@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "AssinaAqui",
+    "name": "Assina Aqui",
     "slug": "AssinaAqui",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0d1b2a"
     },
     "ios": {
       "supportsTablet": true
@@ -18,7 +18,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0d1b2a"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
