@@ -25,6 +25,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Permitir $(PRODUCT_NAME) ao usar o Face ID."
+        }
+      ]
+    ]
   }
 }
