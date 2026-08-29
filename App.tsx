@@ -1,21 +1,32 @@
+import React  from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
 
+import { useBiometrics } from './src/hooks/useBiometrics';
+import { LoginScreen } from './src/screens/LoginScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
 
 export default function App() {
+
+  const {
+        hasHardware,
+        isAuthenticated,
+        authenticate,
+        logout,
+  } = useBiometrics();
+
   return (
-    <View style={styles.container}>
-      <Text>Hello, World! Estamos no Assine Aqui</Text>
+    <>
       <StatusBar style="auto" />
-    </View>
+
+      {isAuthenticated ? (
+        <HomeScreen onLogout={logout} />
+      ):(
+        <LoginScreen hasHardware={hasHardware} onLogin={authenticate}/>
+      )}
+
+    </>
+    
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#E0E1DD',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+
