@@ -11,7 +11,7 @@ export function useBiometrics(){
             setHasHardware(compatible);
         
         })();
-    }),[];
+    },[]);
 
     const authenticate = async () => {
         const success = await autenticarComBiometria();
