@@ -20,20 +20,4 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
-  button: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 8,
-    width: '100%',
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    backgroundColor: '#A0C4FF',
-  },
-  buttonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
 });

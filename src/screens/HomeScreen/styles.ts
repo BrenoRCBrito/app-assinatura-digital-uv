@@ -19,14 +19,4 @@ export const styles = StyleSheet.create({
     color: '#555',
     marginBottom: 24,
   },
-  logoutButton: {
-    backgroundColor: '#d32f2f',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 6,
-  },
-  logoutText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
 });

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
 import { styles } from "./styles" ;
+import { PrimaryButton } from '../../components/PrimaryButton';
 
 interface HomeScreenProps{
     onLogout : () => void;
@@ -9,16 +10,11 @@ interface HomeScreenProps{
 export function HomeScreen({onLogout} : HomeScreenProps){
     return(
         <View style={styles.container}>
-            <Text style={styles.title}>Área Segura</Text>
+            <Text style={styles.title}>Home Assine Aqui</Text>
 
             <Text style={styles.subtitle}>Usuário logado com sucesso!</Text>
 
-            <TouchableOpacity
-                style={styles.logoutButton}
-                onPress={onLogout}
-            >
-                <Text>Sair</Text>
-            </TouchableOpacity>
+            <PrimaryButton label="sair" onPress={onLogout} variant='danger'  />
         </View>
 
     );
