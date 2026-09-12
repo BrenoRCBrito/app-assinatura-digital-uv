@@ -42,6 +42,10 @@ describe('authenticateDeviceOwner', () => {
     ['passcode_not_set', 'unavailable'],
     ['not_enrolled', 'unavailable'],
     ['authentication_failed', 'failed'],
+    ['no_space', 'failed'],
+    ['timeout', 'failed'],
+    ['unable_to_process', 'failed'],
+    ['invalid_context', 'failed'],
     ['unknown', 'failed'],
   ] as const)('converte o erro %s em %s', async (error, type) => {
     jest.mocked(LocalAuthentication.authenticateAsync).mockResolvedValue({ success: false, error });
@@ -85,5 +89,16 @@ describe('getBiometricStatus', () => {
     jest.mocked(LocalAuthentication.isEnrolledAsync).mockResolvedValue(true);
 
     await expect(getBiometricStatus()).resolves.toBe('enrolled');
+  });
+
+  test('devolve noHardware quando a consulta ao aparelho lança erro', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      jest.mocked(LocalAuthentication.hasHardwareAsync).mockRejectedValue(new Error('falha nativa'));
+
+      await expect(getBiometricStatus()).resolves.toBe('noHardware');
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 });
