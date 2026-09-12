@@ -18,6 +18,8 @@ export function PrimaryButton({ label, onPress, theme, disabled = false, variant
 
   return (
     <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
       style={[styles.base, isDanger ? styles.danger : styles.primary, disabled && styles.disabled]}
       onPress={onPress}
       disabled={disabled}
