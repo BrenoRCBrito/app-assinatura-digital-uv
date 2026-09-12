@@ -1,22 +1,31 @@
 import { StyleSheet } from 'react-native';
 
-export const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#2e7d32',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 24,
-  },
-});
+import type { AppTheme } from '../../theme/appTheme';
+
+export function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      color: theme.textPrimary,
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 14,
+      color: theme.textSecondary,
+      marginBottom: 24,
+    },
+    actions: {
+      width: '100%',
+      alignItems: 'center',
+      gap: 12,
+    },
+  });
+}
