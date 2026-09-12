@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 
 import { DEFAULT_SETTINGS, type Settings } from '../domain/settings';
-import { lightTheme } from '../theme/appTheme';
+import { darkTheme } from '../theme/appTheme';
 import { loadSettings, saveSettings } from './settingsStorage';
 
 type SettingsContextValue = Readonly<{
@@ -54,7 +54,7 @@ export function SettingsProvider({ children }: Readonly<{ children: React.ReactN
   if (loading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator color={lightTheme.textSecondary} />
+        <ActivityIndicator color={darkTheme.textSecondary} />
         <Text style={styles.loadingText}>Carregando…</Text>
       </View>
     );
@@ -77,10 +77,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    backgroundColor: lightTheme.background,
+    backgroundColor: darkTheme.background,
   },
   loadingText: {
     fontSize: 15,
-    color: lightTheme.textSecondary,
+    color: darkTheme.textSecondary,
   },
 });
