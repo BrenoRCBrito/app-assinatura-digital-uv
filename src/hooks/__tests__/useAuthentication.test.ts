@@ -107,16 +107,22 @@ describe('AuthenticationProvider', () => {
     expect(result.current.isUnlocked).toBe(true);
   });
 
-  test('libera a autenticação mesmo quando o serviço falha', async () => {
+  test('trata erro inesperado como falha e continua bloqueado', async () => {
     jest.mocked(authenticateDeviceOwner).mockRejectedValue(new Error('falha inesperada'));
-    const { result } = await renderAuthentication();
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const { result } = await renderAuthentication();
 
-    await act(async () => {
-      await expect(result.current.unlock()).rejects.toThrow('falha inesperada');
-    });
+      await act(async () => {
+        await result.current.unlock();
+      });
 
-    expect(result.current.authenticating).toBe(false);
-    expect(result.current.isUnlocked).toBe(false);
+      expect(result.current.authenticating).toBe(false);
+      expect(result.current.isUnlocked).toBe(false);
+      expect(alerta).toHaveBeenCalledWith('Não foi possível entrar', 'Não foi possível autenticar. Tente de novo.');
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   test('lock volta a bloquear depois de entrar', async () => {
