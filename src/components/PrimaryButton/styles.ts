@@ -15,6 +15,14 @@ export function createStyles(theme: AppTheme) {
       borderRadius: 8,
       width: '100%',
     },
+    secondary: {
+      paddingVertical: 12.5,
+      paddingHorizontal: 28,
+      borderRadius: 8,
+      borderWidth: 1.5,
+      borderColor: theme.textSecondary,
+      width: '100%',
+    },
     danger: {
       backgroundColor: theme.danger,
       paddingVertical: 10,
@@ -26,6 +34,11 @@ export function createStyles(theme: AppTheme) {
     },
     primaryText: {
       color: theme.onPrimary,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    secondaryText: {
+      color: theme.textSecondary,
       fontSize: 16,
       fontWeight: '600',
     },
