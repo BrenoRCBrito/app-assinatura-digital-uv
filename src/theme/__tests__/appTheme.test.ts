@@ -12,6 +12,10 @@ describe('createColorToken', () => {
     expect(() => createColorToken('azul')).toThrow('Cor inválida no tema: azul');
     expect(() => createColorToken('#FFF')).toThrow('Cor inválida no tema: #FFF');
   });
+
+  test('recusa canal rgba acima de 255', () => {
+    expect(() => createColorToken('rgba(256, 0, 0, 0.5)')).toThrow('Cor inválida no tema: rgba(256, 0, 0, 0.5)');
+  });
 });
 
 describe('temas', () => {

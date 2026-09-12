@@ -3,10 +3,18 @@ import { ValidationError, type Brand } from '../domain/brand';
 export type ColorToken = Brand<string, 'ColorToken'>;
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
-const RGBA_COLOR = /^rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(0|1|0?\.\d+)\s*\)$/;
+const RGBA_COLOR = /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(0|1|0?\.\d+)\s*\)$/;
+
+function isRgbaColor(value: string): boolean {
+  const match = RGBA_COLOR.exec(value);
+  if (match === null) {
+    return false;
+  }
+  return [match[1], match[2], match[3]].every((channel) => Number(channel) <= 255);
+}
 
 export function createColorToken(value: string): ColorToken {
-  if (!HEX_COLOR.test(value) && !RGBA_COLOR.test(value)) {
+  if (!HEX_COLOR.test(value) && !isRgbaColor(value)) {
     throw new ValidationError(`Cor inválida no tema: ${value}`);
   }
   return value as ColorToken;
