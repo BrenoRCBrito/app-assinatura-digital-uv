@@ -17,6 +17,7 @@
     "@react-navigation/native-stack": "^7.18.10",
     "expo": "~57.0.22",
     "expo-local-authentication": "~57.0.3",
+    "expo-screen-orientation": "~57.0.2",
     "expo-splash-screen": "~57.0.9",
     "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
