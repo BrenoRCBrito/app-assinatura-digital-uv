@@ -1,5 +1,5 @@
 import { ValidationError } from '../brand';
-import { adicionarPonto, criarDesenho, criarTraco, tracoDePontos } from '../desenho';
+import { adicionarPonto, criarDesenho, criarTraco, recortarDesenho, tracoDePontos } from '../desenho';
 import { clampPointToSize, createSize } from '../geometry';
 
 const quadro = createSize(300, 150);
@@ -62,5 +62,32 @@ describe('tracoDePontos', () => {
 
   test('recusa lista vazia', () => {
     expect(() => tracoDePontos([])).toThrow('Um traço precisa de pelo menos um ponto.');
+  });
+});
+
+describe('recortarDesenho', () => {
+  test('recorta o quadro aos limites dos traços, com margem de 8 px', () => {
+    expect(recortarDesenho([criarTraco('M20,30 L60,50')])).toEqual({
+      tracos: ['M8,8 L48,28'],
+      quadro: { width: 56, height: 36 },
+    });
+  });
+
+  test('considera todos os traços para achar os limites', () => {
+    expect(recortarDesenho([criarTraco('M20,30 L60,50'), criarTraco('M100,10 L110,80')])).toEqual({
+      tracos: ['M8,28 L48,48', 'M88,8 L98,78'],
+      quadro: { width: 106, height: 86 },
+    });
+  });
+
+  test('um ponto isolado vira um quadro só com a margem', () => {
+    expect(recortarDesenho([criarTraco('M50,50')])).toEqual({
+      tracos: ['M8,8'],
+      quadro: { width: 16, height: 16 },
+    });
+  });
+
+  test('exige pelo menos um traço', () => {
+    expect(() => recortarDesenho([])).toThrow('Desenhe a assinatura antes de salvar.');
   });
 });
