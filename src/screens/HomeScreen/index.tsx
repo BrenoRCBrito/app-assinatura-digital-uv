@@ -2,16 +2,17 @@ import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
 
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { useAuthentication } from '../../hooks/useAuthentication';
 import { useAppTheme } from '../../theme/useAppTheme';
 import { createStyles } from './styles';
 
 type HomeScreenProps = Readonly<{
-  onLogout: () => void;
   onOpenSettings: () => void;
 }>;
 
-export function HomeScreen({ onLogout, onOpenSettings }: HomeScreenProps) {
+export function HomeScreen({ onOpenSettings }: HomeScreenProps) {
   const { theme } = useAppTheme();
+  const { lock } = useAuthentication();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
@@ -20,7 +21,7 @@ export function HomeScreen({ onLogout, onOpenSettings }: HomeScreenProps) {
       <Text style={styles.subtitle}>Usuário logado com sucesso!</Text>
       <View style={styles.actions}>
         <PrimaryButton label="Configurações" onPress={onOpenSettings} theme={theme} />
-        <PrimaryButton label="Sair" onPress={onLogout} theme={theme} variant="danger" />
+        <PrimaryButton label="Sair" onPress={lock} theme={theme} variant="danger" />
       </View>
     </View>
   );

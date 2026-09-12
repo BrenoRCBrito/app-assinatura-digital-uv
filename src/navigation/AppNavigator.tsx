@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator, type NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { useBiometrics } from '../hooks/useBiometrics';
+import { useAuthentication } from '../hooks/useAuthentication';
 import { HomeScreen } from '../screens/HomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
@@ -15,26 +15,24 @@ type HomeNavigation = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function AppNavigator() {
-  const { hasHardware, isAuthenticated, authenticate, logout } = useBiometrics();
+  const { isUnlocked } = useAuthentication();
   const { theme, themeName } = useAppTheme();
   const navigationTheme = useMemo(() => createNavigationTheme(theme, themeName), [theme, themeName]);
 
   return (
     <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator>
-        {isAuthenticated ? (
+        {isUnlocked ? (
           <>
             <Stack.Screen name="Home" options={{ title: 'Início' }}>
               {({ navigation }: { navigation: HomeNavigation }) => (
-                <HomeScreen onLogout={logout} onOpenSettings={() => navigation.navigate('Settings')} />
+                <HomeScreen onOpenSettings={() => navigation.navigate('Settings')} />
               )}
             </Stack.Screen>
             <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configurações' }} />
           </>
         ) : (
-          <Stack.Screen name="Login" options={{ headerShown: false }}>
-            {() => <LoginScreen hasHardware={hasHardware} onLogin={authenticate} />}
-          </Stack.Screen>
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         )}
       </Stack.Navigator>
     </NavigationContainer>
