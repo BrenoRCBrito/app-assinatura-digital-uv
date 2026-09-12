@@ -60,6 +60,9 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
       } else if (result.type !== 'cancelled') {
         Alert.alert('Não foi possível entrar', AUTHENTICATION_ERROR_MESSAGES[result.type]);
       }
+    } catch (error) {
+      console.error('Falha inesperada ao desbloquear o app:', error);
+      Alert.alert('Não foi possível entrar', AUTHENTICATION_ERROR_MESSAGES.failed);
     } finally {
       authenticatingRef.current = false;
       setAuthenticating(false);
