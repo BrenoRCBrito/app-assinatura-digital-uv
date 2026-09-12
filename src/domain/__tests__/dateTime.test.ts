@@ -13,4 +13,8 @@ describe('createIsoDateTime', () => {
     expect(() => createIsoDateTime('ontem')).toThrow('Data inválida: ontem');
     expect(() => createIsoDateTime('12/09/2026')).toThrow(ValidationError);
   });
+
+  test('recusa data que não existe no calendário', () => {
+    expect(() => createIsoDateTime('2026-02-31T10:00:00.000Z')).toThrow('Data inválida: 2026-02-31T10:00:00.000Z');
+  });
 });
