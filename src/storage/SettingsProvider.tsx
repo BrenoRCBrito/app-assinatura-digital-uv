@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 
 import { DEFAULT_SETTINGS, type Settings } from '../domain/settings';
@@ -15,6 +15,8 @@ const SettingsContext = createContext<SettingsContextValue | null>(null);
 export function SettingsProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
+  // O state só muda no próximo render; a ref guarda a última versão para duas chamadas seguidas.
+  const latestSettings = useRef<Settings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
     let active = true;
@@ -22,6 +24,7 @@ export function SettingsProvider({ children }: Readonly<{ children: React.ReactN
     loadSettings()
       .then((loaded) => {
         if (active) {
+          latestSettings.current = loaded;
           setSettings(loaded);
         }
       })
@@ -36,17 +39,15 @@ export function SettingsProvider({ children }: Readonly<{ children: React.ReactN
     };
   }, []);
 
-  const updateSettings = useCallback(
-    (changes: Partial<Settings>) => {
-      const next: Settings = { ...settings, ...changes };
-      setSettings(next);
-      saveSettings(next).catch((error: unknown) => {
-        console.error('Falha ao salvar as configurações:', error);
-        Alert.alert('Erro', 'Não foi possível salvar as configurações.');
-      });
-    },
-    [settings],
-  );
+  const updateSettings = useCallback((changes: Partial<Settings>) => {
+    const next: Settings = { ...latestSettings.current, ...changes };
+    latestSettings.current = next;
+    setSettings(next);
+    saveSettings(next).catch((error: unknown) => {
+      console.error('Falha ao salvar as configurações:', error);
+      Alert.alert('Erro', 'Não foi possível salvar as configurações.');
+    });
+  }, []);
 
   const value = useMemo(() => ({ settings, updateSettings }), [settings, updateSettings]);
 
