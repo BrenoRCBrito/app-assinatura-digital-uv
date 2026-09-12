@@ -1,25 +1,48 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { useAuthentication } from '../../hooks/useAuthentication';
+import type { BiometricStatus } from '../../services/localAuthentication';
 import { darkTheme } from '../../theme/appTheme';
 import { styles } from './styles';
 
-type LoginScreenProps = Readonly<{
-  hasHardware: boolean;
-  onLogin: () => void;
-}>;
+const STATUS_TEXT: Readonly<Record<BiometricStatus, string>> = {
+  enrolled: 'Use sua biometria ou a senha do aparelho para entrar.',
+  notEnrolled: 'Nenhuma biometria cadastrada. Use a senha do aparelho para entrar.',
+  noHardware: 'Este aparelho não tem biometria. Use a senha do aparelho para entrar.',
+};
 
-export function LoginScreen({ hasHardware, onLogin }: LoginScreenProps) {
+export function LoginScreen() {
+  const { biometricStatus, authenticating, unlock } = useAuthentication();
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
-      <Text style={styles.title}>Bem Vindo Assine Aqui</Text>
-      <Text style={styles.subtitle}>
-        {hasHardware ? 'Toque abaixo para entrar com biometria' : 'Seu dispositivo não possui suporte a biometria'}
-      </Text>
-      <PrimaryButton label="Entrar com Biometria" onPress={onLogin} theme={darkTheme} disabled={!hasHardware} />
-    </View>
+      <View style={styles.content}>
+        <Image
+          accessible
+          accessibilityLabel="Pena e visto do Assina Aqui"
+          source={require('../../../assets/splash-icon.png')}
+          style={styles.logo}
+        />
+        <View style={styles.texts}>
+          <Text style={styles.title}>Assina Aqui</Text>
+          <Text style={styles.subtitle}>
+            {biometricStatus === null ? 'Verificando a biometria do aparelho…' : STATUS_TEXT[biometricStatus]}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.footer}>
+        <PrimaryButton
+          label={authenticating ? 'Autenticando…' : 'Entrar'}
+          onPress={unlock}
+          theme={darkTheme}
+          disabled={authenticating}
+        />
+      </View>
+    </SafeAreaView>
   );
 }

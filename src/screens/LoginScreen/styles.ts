@@ -6,20 +6,38 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: darkTheme.background,
+  },
+  content: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    gap: 8,
+    paddingHorizontal: 36,
+  },
+  logo: {
+    width: 200,
+    height: 200,
+  },
+  texts: {
+    alignItems: 'center',
+    gap: 10,
   },
   title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    marginBottom: 8,
+    fontSize: 32,
+    fontWeight: '700',
+    letterSpacing: -0.5,
     color: darkTheme.textPrimary,
   },
   subtitle: {
-    fontSize: 14,
-    color: darkTheme.textSecondary,
+    maxWidth: 260,
+    fontSize: 16,
+    lineHeight: 23,
     textAlign: 'center',
-    marginBottom: 24,
+    color: darkTheme.textSecondary,
+  },
+  footer: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
 });
