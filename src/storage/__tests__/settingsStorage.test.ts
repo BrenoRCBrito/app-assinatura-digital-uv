@@ -18,11 +18,13 @@ describe('settingsStorage', () => {
 
   test('devolve o padrão quando o JSON salvo está corrompido', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, '{theme: dark');
+    try {
+      await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, '{theme: dark');
 
-    await expect(loadSettings()).resolves.toEqual(DEFAULT_SETTINGS);
-
-    consoleError.mockRestore();
+      await expect(loadSettings()).resolves.toEqual(DEFAULT_SETTINGS);
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   test('completa com o padrão o que faltar no dado salvo', async () => {
