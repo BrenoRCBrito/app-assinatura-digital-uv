@@ -79,3 +79,10 @@ export const darkTheme: AppTheme = {
   danger: createColorToken('#9E3B3B'),
   onDanger: createColorToken('#F4F4F1'),
 };
+
+export const FIXED_COLORS = {
+  paper: createColorToken('#F7F7F4'),
+  paperBorder: createColorToken('rgba(65, 90, 119, 0.22)'),
+  paperGuide: createColorToken('#778DA9'),
+  ink: createColorToken('#1B263B'),
+} as const;
