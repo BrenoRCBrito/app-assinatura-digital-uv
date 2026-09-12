@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { PanResponder, StyleSheet, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -9,7 +9,6 @@ import { FIXED_COLORS } from '../theme/appTheme';
 type SignaturePadProps = Readonly<{
   tracos: readonly Traco[];
   aoMudarTracos: (tracos: readonly Traco[]) => void;
-  aoMedirQuadro: (quadro: Size) => void;
 }>;
 
 const PROPRIEDADES_DO_TRACO = {
@@ -20,7 +19,7 @@ const PROPRIEDADES_DO_TRACO = {
   fill: 'none',
 } as const;
 
-export function SignaturePad({ tracos, aoMudarTracos, aoMedirQuadro }: SignaturePadProps) {
+export function SignaturePad({ tracos, aoMudarTracos }: SignaturePadProps) {
   const [pontosDoTracoAtual, setPontosDoTracoAtual] = useState<readonly ScreenPoint[]>([]);
   const quadroRef = useRef<Size | null>(null);
   const pontosRef = useRef<readonly ScreenPoint[]>([]);
@@ -28,7 +27,7 @@ export function SignaturePad({ tracos, aoMudarTracos, aoMedirQuadro }: Signature
   const tracosRef = useRef(tracos);
   const aoMudarTracosRef = useRef(aoMudarTracos);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     tracosRef.current = tracos;
     aoMudarTracosRef.current = aoMudarTracos;
   });
@@ -65,9 +64,7 @@ export function SignaturePad({ tracos, aoMudarTracos, aoMedirQuadro }: Signature
 
   function medirQuadro(evento: LayoutChangeEvent) {
     const { width, height } = evento.nativeEvent.layout;
-    const quadro = createSize(Math.round(width), Math.round(height));
-    quadroRef.current = quadro;
-    aoMedirQuadro(quadro);
+    quadroRef.current = createSize(Math.round(width), Math.round(height));
   }
 
   return (
