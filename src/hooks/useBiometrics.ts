@@ -1,14 +1,20 @@
 import {useState, useEffect} from 'react'
-import {verificandoBiometriaHardware , autenticarComBiometria} from "../services/biometry"
+import {verificandoBiometriaHardware , verificandoBiometriaCadastrada , autenticarComBiometria} from "../services/biometry"
 
 export function useBiometrics(){
     const [hasHardware , setHasHardware] = useState(false);
+    const [isEnrolled , setIsEnrolled] = useState(false);
     const [isAuthenticated , setIsAuthenticated] = useState(false);
 
     useEffect(() => {
         (async() =>{
             const compatible = await verificandoBiometriaHardware();
             setHasHardware(compatible);
+
+            if(compatible){
+                const enrolled  = await  verificandoBiometriaCadastrada();
+                setIsEnrolled(enrolled);
+            }
         
         })();
     },[]);
@@ -23,6 +29,7 @@ export function useBiometrics(){
 
     return{
         hasHardware,
+        isEnrolled,
         isAuthenticated,
         authenticate,
         logout,
