@@ -33,7 +33,6 @@ export function SettingsScreen() {
             options={THEME_OPTIONS}
             selected={settings.theme}
             onSelect={(themeName) => updateSettings({ theme: themeName })}
-            theme={theme}
           />
         </View>
       </View>
@@ -47,7 +46,6 @@ export function SettingsScreen() {
             options={GESTURE_ENGINE_OPTIONS}
             selected={settings.gestureEngine}
             onSelect={(gestureEngine) => updateSettings({ gestureEngine })}
-            theme={theme}
           />
         </View>
       </View>

@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
-import type { AppTheme } from '../../theme/appTheme';
-import { createStyles } from './styles';
+import { useAppTheme } from '../../theme';
+import { Text } from '../Text';
+import { segmentedControlPresets, type SegmentedControlPresetName } from './presets';
 
 export type SegmentOption<Value extends string> = Readonly<{
   value: Value;
@@ -13,16 +14,17 @@ type SegmentedControlProps<Value extends string> = Readonly<{
   options: readonly SegmentOption<Value>[];
   selected: Value;
   onSelect: (value: Value) => void;
-  theme: AppTheme;
+  preset?: SegmentedControlPresetName;
 }>;
 
 export function SegmentedControl<Value extends string>({
   options,
   selected,
   onSelect,
-  theme,
+  preset = 'default',
 }: SegmentedControlProps<Value>) {
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const { theme } = useAppTheme();
+  const styles = useMemo(() => segmentedControlPresets[preset](theme), [preset, theme]);
 
   return (
     <View style={styles.track} accessibilityRole="radiogroup">
@@ -37,7 +39,7 @@ export function SegmentedControl<Value extends string>({
             style={[styles.segment, isSelected && styles.segmentSelected]}
             onPress={() => onSelect(option.value)}
           >
-            <Text style={isSelected ? styles.labelSelected : styles.label}>{option.label}</Text>
+            <Text preset={isSelected ? 'segmentSelected' : 'segment'}>{option.label}</Text>
           </Pressable>
         );
       })}
