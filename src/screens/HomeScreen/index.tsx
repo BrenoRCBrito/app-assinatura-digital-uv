@@ -1,10 +1,7 @@
-import React, { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import React from 'react';
 
-import { PrimaryButton } from '../../components/PrimaryButton';
+import { Button, Screen, Stack, Text } from '../../components';
 import { useAuthentication } from '../../hooks/useAuthentication';
-import { useAppTheme } from '../../theme/useAppTheme';
-import { createStyles } from './styles';
 
 type HomeScreenProps = Readonly<{
   onOpenAssinaturas: () => void;
@@ -12,19 +9,21 @@ type HomeScreenProps = Readonly<{
 }>;
 
 export function HomeScreen({ onOpenAssinaturas, onOpenSettings }: HomeScreenProps) {
-  const { theme } = useAppTheme();
   const { lock } = useAuthentication();
-  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Área Segura</Text>
-      <Text style={styles.subtitle}>Usuário logado com sucesso!</Text>
-      <View style={styles.actions}>
-        <PrimaryButton label="Minhas assinaturas" onPress={onOpenAssinaturas} theme={theme} />
-        <PrimaryButton label="Configurações" onPress={onOpenSettings} theme={theme} variant="secondary" />
-        <PrimaryButton label="Sair" onPress={lock} theme={theme} variant="danger" />
-      </View>
-    </View>
+    <Screen preset="centered">
+      <Stack gap="heroActions" align="center">
+        <Stack gap="hero" align="center">
+          <Text preset="screenTitle">Área Segura</Text>
+          <Text preset="subtitle">Usuário logado com sucesso!</Text>
+        </Stack>
+        <Stack gap="actions" align="center">
+          <Button label="Minhas assinaturas" onPress={onOpenAssinaturas} />
+          <Button label="Configurações" onPress={onOpenSettings} preset="secondary" />
+          <Button label="Sair" onPress={lock} preset="danger" size="sm" />
+        </Stack>
+      </Stack>
+    </Screen>
   );
 }
