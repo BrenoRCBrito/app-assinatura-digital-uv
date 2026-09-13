@@ -4,7 +4,7 @@ import { join, relative } from 'node:path';
 
 const RAIZ = join(__dirname, '..', '..', '..');
 const PACOTES_PERMITIDOS_NAS_TELAS = ['react', '@react-navigation/native'];
-const TELAS_MIGRADAS = ['HomeScreen', 'LoginScreen', 'SettingsScreen'];
+const TELAS_MIGRADAS = ['HomeScreen', 'LoginScreen', 'SettingsScreen', 'AssinaturasScreen'];
 
 function arquivosDoCodigo(pasta: string): string[] {
   return readdirSync(pasta).flatMap((nome) => {
