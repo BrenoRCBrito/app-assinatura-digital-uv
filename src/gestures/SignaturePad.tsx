@@ -4,7 +4,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { adicionarPonto, tracoDePontos, type Traco } from '../domain/desenho';
 import { clampPointToSize, createSize, type ScreenPoint, type Size } from '../domain/geometry';
-import { FIXED_COLORS } from '../theme/appTheme';
+import { FIXED_COLORS, tokens } from '../theme';
 
 type SignaturePadProps = Readonly<{
   tracos: readonly Traco[];
@@ -13,7 +13,7 @@ type SignaturePadProps = Readonly<{
 
 const PROPRIEDADES_DO_TRACO = {
   stroke: FIXED_COLORS.ink,
-  strokeWidth: 3,
+  strokeWidth: tokens.lineWidth.ink,
   strokeLinecap: 'round',
   strokeLinejoin: 'round',
   fill: 'none',
