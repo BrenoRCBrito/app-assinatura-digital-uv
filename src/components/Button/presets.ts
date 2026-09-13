@@ -18,7 +18,6 @@ export const buttonPresets = {
     container: (theme: Theme) => ({
       borderWidth: theme.lineWidth.outline,
       borderColor: theme.textSecondary,
-      paddingVertical: theme.inset.buttonY - theme.lineWidth.outline,
     }),
   },
   danger: {

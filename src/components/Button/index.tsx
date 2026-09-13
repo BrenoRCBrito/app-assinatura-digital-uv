@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, type ViewStyle } from 'react-native';
 
 import { useAppTheme } from '../../theme';
 import { Text } from '../Text';
@@ -17,10 +17,17 @@ type ButtonProps = Readonly<{
 export function Button({ label, onPress, preset = 'primary', size = 'md', disabled = false, flex }: ButtonProps) {
   const { theme } = useAppTheme();
   const { container, label: labelPreset } = buttonPresets[preset];
-  const containerStyle = useMemo(
-    () => [styles.base, buttonSizes[size](theme), container(theme), disabled && { opacity: theme.opacity.disabled }],
-    [container, disabled, size, theme],
-  );
+  const containerStyle = useMemo(() => {
+    const sizeStyle = buttonSizes[size](theme);
+    const presetStyle: ViewStyle = container(theme);
+    return [
+      styles.base,
+      sizeStyle,
+      presetStyle,
+      { paddingVertical: sizeStyle.paddingVertical - (presetStyle.borderWidth ?? 0) },
+      disabled && { opacity: theme.opacity.disabled },
+    ];
+  }, [container, disabled, size, theme]);
 
   const button = (
     <TouchableOpacity
