@@ -3,6 +3,7 @@ import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 
 import { DEFAULT_SETTINGS, type Settings } from '../domain/settings';
 import { darkTheme } from '../theme/appTheme';
+import { tokens } from '../theme/tokens';
 import { loadSettings, saveSettings } from './settingsStorage';
 
 type SettingsContextValue = Readonly<{
@@ -76,11 +77,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: tokens.gap.loading,
     backgroundColor: darkTheme.background,
   },
   loadingText: {
-    fontSize: 15,
+    fontSize: tokens.typography.loading.fontSize,
     color: darkTheme.textSecondary,
   },
 });
