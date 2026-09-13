@@ -1,20 +1,25 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import * as ScreenOrientation from 'expo-screen-orientation';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
-import Toast from 'react-native-toast-message';
 
-import { PrimaryButton } from '../../components/PrimaryButton';
+import {
+  Button,
+  ChipButton,
+  confirm,
+  PapelDeAssinatura,
+  Row,
+  Screen,
+  showError,
+  showSuccess,
+  Stack,
+  Text,
+  TextField,
+} from '../../components';
 import { criarAssinaturaId, criarNomeAssinatura, type Assinatura } from '../../domain/assinatura';
 import { ValidationError } from '../../domain/brand';
 import { createIsoDateTime } from '../../domain/dateTime';
 import { recortarDesenho, type Traco } from '../../domain/desenho';
-import { SignaturePad } from '../../gestures/SignaturePad';
+import { lockToLandscape, lockToPortrait } from '../../services/screenOrientation';
 import { useRepositories } from '../../storage/RepositoriesProvider';
-import { useAppTheme } from '../../theme/useAppTheme';
-import { createStyles } from './styles';
 
 type NovaAssinaturaScreenProps = Readonly<{
   onSalva: () => void;
@@ -22,8 +27,6 @@ type NovaAssinaturaScreenProps = Readonly<{
 
 export function NovaAssinaturaScreen({ onSalva }: NovaAssinaturaScreenProps) {
   const { assinaturas } = useRepositories();
-  const { theme } = useAppTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
   const [nome, setNome] = useState('');
   const [tracos, setTracos] = useState<readonly Traco[]>([]);
   const [deitado, setDeitado] = useState(false);
@@ -34,7 +37,7 @@ export function NovaAssinaturaScreen({ onSalva }: NovaAssinaturaScreenProps) {
   useFocusEffect(
     useCallback(() => {
       return () => {
-        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch((error: unknown) => {
+        lockToPortrait().catch((error: unknown) => {
           console.error('Falha ao voltar a tela para retrato:', error);
         });
       };
@@ -58,14 +61,14 @@ export function NovaAssinaturaScreen({ onSalva }: NovaAssinaturaScreenProps) {
     setSalvando(true);
     try {
       await assinaturas.save(montarAssinatura());
-      Toast.show({ type: 'success', text1: 'Assinatura salva' });
+      showSuccess('Assinatura salva');
       onSalva();
     } catch (error) {
       if (error instanceof ValidationError) {
-        Alert.alert('Confira a assinatura', error.message);
+        showError('Confira a assinatura', error.message);
       } else {
         console.error('Falha ao salvar a assinatura:', error);
-        Alert.alert('Erro', 'Não foi possível salvar a assinatura.');
+        showError('Erro', 'Não foi possível salvar a assinatura.');
       }
     } finally {
       salvandoRef.current = false;
@@ -79,14 +82,12 @@ export function NovaAssinaturaScreen({ onSalva }: NovaAssinaturaScreenProps) {
     }
     girandoRef.current = true;
     try {
-      await ScreenOrientation.lockAsync(
-        deitado ? ScreenOrientation.OrientationLock.PORTRAIT_UP : ScreenOrientation.OrientationLock.LANDSCAPE,
-      );
+      await (deitado ? lockToPortrait() : lockToLandscape());
       setTracos([]);
       setDeitado(!deitado);
     } catch (error) {
       console.error('Falha ao girar a tela:', error);
-      Alert.alert('Erro', 'Não foi possível girar a tela neste aparelho.');
+      showError('Erro', 'Não foi possível girar a tela neste aparelho.');
     } finally {
       girandoRef.current = false;
     }
@@ -97,91 +98,50 @@ export function NovaAssinaturaScreen({ onSalva }: NovaAssinaturaScreenProps) {
       void girarPapel();
       return;
     }
-    Alert.alert('Girar o papel', 'Girar apaga o desenho atual.', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Girar',
-        onPress: () => {
-          void girarPapel();
-        },
+    confirm({
+      title: 'Girar o papel',
+      message: 'Girar apaga o desenho atual.',
+      confirmLabel: 'Girar',
+      onConfirm: () => {
+        void girarPapel();
       },
-    ]);
+    });
   }
 
   return (
-    <SafeAreaView style={styles.screen} edges={['bottom', 'left', 'right']}>
-      <KeyboardAvoidingView style={styles.conteudo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <Screen
+      preset="form"
+      footer={
+        <Row gap="actions">
+          <Button label="Limpar" onPress={() => setTracos([])} preset="secondary" disabled={salvando} flex={1} />
+          <Button label={salvando ? 'Salvando…' : 'Salvar'} onPress={salvar} disabled={salvando} flex={2} />
+        </Row>
+      }
+    >
+      <Stack gap="form" flex={1}>
         {deitado ? null : (
-          <View style={styles.campo}>
-            <Text style={styles.rotulo}>Nome</Text>
-            <TextInput
-              accessibilityLabel="Nome da assinatura"
-              maxLength={40}
-              onChangeText={setNome}
-              placeholder="Ex.: Rubrica"
-              placeholderTextColor={theme.textMuted}
-              returnKeyType="done"
-              style={styles.input}
-              value={nome}
-            />
-          </View>
-        )}
-        <View style={styles.areaDaAssinatura}>
-          <View style={styles.cabecalhoDaAssinatura}>
-            <Text style={styles.rotulo}>Assinatura</Text>
-            <Pressable
-              accessibilityRole="button"
-              disabled={salvando}
-              onPress={confirmarGiro}
-              style={({ pressed }) => [styles.botaoGirar, pressed && styles.botaoGirarPressionado]}
-            >
-              <Svg width={18} height={18} viewBox="0 0 24 24">
-                <Path
-                  d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"
-                  stroke={theme.textSecondary}
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-                <Path
-                  d="M21 3v5h-5"
-                  stroke={theme.textSecondary}
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-              </Svg>
-              <Text style={styles.textoGirar}>{deitado ? 'Voltar ao retrato' : 'Deitar papel'}</Text>
-            </Pressable>
-          </View>
-          <View style={styles.papel}>
-            <SignaturePad tracos={tracos} aoMudarTracos={setTracos} />
-            <View style={styles.guia}>
-              <View style={styles.linhaDaGuia}>
-                <Text style={styles.letraDaGuia}>X</Text>
-                <View style={styles.tracoDaGuia} />
-              </View>
-              <Text style={styles.dica}>Assine acima da linha</Text>
-            </View>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-      <View style={styles.acoes}>
-        <View style={styles.acaoLimpar}>
-          <PrimaryButton
-            label="Limpar"
-            onPress={() => setTracos([])}
-            theme={theme}
-            variant="secondary"
-            disabled={salvando}
+          <TextField
+            label="Nome"
+            accessibilityLabel="Nome da assinatura"
+            value={nome}
+            onChangeText={setNome}
+            placeholder="Ex.: Rubrica"
+            maxLength={40}
           />
-        </View>
-        <View style={styles.acaoSalvar}>
-          <PrimaryButton label={salvando ? 'Salvando…' : 'Salvar'} onPress={salvar} theme={theme} disabled={salvando} />
-        </View>
-      </View>
-    </SafeAreaView>
+        )}
+        <Stack gap="fieldLabel" flex={1}>
+          <Row align="center" justify="between">
+            <Text preset="sectionLabel">Assinatura</Text>
+            <ChipButton
+              icon="rotate"
+              label={deitado ? 'Voltar ao retrato' : 'Deitar papel'}
+              onPress={confirmarGiro}
+              disabled={salvando}
+            />
+          </Row>
+          <PapelDeAssinatura tracos={tracos} aoMudarTracos={setTracos} />
+        </Stack>
+      </Stack>
+    </Screen>
   );
 }
