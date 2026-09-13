@@ -4,8 +4,9 @@ import { join, relative } from 'node:path';
 
 const RAIZ = join(__dirname, '..', '..', '..');
 const PACOTES_PERMITIDOS_NAS_TELAS = ['react', '@react-navigation/native'];
+const PASTAS_DE_INTERFACE = ['src/screens', 'src/components'];
 const CHAVES_DE_ESTILO_NUMERICO =
-  '(?:padding|margin)\\w*|gap|rowGap|columnGap|top|right|bottom|left|width|height|minWidth|minHeight|maxWidth|maxHeight|fontSize|lineHeight|letterSpacing|borderRadius|border\\w*Width|strokeWidth|size';
+  '(?:padding|margin)\\w*|gap|rowGap|columnGap|top|right|bottom|left|width|height|minWidth|minHeight|maxWidth|maxHeight|fontSize|lineHeight|letterSpacing|border\\w*Radius|border\\w*Width|strokeWidth|shadowRadius|elevation|aspectRatio|translate[XY]|size';
 
 function arquivosDoCodigo(pasta: string): string[] {
   return readdirSync(pasta).flatMap((nome) => {
@@ -21,8 +22,8 @@ function arquivosDeInterface(): string[] {
   return arquivosDoCodigo(join(RAIZ, 'src')).filter(
     (arquivo) =>
       !arquivo.startsWith(join(RAIZ, 'src', 'theme')) &&
-      (arquivo.startsWith(join(RAIZ, 'src', 'screens')) ||
-        /\bfrom\s+['"]react-native['"]/.test(readFileSync(arquivo, 'utf8'))),
+      (PASTAS_DE_INTERFACE.some((pasta) => arquivo.startsWith(join(RAIZ, pasta))) ||
+        /\bfrom\s+['"]react-native(?:-[\w-]+)?['"]/.test(readFileSync(arquivo, 'utf8'))),
   );
 }
 
@@ -34,11 +35,11 @@ function importsProibidos(codigo: string): string[] {
 }
 
 function estilosPassados(codigo: string): string[] {
-  return [...codigo.matchAll(/\b\w*[sS]tyle=/g)].map((encontrado) => encontrado[0]);
+  return [...codigo.matchAll(/\b\w*[sS]tyle\s*=/g)].map((encontrado) => encontrado[0]);
 }
 
-function coresEmHex(codigo: string): string[] {
-  return [...codigo.matchAll(/#[0-9A-Fa-f]{3,8}\b/g)].map((encontrada) => encontrada[0]);
+function coresLiterais(codigo: string): string[] {
+  return [...codigo.matchAll(/#[0-9A-Fa-f]{3,8}\b|\b(?:rgb|hsl)a?\([^)]*\)/g)].map((encontrada) => encontrada[0]);
 }
 
 function numerosDeEstilo(codigo: string): string[] {
@@ -70,15 +71,23 @@ describe('verificadores das regras', () => {
     expect(importsProibidos(codigo)).toEqual(['react-native', 'expo-asset']);
   });
 
-  test('estilosPassados aponta style e contentContainerStyle', () => {
-    expect(estilosPassados('<Stack gap="section" style={x} />\n<List contentContainerStyle={y} />')).toEqual([
-      'style=',
-      'contentContainerStyle=',
-    ]);
+  test('estilosPassados aponta style e contentContainerStyle, com ou sem espaço antes do igual', () => {
+    const codigo = [
+      '<Stack gap="section" style={x} />',
+      '<List contentContainerStyle={y} />',
+      '<Card style = {z} />',
+    ].join('\n');
+
+    expect(estilosPassados(codigo)).toEqual(['style=', 'contentContainerStyle=', 'style =']);
   });
 
-  test('coresEmHex aponta hex de três a oito dígitos', () => {
-    expect(coresEmHex("color: '#0D1B2A', borderColor: '#fff', fill: 'none'")).toEqual(['#0D1B2A', '#fff']);
+  test('coresLiterais aponta hex, rgb e hsl', () => {
+    const codigo = [
+      "color: '#0D1B2A', borderColor: '#fff', fill: 'none',",
+      "shadowColor: 'rgba(13, 27, 42, 0.2)', tintColor: 'hsl(210, 50%, 20%)',",
+    ].join('\n');
+
+    expect(coresLiterais(codigo)).toEqual(['#0D1B2A', '#fff', 'rgba(13, 27, 42, 0.2)', 'hsl(210, 50%, 20%)']);
   });
 
   test('numerosDeEstilo aponta número solto em estilo e em prop de medida, e aceita zero, flex e token', () => {
@@ -86,9 +95,20 @@ describe('verificadores das regras', () => {
       'const estilos = { padding: 12, marginTop: -4, flex: 1, top: 0, gap: theme.gap.list };',
       '<Svg width={22} height={theme.size.iconMedium} />',
       '<TextInput maxLength={40} numberOfLines={1} />',
+      'const sombra = { borderTopLeftRadius: 8, shadowRadius: 4, elevation: 3 };',
+      'const quadro = { aspectRatio: 1.5, transform: [{ translateX: 10 }] };',
     ].join('\n');
 
-    expect(numerosDeEstilo(codigo)).toEqual(['padding: 12', 'marginTop: -4', 'width: 22']);
+    expect(numerosDeEstilo(codigo)).toEqual([
+      'padding: 12',
+      'marginTop: -4',
+      'width: 22',
+      'borderTopLeftRadius: 8',
+      'shadowRadius: 4',
+      'elevation: 3',
+      'aspectRatio: 1.5',
+      'translateX: 10',
+    ]);
   });
 });
 
@@ -100,18 +120,20 @@ describe('regras das telas', () => {
     expect([...violacoes(arquivos, importsProibidos), ...violacoes(arquivos, estilosPassados)]).toEqual([]);
   });
 
-  test('nenhuma cor em hex fora de src/theme', () => {
+  test('nenhuma cor literal fora de src/theme', () => {
     const arquivos = arquivosDeInterface();
 
     expect(arquivos).toContain(join(RAIZ, 'src/gestures/SignaturePad.tsx'));
     expect(arquivos).toContain(join(RAIZ, 'src/storage/SettingsProvider.tsx'));
-    expect(violacoes(arquivos, coresEmHex)).toEqual([]);
+    expect(arquivos).toContain(join(RAIZ, 'src/components/DesenhoSvg/index.tsx'));
+    expect(violacoes(arquivos, coresLiterais)).toEqual([]);
   });
 
   test('nenhum número de estilo fora de src/theme', () => {
     const arquivos = arquivosDeInterface();
 
     expect(arquivos).toContain(join(RAIZ, 'src/components/Button/presets.ts'));
+    expect(arquivos).toContain(join(RAIZ, 'src/components/Icon/presets.ts'));
     expect(violacoes(arquivos, numerosDeEstilo)).toEqual([]);
   });
 });
