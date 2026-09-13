@@ -1,11 +1,17 @@
-import React, { useMemo } from 'react';
-import { ScrollView, Switch, Text, View } from 'react-native';
+import React from 'react';
 
-import { SegmentedControl, type SegmentOption } from '../../components/SegmentedControl';
+import {
+  Card,
+  Screen,
+  Section,
+  SegmentedControl,
+  Stack,
+  Text,
+  ToggleRow,
+  type SegmentOption,
+} from '../../components';
 import type { GestureEngine, ThemeName } from '../../domain/settings';
 import { useSettings } from '../../storage/SettingsProvider';
-import { useAppTheme } from '../../theme/useAppTheme';
-import { createStyles } from './styles';
 
 const THEME_OPTIONS: readonly SegmentOption<ThemeName>[] = [
   { value: 'light', label: 'Claro' },
@@ -19,53 +25,43 @@ const GESTURE_ENGINE_OPTIONS: readonly SegmentOption<GestureEngine>[] = [
 
 export function SettingsScreen() {
   const { settings, updateSettings } = useSettings();
-  const { theme } = useAppTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Aparência</Text>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Tema</Text>
-          <Text style={styles.cardDescription}>Muda as cores do app. Documentos e PDFs continuam em papel claro.</Text>
-          <SegmentedControl
-            options={THEME_OPTIONS}
-            selected={settings.theme}
-            onSelect={(themeName) => updateSettings({ theme: themeName })}
-          />
-        </View>
-      </View>
+    <Screen preset="scroll">
+      <Stack gap="section">
+        <Section label="Aparência">
+          <Card>
+            <Text preset="itemTitle">Tema</Text>
+            <Text preset="description">Muda as cores do app. Documentos e PDFs continuam em papel claro.</Text>
+            <SegmentedControl
+              options={THEME_OPTIONS}
+              selected={settings.theme}
+              onSelect={(themeName) => updateSettings({ theme: themeName })}
+            />
+          </Card>
+        </Section>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Gestos</Text>
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Motor de gestos</Text>
-          <Text style={styles.cardDescription}>Define como o selo é arrastado sobre o documento.</Text>
-          <SegmentedControl
-            options={GESTURE_ENGINE_OPTIONS}
-            selected={settings.gestureEngine}
-            onSelect={(gestureEngine) => updateSettings({ gestureEngine })}
-          />
-        </View>
-      </View>
+        <Section label="Gestos">
+          <Card>
+            <Text preset="itemTitle">Motor de gestos</Text>
+            <Text preset="description">Define como o selo é arrastado sobre o documento.</Text>
+            <SegmentedControl
+              options={GESTURE_ENGINE_OPTIONS}
+              selected={settings.gestureEngine}
+              onSelect={(gestureEngine) => updateSettings({ gestureEngine })}
+            />
+          </Card>
+        </Section>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Digitalização</Text>
-        <View style={[styles.card, styles.row]}>
-          <View style={styles.rowText}>
-            <Text style={styles.cardTitle}>Salvar cópia na galeria</Text>
-            <Text style={styles.cardDescription}>Guarda a foto original do documento nas suas fotos.</Text>
-          </View>
-          <Switch
-            accessibilityLabel="Salvar cópia na galeria"
+        <Section label="Digitalização">
+          <ToggleRow
+            title="Salvar cópia na galeria"
+            description="Guarda a foto original do documento nas suas fotos."
             value={settings.salvarCopiaNaGaleria}
             onValueChange={(salvarCopiaNaGaleria) => updateSettings({ salvarCopiaNaGaleria })}
-            trackColor={{ false: theme.switchTrackOff, true: theme.switchTrackOn }}
-            thumbColor={theme.switchThumb}
           />
-        </View>
-      </View>
-    </ScrollView>
+        </Section>
+      </Stack>
+    </Screen>
   );
 }
