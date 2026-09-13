@@ -60,6 +60,10 @@ function ScreenFrame({ preset, footer, children }: ScreenProps) {
     case 'fill':
       body = <View style={[styles.fill, presetStyles.content]}>{children}</View>;
       break;
+    default: {
+      const unhandledLayout: never = layout;
+      throw new Error(`Layout de tela sem montagem: ${unhandledLayout}`);
+    }
   }
 
   return (
