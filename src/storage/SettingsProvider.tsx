@@ -81,7 +81,8 @@ const styles = StyleSheet.create({
     backgroundColor: darkTheme.background,
   },
   loadingText: {
-    fontSize: tokens.typography.loading.fontSize,
+    fontSize: tokens.typography.supporting.fontSize,
+    lineHeight: tokens.typography.supporting.lineHeight,
     color: darkTheme.textSecondary,
   },
 });

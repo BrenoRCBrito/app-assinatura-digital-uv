@@ -8,9 +8,13 @@ export const textPresets = {
   status: (theme: Theme) => ({ ...theme.typography.status, color: theme.textSecondary }),
   sectionLabel: (theme: Theme) => ({ ...theme.typography.sectionLabel, color: theme.textSecondary }),
   itemTitle: (theme: Theme) => ({ ...theme.typography.itemTitle, color: theme.textPrimary }),
-  description: (theme: Theme) => ({ ...theme.typography.description, color: theme.textSecondary }),
-  subtitle: (theme: Theme) => ({ ...theme.typography.subtitle, color: theme.textSecondary }),
-  empty: (theme: Theme) => ({ ...theme.typography.empty, marginTop: theme.inset.emptyTop, color: theme.textSecondary }),
+  supporting: (theme: Theme) => ({ ...theme.typography.supporting, color: theme.textSecondary }),
+  empty: (theme: Theme) => ({
+    ...theme.typography.supporting,
+    textAlign: 'center',
+    marginTop: theme.inset.emptyTop,
+    color: theme.textSecondary,
+  }),
   meta: (theme: Theme) => ({ ...theme.typography.meta, color: theme.textMuted }),
   buttonPrimary: (theme: Theme) => ({ ...theme.typography.button, color: theme.onPrimary }),
   buttonSecondary: (theme: Theme) => ({ ...theme.typography.button, color: theme.textSecondary }),
@@ -19,7 +23,11 @@ export const textPresets = {
   segment: (theme: Theme) => ({ ...theme.typography.segment, color: theme.textSecondary }),
   segmentSelected: (theme: Theme) => ({ ...theme.typography.segment, color: theme.onPrimary }),
   paperMark: (theme: Theme) => ({ ...theme.typography.paperMark, color: FIXED_COLORS.paperGuide }),
-  paperHint: (theme: Theme) => ({ ...theme.typography.paperHint, color: FIXED_COLORS.paperGuide }),
+  paperHint: (theme: Theme) => ({
+    ...theme.typography.supporting,
+    textAlign: 'center',
+    color: FIXED_COLORS.paperGuide,
+  }),
 } satisfies Record<string, (theme: Theme) => TextStyle>;
 
 export type TextPresetName = keyof typeof textPresets;

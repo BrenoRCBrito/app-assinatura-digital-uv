@@ -32,7 +32,7 @@ export function SettingsScreen() {
         <Section label="Aparência">
           <Card>
             <Text preset="itemTitle">Tema</Text>
-            <Text preset="description">Muda as cores do app. Documentos e PDFs continuam em papel claro.</Text>
+            <Text preset="supporting">Muda as cores do app. Documentos e PDFs continuam em papel claro.</Text>
             <SegmentedControl
               options={THEME_OPTIONS}
               selected={settings.theme}
@@ -44,7 +44,7 @@ export function SettingsScreen() {
         <Section label="Gestos">
           <Card>
             <Text preset="itemTitle">Motor de gestos</Text>
-            <Text preset="description">Define como o selo é arrastado sobre o documento.</Text>
+            <Text preset="supporting">Define como o selo é arrastado sobre o documento.</Text>
             <SegmentedControl
               options={GESTURE_ENGINE_OPTIONS}
               selected={settings.gestureEngine}
