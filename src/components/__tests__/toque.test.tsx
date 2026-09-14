@@ -8,6 +8,7 @@ import { tokens } from '../../theme';
 import { Button } from '../Button';
 import { ChipButton } from '../ChipButton';
 import { IconButton } from '../IconButton';
+import { MenuList } from '../MenuList';
 import { SegmentedControl } from '../SegmentedControl';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -89,6 +90,14 @@ describe('retorno ao pressionar', () => {
 
   test('o chip fica com a opacidade de pressionado', async () => {
     await render(<ChipButton label="Deitar papel" icon="rotate" onPress={() => undefined} />, {
+      wrapper: SettingsProvider,
+    });
+
+    expect((await estiloPressionado('button')).opacity).toBe(tokens.opacity.pressed);
+  });
+
+  test('a linha do menu fica com a opacidade de pressionado', async () => {
+    await render(<MenuList items={[{ label: 'Configurações', icon: 'settings', onPress: () => undefined }]} />, {
       wrapper: SettingsProvider,
     });
 
