@@ -45,7 +45,7 @@ const inset = {
   itemY: 12,
   itemLeft: 12,
   itemRight: 6,
-  buttonY: 14,
+  buttonY: 12,
   buttonX: 28,
   dangerY: 10,
   dangerX: 20,
