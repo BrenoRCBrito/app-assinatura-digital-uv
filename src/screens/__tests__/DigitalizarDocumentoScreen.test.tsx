@@ -127,6 +127,16 @@ describe('DigitalizarDocumentoScreen', () => {
     erro.mockRestore();
   });
 
+  test('dois toques em Fechar câmera fecham a tela uma vez só', async () => {
+    const { onFechar } = await abrirTela(COM_PERMISSAO);
+    const fechar = await screen.findByLabelText('Fechar câmera');
+
+    await fireEvent.press(fechar);
+    await fireEvent.press(fechar);
+
+    expect(onFechar).toHaveBeenCalledTimes(1);
+  });
+
   test('Tirar outra fecha a prévia e mantém a câmera', async () => {
     await abrirTela(COM_PERMISSAO);
 
