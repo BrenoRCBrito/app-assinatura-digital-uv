@@ -1,12 +1,12 @@
 import type { TextStyle } from 'react-native';
 
 type SpaceStep = 4 | 6 | 8 | 10 | 12 | 14 | 16 | 18 | 20 | 22 | 24 | 28 | 36 | 48;
-type SizeStep = 18 | 20 | 22 | 28 | 36 | 44 | 48 | 52 | 56 | 58 | 60 | 76 | 116 | 150 | 200;
+type SizeStep = 13 | 16 | 18 | 20 | 22 | 28 | 36 | 44 | 48 | 52 | 56 | 58 | 60 | 76 | 116 | 150 | 200;
 type FontSizeStep = 12 | 13 | 14 | 15 | 16 | 17 | 20 | 22 | 32;
 type LineHeightStep = 20 | 23;
 type LetterSpacingStep = -0.5 | -0.3 | 0.6;
-type RadiusStep = 6 | 7 | 8 | 10 | 14 | 16 | 22 | 29 | 38;
-type LineWidthStep = 1 | 1.5 | 1.7 | 1.8 | 2 | 3 | 4;
+type RadiusStep = 4 | 6 | 7 | 8 | 10 | 14 | 16 | 22 | 29 | 38;
+type LineWidthStep = 1 | 1.5 | 1.7 | 1.8 | 2 | 2.4 | 2.5 | 3 | 4;
 type OpacityStep = 0.45 | 0.6;
 
 type TypographyToken = TextStyle &
@@ -36,6 +36,10 @@ const gap = {
   paperMark: 10,
   loading: 12,
   feature: 20,
+  choiceChips: 8,
+  choiceChip: 8,
+  stepper: 12,
+  stepperLabel: 8,
 } satisfies Record<string, SpaceStep>;
 
 const inset = {
@@ -68,6 +72,7 @@ const inset = {
   hintY: 8,
   shutterTop: 18,
   photoY: 8,
+  choiceChipX: 16,
 } satisfies Record<string, SpaceStep>;
 
 const size = {
@@ -89,6 +94,10 @@ const size = {
   shutterCore: 58,
   shutterArea: 150,
   photoBar: 52,
+  choiceChipIcon: 16,
+  stepperIcon: 20,
+  stampHandle: 20,
+  stampHandleIcon: 13,
 } satisfies Record<string, SizeStep>;
 
 const radius = {
@@ -105,6 +114,10 @@ const radius = {
   cameraControl: 22,
   shutter: 38,
   shutterCore: 29,
+  choiceChip: 22,
+  stepper: 10,
+  stamp: 4,
+  stampHandle: 10,
 } satisfies Record<string, RadiusStep>;
 
 const lineWidth = {
@@ -121,6 +134,10 @@ const lineWidth = {
   iconOverlay: 2,
   cameraGuide: 3,
   shutterRing: 4,
+  choiceChipIcon: 2.5,
+  stepperIcon: 2,
+  stampFrame: 1.5,
+  stampHandleIcon: 2.4,
 } satisfies Record<string, LineWidthStep>;
 
 const opacity = {
@@ -143,6 +160,8 @@ const typography = {
   paperMark: { fontSize: 20, fontWeight: '600' },
   hint: { fontSize: 14, fontWeight: '500' },
   photoTitle: { fontSize: 17, fontWeight: '600' },
+  choiceChip: { fontSize: 15, fontWeight: '600' },
+  stepperValue: { fontSize: 16, fontWeight: '600', fontVariant: ['tabular-nums'] },
 } satisfies Record<string, TypographyToken>;
 
 export const tokens = { gap, inset, size, radius, lineWidth, opacity, typography };
