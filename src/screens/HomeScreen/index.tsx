@@ -16,7 +16,7 @@ export function HomeScreen({ onOpenAssinaturas, onOpenSettings }: HomeScreenProp
       <Stack gap="heroActions" align="center">
         <Stack gap="titleText" align="center">
           <Text preset="screenTitle">Área Segura</Text>
-          <Text preset="subtitle">Usuário logado com sucesso!</Text>
+          <Text preset="supporting">Usuário logado com sucesso!</Text>
         </Stack>
         <Stack gap="actions" align="center">
           <Button label="Minhas assinaturas" onPress={onOpenAssinaturas} />

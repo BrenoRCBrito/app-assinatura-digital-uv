@@ -23,7 +23,7 @@ export function ToggleRow({ title, description, value, onValueChange, preset = '
       <View style={styles.row}>
         <View style={styles.texts}>
           <Text preset="itemTitle">{title}</Text>
-          <Text preset="description">{description}</Text>
+          <Text preset="supporting">{description}</Text>
         </View>
         <Switch
           accessibilityLabel={title}
