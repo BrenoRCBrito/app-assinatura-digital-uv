@@ -5,7 +5,7 @@ import { processColor, StyleSheet } from 'react-native';
 import type { TestInstance } from 'test-renderer';
 
 import { SettingsProvider } from '../../storage/SettingsProvider';
-import { tokens } from '../../theme';
+import { lightTheme, tokens } from '../../theme';
 import { Button } from '../Button';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -71,5 +71,22 @@ describe('Button', () => {
     const contornoDoRotulo = (await screen.findByText('Limpar')).parent;
 
     expect(StyleSheet.flatten(contornoDoRotulo?.props.style)?.flexShrink).toBe(1);
+  });
+
+  test('o botão invertido tem fundo claro, com texto e ícone na cor principal', async () => {
+    await render(<Button label="Digitalizar documento" icon="camera" preset="inverse" onPress={() => undefined} />, {
+      wrapper: SettingsProvider,
+    });
+
+    const botao = await screen.findByRole('button');
+    const tracos = descendentes(botao).filter((no) => no.type === 'RNSVGPath');
+    const corPrincipal = processColor(lightTheme.primary);
+
+    expect(StyleSheet.flatten(botao.props.style).backgroundColor).toBe(lightTheme.onPrimary);
+    expect(StyleSheet.flatten(screen.getByText('Digitalizar documento').props.style).color).toBe(lightTheme.primary);
+    expect(tracos.map((traco) => traco.props.stroke)).toEqual([
+      { type: 0, payload: corPrincipal },
+      { type: 0, payload: corPrincipal },
+    ]);
   });
 });

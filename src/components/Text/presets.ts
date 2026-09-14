@@ -19,6 +19,7 @@ export const textPresets = {
   buttonPrimary: (theme: Theme) => ({ ...theme.typography.button, color: theme.onPrimary }),
   buttonSecondary: (theme: Theme) => ({ ...theme.typography.button, color: theme.textSecondary }),
   buttonDanger: (theme: Theme) => ({ ...theme.typography.button, color: theme.onDanger }),
+  buttonInverse: (theme: Theme) => ({ ...theme.typography.button, color: theme.primary }),
   chip: (theme: Theme) => ({ ...theme.typography.chip, color: theme.textSecondary }),
   segment: (theme: Theme) => ({ ...theme.typography.segment, color: theme.textSecondary }),
   segmentSelected: (theme: Theme) => ({ ...theme.typography.segment, color: theme.onPrimary }),
@@ -28,6 +29,10 @@ export const textPresets = {
     textAlign: 'center',
     color: FIXED_COLORS.paperGuide,
   }),
+  featureTitle: (theme: Theme) => ({ ...theme.typography.screenTitle, color: theme.onPrimary }),
+  featureDescription: (theme: Theme) => ({ ...theme.typography.supporting, color: theme.onPrimaryMuted }),
+  cameraHint: (theme: Theme) => ({ ...theme.typography.hint, color: theme.textPrimary }),
+  photoTitle: (theme: Theme) => ({ ...theme.typography.photoTitle, color: theme.textPrimary }),
 } satisfies Record<string, (theme: Theme) => TextStyle>;
 
 export type TextPresetName = keyof typeof textPresets;
