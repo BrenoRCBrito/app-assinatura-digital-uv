@@ -36,7 +36,7 @@ export function SegmentedControl<Value extends string>({
             key={option.value}
             accessibilityRole="radio"
             accessibilityState={{ checked: isSelected }}
-            style={[styles.segment, isSelected && styles.segmentSelected]}
+            style={({ pressed }) => [styles.segment, isSelected && styles.segmentSelected, pressed && styles.segmentPressed]}
             onPress={() => onSelect(option.value)}
           >
             <Text preset={isSelected ? 'segmentSelected' : 'segment'}>{option.label}</Text>

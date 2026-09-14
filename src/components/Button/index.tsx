@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, TouchableOpacity, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useAppTheme } from '../../theme';
 import { Text } from '../Text';
@@ -28,17 +28,18 @@ export function Button({ label, onPress, preset = 'primary', size = 'md', disabl
       disabled && { opacity: theme.opacity.disabled },
     ];
   }, [container, disabled, size, theme]);
+  const pressedStyle = useMemo(() => ({ opacity: theme.opacity.pressed }), [theme]);
 
   const button = (
-    <TouchableOpacity
+    <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled }}
-      style={containerStyle}
+      style={({ pressed }) => [containerStyle, pressed && pressedStyle]}
       onPress={onPress}
       disabled={disabled}
     >
       <Text preset={labelPreset}>{label}</Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 
   return flex === undefined ? button : <View style={{ flex }}>{button}</View>;

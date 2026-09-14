@@ -21,6 +21,9 @@ export const segmentedControlPresets = {
     segmentSelected: {
       backgroundColor: theme.primary,
     },
+    segmentPressed: {
+      opacity: theme.opacity.pressed,
+    },
   }),
 } satisfies Record<string, (theme: Theme) => Record<string, ViewStyle>>;
 
