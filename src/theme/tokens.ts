@@ -18,18 +18,16 @@ type TypographyToken = TextStyle &
   }>;
 
 const gap = {
-  section: 28,
-  form: 20,
+  block: 20,
   list: 12,
   actions: 12,
-  sectionLabel: 10,
-  fieldLabel: 8,
+  label: 8,
   card: 12,
   text: 4,
   row: 16,
   item: 14,
   hero: 8,
-  brandText: 10,
+  titleText: 8,
   heroActions: 24,
   chip: 6,
   segment: 4,

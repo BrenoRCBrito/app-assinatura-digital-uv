@@ -28,7 +28,7 @@ export function SettingsScreen() {
 
   return (
     <Screen preset="scroll">
-      <Stack gap="section">
+      <Stack gap="block">
         <Section label="Aparência">
           <Card>
             <Text preset="itemTitle">Tema</Text>

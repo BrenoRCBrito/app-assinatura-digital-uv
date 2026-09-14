@@ -22,7 +22,7 @@ export function LoginScreen() {
     >
       <Stack gap="hero" align="center">
         <Logo />
-        <Stack gap="brandText" align="center">
+        <Stack gap="titleText" align="center">
           <Text preset="brand">Assina Aqui</Text>
           <Text preset="status">
             {biometricStatus === null ? 'Verificando a biometria do aparelho…' : STATUS_TEXT[biometricStatus]}
