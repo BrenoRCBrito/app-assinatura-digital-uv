@@ -2,6 +2,7 @@ import React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
+import type { TestInstance } from 'test-renderer';
 
 import { createCapturedPhoto } from '../../domain/photo';
 import { SettingsProvider } from '../../storage/SettingsProvider';
@@ -14,6 +15,18 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 
 const FOTO = createCapturedPhoto('file:///cache/foto.jpg', 3024, 4032);
+
+function descendentes(no: TestInstance): TestInstance[] {
+  return no.children.flatMap((filho) => (typeof filho === 'string' ? [] : [filho, ...descendentes(filho)]));
+}
+
+function modalDaPrevia(): TestInstance {
+  const modal = descendentes(screen.container).find((no) => no.type === 'Modal');
+  if (modal === undefined) {
+    throw new Error('Modal da prévia não encontrado.');
+  }
+  return modal;
+}
 
 describe('PhotoPreview', () => {
   beforeEach(async () => {
@@ -72,5 +85,29 @@ describe('PhotoPreview', () => {
       { disabled: true },
       { disabled: true },
     ]);
+  });
+
+  test('o voltar do Android equivale a Tirar outra', async () => {
+    const onRetake = jest.fn();
+    await render(<PhotoPreview foto={FOTO} saving={false} onRetake={onRetake} onUse={jest.fn()} />, {
+      wrapper: SettingsProvider,
+    });
+
+    await screen.findByText('Prévia');
+    await fireEvent(modalDaPrevia(), 'requestClose');
+
+    expect(onRetake).toHaveBeenCalledTimes(1);
+  });
+
+  test('o voltar do Android não faz nada enquanto salva', async () => {
+    const onRetake = jest.fn();
+    await render(<PhotoPreview foto={FOTO} saving onRetake={onRetake} onUse={jest.fn()} />, {
+      wrapper: SettingsProvider,
+    });
+
+    await screen.findByText('Prévia');
+    await fireEvent(modalDaPrevia(), 'requestClose');
+
+    expect(onRetake).not.toHaveBeenCalled();
   });
 });
