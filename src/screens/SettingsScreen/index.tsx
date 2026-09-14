@@ -1,15 +1,6 @@
 import React from 'react';
 
-import {
-  Card,
-  Screen,
-  Section,
-  SegmentedControl,
-  Stack,
-  Text,
-  ToggleRow,
-  type SegmentOption,
-} from '../../components';
+import { Card, Screen, Section, SegmentedControl, Stack, ToggleRow, type SegmentOption } from '../../components';
 import type { GestureEngine, ThemeName } from '../../domain/settings';
 import { useSettings } from '../../storage/SettingsProvider';
 
@@ -30,9 +21,7 @@ export function SettingsScreen() {
     <Screen preset="scroll">
       <Stack gap="block">
         <Section label="Aparência">
-          <Card>
-            <Text preset="itemTitle">Tema</Text>
-            <Text preset="supporting">Muda as cores do app. Documentos e PDFs continuam em papel claro.</Text>
+          <Card title="Tema" description="Muda as cores do app. Documentos e PDFs continuam em papel claro.">
             <SegmentedControl
               options={THEME_OPTIONS}
               selected={settings.theme}
@@ -42,9 +31,7 @@ export function SettingsScreen() {
         </Section>
 
         <Section label="Gestos">
-          <Card>
-            <Text preset="itemTitle">Motor de gestos</Text>
-            <Text preset="supporting">Define como o selo é arrastado sobre o documento.</Text>
+          <Card title="Motor de gestos" description="Define como o selo é arrastado sobre o documento.">
             <SegmentedControl
               options={GESTURE_ENGINE_OPTIONS}
               selected={settings.gestureEngine}
