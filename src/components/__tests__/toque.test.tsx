@@ -7,9 +7,11 @@ import { SettingsProvider } from '../../storage/SettingsProvider';
 import { tokens } from '../../theme';
 import { Button } from '../Button';
 import { ChipButton } from '../ChipButton';
+import { ChoiceChips } from '../ChoiceChips';
 import { IconButton } from '../IconButton';
 import { MenuList } from '../MenuList';
 import { SegmentedControl } from '../SegmentedControl';
+import { SizeStepper } from '../SizeStepper';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -100,6 +102,38 @@ describe('retorno ao pressionar', () => {
     await render(<MenuList items={[{ label: 'Configurações', icon: 'settings', onPress: () => undefined }]} />, {
       wrapper: SettingsProvider,
     });
+
+    expect((await estiloPressionado('button')).opacity).toBe(tokens.opacity.pressed);
+  });
+
+  test('a ficha de escolha fica com a opacidade de pressionado', async () => {
+    await render(
+      <ChoiceChips
+        options={[{ value: '1', label: 'Rubrica' }]}
+        selected={null}
+        onSelect={() => undefined}
+        accessibilityLabel="Assinatura"
+      />,
+      { wrapper: SettingsProvider },
+    );
+
+    expect((await estiloPressionado('radio')).opacity).toBe(tokens.opacity.pressed);
+  });
+
+  test('o botão de tamanho fica com a opacidade de pressionado', async () => {
+    await render(
+      <SizeStepper
+        label="Tamanho do selo"
+        value="35%"
+        canDecrease
+        canIncrease
+        decreaseLabel="Diminuir o selo"
+        increaseLabel="Aumentar o selo"
+        onDecrease={() => undefined}
+        onIncrease={() => undefined}
+      />,
+      { wrapper: SettingsProvider },
+    );
 
     expect((await estiloPressionado('button')).opacity).toBe(tokens.opacity.pressed);
   });
