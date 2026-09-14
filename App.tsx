@@ -1,5 +1,7 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
@@ -23,14 +25,22 @@ function ThemedApp() {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <SettingsProvider>
-        <RepositoriesProvider>
-          <AuthenticationProvider>
-            <ThemedApp />
-          </AuthenticationProvider>
-        </RepositoriesProvider>
-      </SettingsProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <SafeAreaProvider>
+        <SettingsProvider>
+          <RepositoriesProvider>
+            <AuthenticationProvider>
+              <ThemedApp />
+            </AuthenticationProvider>
+          </RepositoriesProvider>
+        </SettingsProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});
