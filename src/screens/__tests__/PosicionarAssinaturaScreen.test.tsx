@@ -3,8 +3,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Alert, StyleSheet } from 'react-native';
 
+import { criarDesenho, criarTraco } from '../../domain/desenho';
 import { createFraction, createSize, fitSizeInside } from '../../domain/geometry';
-import { createCapturedPhoto } from '../../domain/photo';
+import { createCapturedPhoto, type CapturedPhoto } from '../../domain/photo';
 import { layoutDoSelo } from '../../domain/selo';
 import {
   ASSINATURAS_STORAGE_KEY,
@@ -44,9 +45,9 @@ async function salvarAssinaturas() {
   await repositorio.save(criarAssinaturaDeTeste('2', 'Rubrica', '2026-09-12T10:00:00.000Z'));
 }
 
-async function abrirTela() {
+async function abrirTela(foto: CapturedPhoto = FOTO) {
   const onNovaAssinatura = jest.fn();
-  await render(<PosicionarAssinaturaScreen foto={FOTO} onNovaAssinatura={onNovaAssinatura} />, {
+  await render(<PosicionarAssinaturaScreen foto={foto} onNovaAssinatura={onNovaAssinatura} />, {
     wrapper: Provedores,
   });
   return { onNovaAssinatura };
@@ -100,6 +101,27 @@ describe('PosicionarAssinaturaScreen', () => {
     await fireEvent.press(screen.getByLabelText('Diminuir o selo'));
     await fireEvent.press(screen.getByLabelText('Diminuir o selo'));
     expect(screen.getByText('30%')).toBeTruthy();
+  });
+
+  test('com foto deitada e assinatura alta, o passo para quando o selo chega à altura da foto', async () => {
+    const fotoDeitada = createCapturedPhoto('file:///cache/foto.jpg', 4032, 3024);
+    await createAsyncStorageAssinaturaRepository().save({
+      ...criarAssinaturaDeTeste('1', 'Rubrica alta', '2026-09-12T10:00:00.000Z'),
+      desenho: criarDesenho([criarTraco('M10,20 L30,40')], createSize(300, 400)),
+    });
+    await abrirTela(fotoDeitada);
+    await screen.findByText('35%');
+    await fireEvent(screen.getByLabelText('Palco do documento'), 'layout', PALCO_MEDIDO);
+
+    await fireEvent.press(screen.getByLabelText('Aumentar o selo'));
+    await fireEvent.press(screen.getByLabelText('Aumentar o selo'));
+    await fireEvent.press(screen.getByLabelText('Aumentar o selo'));
+
+    const area = fitSizeInside(fotoDeitada.size, createSize(300, 300));
+    const selo = StyleSheet.flatten(screen.getByLabelText('Selo da assinatura').props.style);
+    expect(screen.getByText('47%')).toBeTruthy();
+    expect(screen.getByLabelText('Aumentar o selo').props.accessibilityState).toEqual({ disabled: true });
+    expect(selo.height).toBeLessThanOrEqual(area.height);
   });
 
   test('sem assinatura salva, pergunta antes de abrir Nova assinatura', async () => {

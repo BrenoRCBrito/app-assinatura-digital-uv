@@ -22,6 +22,8 @@ import {
   aumentarSelo,
   diminuirSelo,
   larguraInicialDoSelo,
+  larguraMaximaDoSelo,
+  limitarLarguraDoSelo,
   podeAumentarSelo,
   podeDiminuirSelo,
   type PosicaoSelo,
@@ -79,7 +81,13 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura }: Posiciona
     });
   }, [assinaturas.length, carregando, onNovaAssinatura]);
 
+  function medirSelo({ desenho }: Assinatura) {
+    const larguraMaxima = larguraMaximaDoSelo(foto.size, desenho.quadro);
+    return { desenho, larguraMaxima, largura: limitarLarguraDoSelo(largura, larguraMaxima) };
+  }
+
   const assinatura = assinaturas.find((item) => item.id === assinaturaId);
+  const selo = assinatura === undefined ? null : medirSelo(assinatura);
 
   function escolhaDaAssinatura() {
     if (carregando) {
@@ -107,18 +115,18 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura }: Posiciona
     <Screen
       preset="form"
       footer={
-        assinatura === undefined ? undefined : (
+        selo === null ? undefined : (
           <Stack gap="block">
             <Text preset="supportingCentered">Arraste o selo até a linha de assinatura.</Text>
             <SizeStepper
               label="Tamanho do selo"
-              value={formatPercent(largura)}
-              canDecrease={podeDiminuirSelo(largura)}
-              canIncrease={podeAumentarSelo(largura)}
+              value={formatPercent(selo.largura)}
+              canDecrease={podeDiminuirSelo(selo.largura)}
+              canIncrease={podeAumentarSelo(selo.largura, selo.larguraMaxima)}
               decreaseLabel="Diminuir o selo"
               increaseLabel="Aumentar o selo"
-              onDecrease={() => setLargura(diminuirSelo)}
-              onIncrease={() => setLargura(aumentarSelo)}
+              onDecrease={() => setLargura(diminuirSelo(selo.largura))}
+              onIncrease={() => setLargura(aumentarSelo(selo.largura, selo.larguraMaxima))}
             />
           </Stack>
         )
@@ -137,11 +145,11 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura }: Posiciona
           <Text preset="sectionLabel">Assinatura</Text>
           {escolhaDaAssinatura()}
         </Stack>
-        {assinatura === undefined ? null : (
+        {selo === null ? null : (
           <PalcoDoSelo
             foto={foto}
-            desenho={assinatura.desenho}
-            largura={largura}
+            desenho={selo.desenho}
+            largura={selo.largura}
             linhas={[formatDateTime(agora), 'Local ao assinar']}
             posicao={posicao}
             onMudarPosicao={setPosicao}

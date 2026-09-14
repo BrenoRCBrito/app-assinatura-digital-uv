@@ -36,16 +36,26 @@ export function larguraInicialDoSelo(): Fraction {
   return createFraction(LARGURA_INICIAL);
 }
 
-export function podeAumentarSelo(largura: Fraction): boolean {
-  return largura < LARGURA_MAXIMA;
+export function larguraMaximaDoSelo(foto: Size, quadro: Size): Fraction {
+  const alturaPorLargura = quadro.height / quadro.width + PROPORCAO_DA_FAIXA;
+  const cabeNaAltura = Math.floor((foto.height / (foto.width * alturaPorLargura)) * 100) / 100;
+  return createFraction(Math.min(LARGURA_MAXIMA, cabeNaAltura));
+}
+
+export function limitarLarguraDoSelo(largura: Fraction, maxima: Fraction): Fraction {
+  return largura > maxima ? maxima : largura;
+}
+
+export function podeAumentarSelo(largura: Fraction, maxima: Fraction): boolean {
+  return largura < maxima;
 }
 
 export function podeDiminuirSelo(largura: Fraction): boolean {
   return largura > LARGURA_MINIMA;
 }
 
-export function aumentarSelo(largura: Fraction): Fraction {
-  return arredondarLargura(Math.min(largura + PASSO_DA_LARGURA, LARGURA_MAXIMA));
+export function aumentarSelo(largura: Fraction, maxima: Fraction): Fraction {
+  return arredondarLargura(Math.min(largura + PASSO_DA_LARGURA, maxima));
 }
 
 export function diminuirSelo(largura: Fraction): Fraction {
