@@ -23,7 +23,7 @@ export function IconButton({ icon, label, onPress, preset = 'plain' }: IconButto
       style={({ pressed }) => [styles.button, pressed && styles.pressed]}
       onPress={onPress}
     >
-      <Icon name={icon} size="standalone" color={styles.iconColor} />
+      <Icon name={icon} size={styles.iconSize} color={styles.iconColor} />
     </Pressable>
   );
 }
