@@ -8,7 +8,6 @@ import {
   Screen,
   showError,
   showInfo,
-  showSuccess,
   Stack,
   Text,
 } from '../../components';
@@ -19,22 +18,27 @@ import { useSettings } from '../../storage/SettingsProvider';
 
 type DigitalizarDocumentoScreenProps = Readonly<{
   onFechar: () => void;
+  onUsarFoto: (foto: CapturedPhoto) => void;
 }>;
 
-export function DigitalizarDocumentoScreen({ onFechar }: DigitalizarDocumentoScreenProps) {
+export function DigitalizarDocumentoScreen({ onFechar, onUsarFoto }: DigitalizarDocumentoScreenProps) {
   const permissao = useCameraPermission();
   const { settings } = useSettings();
   const [foto, setFoto] = useState<CapturedPhoto | null>(null);
   const [usandoFoto, setUsandoFoto] = useState(false);
   const usandoFotoRef = useRef(false);
-  const fechandoRef = useRef(false);
+  const saindoRef = useRef(false);
 
-  function fechar() {
-    if (fechandoRef.current) {
+  function sair(acao: () => void) {
+    if (saindoRef.current) {
       return;
     }
-    fechandoRef.current = true;
-    onFechar();
+    saindoRef.current = true;
+    acao();
+  }
+
+  function fechar() {
+    sair(onFechar);
   }
 
   function avisarFalhaAoAbrirCamera(error: unknown) {
@@ -57,10 +61,8 @@ export function DigitalizarDocumentoScreen({ onFechar }: DigitalizarDocumentoScr
     const copiaFalhou = settings.salvarCopiaNaGaleria && !(await salvarCopiaNaGaleria(foto));
     if (copiaFalhou) {
       showInfo('Cópia não salva na galeria');
-    } else {
-      showSuccess('Documento fotografado');
     }
-    fechar();
+    sair(() => onUsarFoto(foto));
   }
 
   if (permissao.status === 'checking') {
