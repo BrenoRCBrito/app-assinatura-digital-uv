@@ -33,10 +33,10 @@ export function Screen({ preset, footer, children }: ScreenProps) {
 
 function ScreenFrame({ preset, footer, children }: ScreenProps) {
   const { theme } = useAppTheme();
-  const { layout, edges, content } = screenPresets[preset];
+  const { layout, edges, background, content } = screenPresets[preset];
   const presetStyles = useMemo(
-    () => ({ frame: { backgroundColor: theme.background }, content: content(theme), footer: screenFooter(theme) }),
-    [content, theme],
+    () => ({ frame: { backgroundColor: background(theme) }, content: content(theme), footer: screenFooter(theme) }),
+    [background, content, theme],
   );
 
   let body: React.ReactNode;

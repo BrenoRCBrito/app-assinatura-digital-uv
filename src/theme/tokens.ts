@@ -1,12 +1,12 @@
 import type { TextStyle } from 'react-native';
 
-type SpaceStep = 4 | 6 | 8 | 10 | 12 | 14 | 16 | 20 | 24 | 28 | 36 | 48;
-type SizeStep = 18 | 22 | 44 | 48 | 60 | 116 | 200;
-type FontSizeStep = 12 | 13 | 14 | 15 | 16 | 20 | 22 | 32;
+type SpaceStep = 4 | 6 | 8 | 10 | 12 | 14 | 16 | 18 | 20 | 22 | 24 | 28 | 36 | 48;
+type SizeStep = 18 | 20 | 22 | 28 | 36 | 44 | 48 | 52 | 56 | 58 | 60 | 76 | 116 | 150 | 200;
+type FontSizeStep = 12 | 13 | 14 | 15 | 16 | 17 | 20 | 22 | 32;
 type LineHeightStep = 20 | 23;
 type LetterSpacingStep = -0.5 | -0.3 | 0.6;
-type RadiusStep = 6 | 7 | 8 | 10 | 14;
-type LineWidthStep = 1 | 1.5 | 1.8 | 2 | 3;
+type RadiusStep = 6 | 7 | 8 | 10 | 14 | 16 | 22 | 29 | 38;
+type LineWidthStep = 1 | 1.5 | 1.7 | 1.8 | 2 | 3 | 4;
 type OpacityStep = 0.45 | 0.6;
 
 type TypographyToken = TextStyle &
@@ -35,6 +35,7 @@ const gap = {
   paperGuide: 12,
   paperMark: 10,
   loading: 12,
+  feature: 20,
 } satisfies Record<string, SpaceStep>;
 
 const inset = {
@@ -58,6 +59,15 @@ const inset = {
   paperGuide: 24,
   paperGuideLine: 4,
   emptyTop: 48,
+  feature: 22,
+  menuItemX: 16,
+  cameraBarX: 12,
+  cameraX: 36,
+  cameraFrameY: 12,
+  hintX: 14,
+  hintY: 8,
+  shutterTop: 18,
+  photoY: 8,
 } satisfies Record<string, SpaceStep>;
 
 const size = {
@@ -68,6 +78,17 @@ const size = {
   previewWidth: 116,
   previewHeight: 60,
   logo: 200,
+  iconMenu: 20,
+  iconFeature: 28,
+  featureIconBox: 52,
+  menuIconBox: 36,
+  menuItem: 60,
+  cameraBar: 56,
+  cameraGuide: 36,
+  shutter: 76,
+  shutterCore: 58,
+  shutterArea: 150,
+  photoBar: 52,
 } satisfies Record<string, SizeStep>;
 
 const radius = {
@@ -76,6 +97,14 @@ const radius = {
   danger: 6,
   segmentTrack: 10,
   segment: 7,
+  feature: 16,
+  featureIconBox: 14,
+  menuIconBox: 10,
+  hint: 16,
+  cameraGuide: 10,
+  cameraControl: 22,
+  shutter: 38,
+  shutterCore: 29,
 } satisfies Record<string, RadiusStep>;
 
 const lineWidth = {
@@ -86,6 +115,12 @@ const lineWidth = {
   iconSmall: 2,
   drawing: 2,
   ink: 3,
+  iconFeature: 1.7,
+  iconBoxed: 1.8,
+  iconTrailing: 2,
+  iconOverlay: 2,
+  cameraGuide: 3,
+  shutterRing: 4,
 } satisfies Record<string, LineWidthStep>;
 
 const opacity = {
@@ -106,6 +141,8 @@ const typography = {
   segment: { fontSize: 15, fontWeight: '600' },
   input: { fontSize: 16 },
   paperMark: { fontSize: 20, fontWeight: '600' },
+  hint: { fontSize: 14, fontWeight: '500' },
+  photoTitle: { fontSize: 17, fontWeight: '600' },
 } satisfies Record<string, TypographyToken>;
 
 export const tokens = { gap, inset, size, radius, lineWidth, opacity, typography };

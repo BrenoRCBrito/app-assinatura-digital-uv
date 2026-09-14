@@ -34,11 +34,38 @@ export const iconShapes = {
     { d: 'M10 8l-4 4 4 4', strokeLinecap: 'round', strokeLinejoin: 'round' },
     { d: 'M6 12h10', strokeLinecap: 'round', strokeLinejoin: 'round' },
   ],
+  close: [{ d: 'M6 6l12 12M18 6L6 18', strokeLinecap: 'round', strokeLinejoin: 'round' }],
+  camera: [
+    { d: 'M4 8h3l2-3h6l2 3h3v11H4z', strokeLinecap: 'round', strokeLinejoin: 'round' },
+    { d: 'M15.5 13a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0', strokeLinecap: 'round', strokeLinejoin: 'round' },
+  ],
+  documentSign: [
+    { d: 'M7 3h7l4 4v13H7z', strokeLinecap: 'round', strokeLinejoin: 'round' },
+    { d: 'M14 3v4h4', strokeLinecap: 'round', strokeLinejoin: 'round' },
+    { d: 'M9.5 16.5c1-1.6 1.9-1.6 2.4 0 .5 1.6 1.4 1.6 2.6 0', strokeLinecap: 'round', strokeLinejoin: 'round' },
+  ],
+  signatures: [
+    { d: 'M3 16c2.5-5 4.5-7 5.5-5s-1.5 6 1 6 3.5-7 6-7 1 5 3.5 5', strokeLinecap: 'round', strokeLinejoin: 'round' },
+    { d: 'M3 21h18', strokeLinecap: 'round', strokeLinejoin: 'round' },
+  ],
+  settings: [
+    { d: 'M15 12a3 3 0 1 1-6 0a3 3 0 1 1 6 0', strokeLinecap: 'round', strokeLinejoin: 'round' },
+    {
+      d: 'M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8',
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+    },
+  ],
+  chevronRight: [{ d: 'M9 6l6 6-6 6', strokeLinecap: 'round', strokeLinejoin: 'round' }],
 } satisfies Record<string, readonly IconPath[]>;
 
 export const iconSizes = {
   inline: (theme: Theme) => ({ size: theme.size.iconSmall, strokeWidth: theme.lineWidth.iconSmall }),
   standalone: (theme: Theme) => ({ size: theme.size.iconMedium, strokeWidth: theme.lineWidth.iconMedium }),
+  boxed: (theme: Theme) => ({ size: theme.size.iconMenu, strokeWidth: theme.lineWidth.iconBoxed }),
+  trailing: (theme: Theme) => ({ size: theme.size.iconMenu, strokeWidth: theme.lineWidth.iconTrailing }),
+  feature: (theme: Theme) => ({ size: theme.size.iconFeature, strokeWidth: theme.lineWidth.iconFeature }),
+  overlay: (theme: Theme) => ({ size: theme.size.iconMedium, strokeWidth: theme.lineWidth.iconOverlay }),
 } satisfies Record<string, (theme: Theme) => IconSize>;
 
 export type IconName = keyof typeof iconShapes;

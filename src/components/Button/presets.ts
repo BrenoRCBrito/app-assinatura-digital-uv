@@ -28,6 +28,11 @@ export const buttonPresets = {
     container: (theme: Theme) => ({ backgroundColor: theme.danger }),
     iconColor: (theme: Theme) => theme.onDanger,
   },
+  inverse: {
+    label: 'buttonInverse',
+    container: (theme: Theme) => ({ backgroundColor: theme.onPrimary }),
+    iconColor: (theme: Theme) => theme.primary,
+  },
 } satisfies Record<string, ButtonPreset>;
 
 export const buttonSizes = {

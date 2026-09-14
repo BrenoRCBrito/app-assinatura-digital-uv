@@ -85,4 +85,8 @@ export const FIXED_COLORS = {
   paperBorder: createColorToken('rgba(65, 90, 119, 0.22)'),
   paperGuide: createColorToken('#778DA9'),
   ink: createColorToken('#1B263B'),
+  cameraBackground: createColorToken('#0A141F'),
+  cameraControl: createColorToken('rgba(224, 225, 221, 0.14)'),
+  cameraHint: createColorToken('rgba(13, 27, 42, 0.72)'),
+  shutterRing: createColorToken('rgba(224, 225, 221, 0.55)'),
 } as const;
