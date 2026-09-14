@@ -17,7 +17,12 @@ export function IconButton({ icon, label, onPress, preset = 'plain' }: IconButto
   const styles = useMemo(() => iconButtonPresets[preset](theme), [preset, theme]);
 
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} style={styles.button} onPress={onPress}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+      onPress={onPress}
+    >
       <Icon name={icon} />
     </Pressable>
   );

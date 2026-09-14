@@ -10,6 +10,9 @@ export const iconButtonPresets = {
       alignItems: 'center',
       justifyContent: 'center',
     },
+    pressed: {
+      opacity: theme.opacity.pressed,
+    },
   }),
 } satisfies Record<string, (theme: Theme) => Record<string, ViewStyle>>;
 
