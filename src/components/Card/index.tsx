@@ -5,12 +5,15 @@ import { useAppTheme } from '../../theme';
 import { Text } from '../Text';
 import { cardPresets, type CardPresetName } from './presets';
 
-type CardProps = Readonly<{
-  title?: string;
-  description?: string;
-  children: React.ReactNode;
-  preset?: CardPresetName;
-}>;
+type CardHeadingProps =
+  | Readonly<{ title: string; description?: string }>
+  | Readonly<{ title?: undefined; description?: undefined }>;
+
+type CardProps = CardHeadingProps &
+  Readonly<{
+    children: React.ReactNode;
+    preset?: CardPresetName;
+  }>;
 
 export function Card({ title, description, children, preset = 'default' }: CardProps) {
   const { theme } = useAppTheme();

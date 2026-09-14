@@ -47,4 +47,15 @@ describe('Card', () => {
 
     expect(estiloDoPai('Controle').gap).toBe(tokens.gap.card);
   });
+
+  test('não aceita descrição sem título', () => {
+    const cartao = (
+      // @ts-expect-error a descrição só aparece junto do título
+      <Card description="Muda as cores do app.">
+        <NativeText>Controle</NativeText>
+      </Card>
+    );
+
+    expect(cartao.props.description).toBe('Muda as cores do app.');
+  });
 });
