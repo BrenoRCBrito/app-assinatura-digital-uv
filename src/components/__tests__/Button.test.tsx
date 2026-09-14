@@ -28,4 +28,12 @@ describe('Button', () => {
       tokens.lineWidth.outline,
     ]);
   });
+
+  test('o tamanho md tem a altura mínima do campo de texto', async () => {
+    await render(<Button label="Salvar" onPress={() => undefined} />, { wrapper: SettingsProvider });
+
+    const estilo = StyleSheet.flatten((await screen.findByRole('button')).props.style);
+
+    expect([estilo.minHeight, estilo.paddingVertical]).toEqual([tokens.size.control, tokens.inset.buttonY]);
+  });
 });

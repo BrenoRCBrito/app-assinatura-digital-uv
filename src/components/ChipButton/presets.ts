@@ -8,6 +8,7 @@ export const chipButtonPresets = {
       flexDirection: 'row',
       alignItems: 'center',
       gap: theme.gap.chip,
+      minHeight: theme.size.touchTarget,
       paddingVertical: theme.inset.chipY,
       paddingHorizontal: theme.inset.chipX,
       borderRadius: theme.radius.control,

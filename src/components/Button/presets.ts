@@ -28,12 +28,14 @@ export const buttonPresets = {
 
 export const buttonSizes = {
   md: (theme: Theme) => ({
+    minHeight: theme.size.control,
     paddingVertical: theme.inset.buttonY,
     paddingHorizontal: theme.inset.buttonX,
     borderRadius: theme.radius.control,
     width: '100%',
   }),
   sm: (theme: Theme) => ({
+    minHeight: theme.size.touchTarget,
     paddingVertical: theme.inset.dangerY,
     paddingHorizontal: theme.inset.dangerX,
     borderRadius: theme.radius.danger,
