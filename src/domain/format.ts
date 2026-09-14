@@ -1,4 +1,5 @@
 import type { IsoDateTime } from './dateTime';
+import type { Fraction } from './geometry';
 
 function twoDigits(value: number): string {
   return value.toString().padStart(2, '0');
@@ -7,4 +8,13 @@ function twoDigits(value: number): string {
 export function formatDate(isoDateTime: IsoDateTime): string {
   const date = new Date(isoDateTime);
   return `${twoDigits(date.getDate())}/${twoDigits(date.getMonth() + 1)}/${date.getFullYear()}`;
+}
+
+export function formatDateTime(isoDateTime: IsoDateTime): string {
+  const date = new Date(isoDateTime);
+  return `${formatDate(isoDateTime)} ${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}`;
+}
+
+export function formatPercent(fraction: Fraction): string {
+  return `${Math.round(fraction * 100)}%`;
 }

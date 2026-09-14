@@ -1,10 +1,29 @@
 import { createIsoDateTime } from '../dateTime';
-import { formatDate } from '../format';
+import { formatDate, formatDateTime, formatPercent } from '../format';
+import { createFraction } from '../geometry';
 
 describe('formatDate', () => {
   test('formata como dd/mm/aaaa no fuso do aparelho', () => {
     const criadaEm = createIsoDateTime(new Date(2026, 8, 5, 23, 59).toISOString());
 
     expect(formatDate(criadaEm)).toBe('05/09/2026');
+  });
+});
+
+describe('formatDateTime', () => {
+  test('formata como dd/mm/aaaa hh:mm no fuso do aparelho', () => {
+    const assinadoEm = createIsoDateTime(new Date(2026, 8, 5, 7, 3).toISOString());
+
+    expect(formatDateTime(assinadoEm)).toBe('05/09/2026 07:03');
+  });
+});
+
+describe('formatPercent', () => {
+  test('mostra a fração como porcentagem inteira', () => {
+    expect([createFraction(0.35), createFraction(0.6), createFraction(0.15)].map(formatPercent)).toEqual([
+      '35%',
+      '60%',
+      '15%',
+    ]);
   });
 });
