@@ -4,7 +4,7 @@ export { Card } from './Card';
 export { ChipButton } from './ChipButton';
 export { DesenhoSvg } from './DesenhoSvg';
 export { EmptyState } from './EmptyState';
-export { confirm, confirmDestructive, showError, showSuccess } from './feedback';
+export { confirm, confirmDestructive, showError, showInfo, showSuccess } from './feedback';
 export { Icon, type IconName } from './Icon';
 export { IconButton } from './IconButton';
 export { Row, Stack } from './Layout';
