@@ -26,10 +26,27 @@
           "faceIDPermission": "Permitir $(PRODUCT_NAME) ao usar o Face ID."
         }
       ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permitir que o $(PRODUCT_NAME) use a câmera para fotografar documentos.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Permitir que o $(PRODUCT_NAME) acesse suas fotos.",
+          "savePhotosPermission": "Permitir que o $(PRODUCT_NAME) salve uma cópia do documento nas suas fotos.",
+          "isAccessMediaLocationEnabled": false,
+          "granularPermissions": ["photo"]
+        }
+      ],
       "expo-sqlite",
       "expo-status-bar",
       [
-      "expo-splash-screen",
+        "expo-splash-screen",
         {
           "backgroundColor": "#0d1b2a",
           "image": "./assets/splash-icon.png",
