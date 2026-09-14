@@ -4,7 +4,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DarkThemeScope, useAppTheme } from '../../theme';
-import { screenPresets, type ScreenPresetName } from './presets';
+import { screenFooter, screenPresets, type ScreenPresetName } from './presets';
 
 type ScreenProps = Readonly<{
   preset: ScreenPresetName;
@@ -33,10 +33,10 @@ export function Screen({ preset, footer, children }: ScreenProps) {
 
 function ScreenFrame({ preset, footer, children }: ScreenProps) {
   const { theme } = useAppTheme();
-  const { layout, edges, content, footer: footerStyle } = screenPresets[preset];
+  const { layout, edges, content } = screenPresets[preset];
   const presetStyles = useMemo(
-    () => ({ frame: { backgroundColor: theme.background }, content: content(theme), footer: footerStyle(theme) }),
-    [content, footerStyle, theme],
+    () => ({ frame: { backgroundColor: theme.background }, content: content(theme), footer: screenFooter(theme) }),
+    [content, theme],
   );
 
   let body: React.ReactNode;

@@ -40,12 +40,9 @@ const gap = {
 
 const inset = {
   screen: 20,
-  screenTop: 8,
-  scroll: 20,
+  screenTop: 12,
   footerY: 16,
   immersive: 36,
-  immersiveFooter: 24,
-  centered: 24,
   card: 16,
   itemY: 12,
   itemLeft: 12,
