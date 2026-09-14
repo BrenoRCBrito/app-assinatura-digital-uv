@@ -10,6 +10,9 @@ export const cardPresets = {
       borderRadius: theme.radius.surface,
       backgroundColor: theme.surface,
     },
+    heading: {
+      gap: theme.gap.text,
+    },
   }),
 } satisfies Record<string, (theme: Theme) => Record<string, ViewStyle>>;
 
