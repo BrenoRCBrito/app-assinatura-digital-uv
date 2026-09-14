@@ -1,28 +1,40 @@
 import React from 'react';
 
-import { Button, Screen, Stack, Text } from '../../components';
+import { Button, FeatureCard, MenuList, Row, Screen, Stack } from '../../components';
 import { useAuthentication } from '../../hooks/useAuthentication';
 
 type HomeScreenProps = Readonly<{
+  onDigitalizarDocumento: () => void;
   onOpenAssinaturas: () => void;
   onOpenSettings: () => void;
 }>;
 
-export function HomeScreen({ onOpenAssinaturas, onOpenSettings }: HomeScreenProps) {
+export function HomeScreen({ onDigitalizarDocumento, onOpenAssinaturas, onOpenSettings }: HomeScreenProps) {
   const { lock } = useAuthentication();
 
   return (
-    <Screen preset="centered">
-      <Stack gap="heroActions" align="center">
-        <Stack gap="titleText" align="center">
-          <Text preset="screenTitle">Área Segura</Text>
-          <Text preset="supporting">Usuário logado com sucesso!</Text>
-        </Stack>
-        <Stack gap="actions" align="center">
-          <Button label="Minhas assinaturas" onPress={onOpenAssinaturas} />
-          <Button label="Configurações" onPress={onOpenSettings} preset="secondary" />
+    <Screen
+      preset="menu"
+      footer={
+        <Row justify="center">
           <Button label="Sair" icon="logout" onPress={lock} preset="danger" size="sm" />
-        </Stack>
+        </Row>
+      }
+    >
+      <Stack gap="block">
+        <FeatureCard
+          icon="documentSign"
+          title="Assinar documento"
+          description="Fotografe o documento, posicione uma assinatura salva e gere o PDF."
+        >
+          <Button label="Digitalizar documento" icon="camera" onPress={onDigitalizarDocumento} preset="inverse" />
+        </FeatureCard>
+        <MenuList
+          items={[
+            { label: 'Minhas assinaturas', icon: 'signatures', onPress: onOpenAssinaturas },
+            { label: 'Configurações', icon: 'settings', onPress: onOpenSettings },
+          ]}
+        />
       </Stack>
     </Screen>
   );

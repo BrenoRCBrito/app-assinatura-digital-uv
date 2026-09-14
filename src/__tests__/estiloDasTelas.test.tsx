@@ -112,7 +112,7 @@ function capturarTelaEmFoco(): readonly Amostra[] {
 async function entrar() {
   await render(<App />);
   await fireEvent.press(await screen.findByText('Entrar'));
-  await screen.findByText('Área Segura');
+  await screen.findByText('Assinar documento');
 }
 
 describe.each(['light', 'dark'] as const)('estilo das telas no tema %s', (themeName: ThemeName) => {
@@ -129,7 +129,7 @@ describe.each(['light', 'dark'] as const)('estilo das telas no tema %s', (themeN
     expect(capturarTelaEmFoco()).toMatchSnapshot('login');
 
     await fireEvent.press(screen.getByText('Entrar'));
-    await screen.findByText('Área Segura');
+    await screen.findByText('Assinar documento');
     expect(capturarTelaEmFoco()).toMatchSnapshot('início');
 
     await fireEvent.press(screen.getByText('Configurações'));

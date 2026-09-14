@@ -30,6 +30,7 @@ export function AppNavigator() {
             <Stack.Screen name="Home" options={{ title: 'Início' }}>
               {({ navigation }: { navigation: AppNavigation }) => (
                 <HomeScreen
+                  onDigitalizarDocumento={() => navigation.navigate('DigitalizarDocumento')}
                   onOpenAssinaturas={() => navigation.navigate('Assinaturas')}
                   onOpenSettings={() => navigation.navigate('Settings')}
                 />
