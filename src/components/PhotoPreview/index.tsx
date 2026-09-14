@@ -20,13 +20,19 @@ export function PhotoPreview({ foto, saving, onRetake, onUse }: PhotoPreviewProp
   const { theme } = useAppTheme();
   const styles = useMemo(() => photoPreviewPresets.default(theme), [theme]);
 
+  function requestClose() {
+    if (!saving) {
+      onRetake();
+    }
+  }
+
   return (
     <Modal
       visible={foto !== null}
       animationType="fade"
       statusBarTranslucent
       navigationBarTranslucent
-      onRequestClose={onRetake}
+      onRequestClose={requestClose}
     >
       <Screen
         preset="preview"
