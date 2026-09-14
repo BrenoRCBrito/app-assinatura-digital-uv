@@ -14,9 +14,10 @@ type DocumentCameraProps = Readonly<{
   onClose: () => void;
   onCapture: (foto: CapturedPhoto) => void;
   onCaptureError: (error: unknown) => void;
+  onMountError: (error: unknown) => void;
 }>;
 
-export function DocumentCamera({ onClose, onCapture, onCaptureError }: DocumentCameraProps) {
+export function DocumentCamera({ onClose, onCapture, onCaptureError, onMountError }: DocumentCameraProps) {
   const { theme } = useAppTheme();
   const styles = useMemo(() => documentCameraPresets.default(theme), [theme]);
   const camera = useRef<CameraView>(null);
@@ -48,7 +49,12 @@ export function DocumentCamera({ onClose, onCapture, onCaptureError }: DocumentC
         <View style={styles.topBarBalance} />
       </View>
       <View style={styles.viewfinder}>
-        <CameraView ref={camera} style={StyleSheet.absoluteFill} onCameraReady={() => setReady(true)} />
+        <CameraView
+          ref={camera}
+          style={StyleSheet.absoluteFill}
+          onCameraReady={() => setReady(true)}
+          onMountError={onMountError}
+        />
         <View style={styles.frame}>
           <View style={styles.guideTopLeft} />
           <View style={styles.guideTopRight} />

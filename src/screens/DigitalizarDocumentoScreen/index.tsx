@@ -28,6 +28,12 @@ export function DigitalizarDocumentoScreen({ onFechar }: DigitalizarDocumentoScr
   const [usandoFoto, setUsandoFoto] = useState(false);
   const usandoFotoRef = useRef(false);
 
+  function avisarFalhaAoAbrirCamera(error: unknown) {
+    console.error('Falha ao abrir a câmera:', error);
+    showError('Erro', 'Não foi possível abrir a câmera. Tente de novo.');
+    onFechar();
+  }
+
   function avisarFalhaNaFoto(error: unknown) {
     console.error('Falha ao tirar a foto:', error);
     showError('Erro', 'Não foi possível tirar a foto. Tente de novo.');
@@ -87,7 +93,12 @@ export function DigitalizarDocumentoScreen({ onFechar }: DigitalizarDocumentoScr
 
   return (
     <Screen preset="camera">
-      <DocumentCamera onClose={onFechar} onCapture={setFoto} onCaptureError={avisarFalhaNaFoto} />
+      <DocumentCamera
+        onClose={onFechar}
+        onCapture={setFoto}
+        onCaptureError={avisarFalhaNaFoto}
+        onMountError={avisarFalhaAoAbrirCamera}
+      />
       <PhotoPreview
         foto={foto}
         saving={usandoFoto}

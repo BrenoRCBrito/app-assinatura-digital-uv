@@ -19,7 +19,11 @@ jest.mock('expo-camera', () => {
 
   class CameraView extends Component {
     componentDidMount() {
-      this.props.onCameraReady();
+      if (mockCameraFalhaAoAbrir) {
+        this.props.onMountError({ message: 'Câmera ocupada' });
+      } else {
+        this.props.onCameraReady();
+      }
     }
 
     takePictureAsync(options: unknown) {
@@ -34,6 +38,7 @@ jest.mock('expo-camera', () => {
   return { CameraView, useCameraPermissions: jest.fn() };
 });
 
+let mockCameraFalhaAoAbrir = false;
 const mockTirarFoto = jest.fn();
 
 const camera = jest.requireMock<{ useCameraPermissions: jest.Mock }>('expo-camera');
@@ -69,6 +74,7 @@ describe('DigitalizarDocumentoScreen', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
     jest.clearAllMocks();
+    mockCameraFalhaAoAbrir = false;
     mockTirarFoto.mockResolvedValue(FOTO_DA_CAMERA);
     toast = jest.spyOn(Toast, 'show').mockImplementation(() => undefined);
     alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
@@ -108,6 +114,17 @@ describe('DigitalizarDocumentoScreen', () => {
     expect(abrirConfiguracoes).toHaveBeenCalledTimes(1);
     expect(screen.queryByText('Permitir câmera')).toBeNull();
     abrirConfiguracoes.mockRestore();
+  });
+
+  test('quando a câmera não abre, mostra o alerta e fecha a tela', async () => {
+    const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    mockCameraFalhaAoAbrir = true;
+    const { onFechar } = await abrirTela(COM_PERMISSAO);
+
+    await waitFor(() => expect(alerta).toHaveBeenCalledWith('Erro', 'Não foi possível abrir a câmera. Tente de novo.'));
+    expect(onFechar).toHaveBeenCalledTimes(1);
+    expect(erro).toHaveBeenCalledTimes(1);
+    erro.mockRestore();
   });
 
   test('Tirar outra fecha a prévia e mantém a câmera', async () => {

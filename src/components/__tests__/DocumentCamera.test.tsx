@@ -16,7 +16,9 @@ jest.mock('expo-camera', () => {
 
   class CameraView extends Component {
     componentDidMount() {
-      if (mockCameraFicaPronta) {
+      if (mockCameraFalhaAoAbrir) {
+        this.props.onMountError({ message: 'Câmera ocupada' });
+      } else if (mockCameraFicaPronta) {
         this.props.onCameraReady();
       }
     }
@@ -34,6 +36,7 @@ jest.mock('expo-camera', () => {
 });
 
 let mockCameraFicaPronta = true;
+let mockCameraFalhaAoAbrir = false;
 const mockTirarFoto = jest.fn();
 
 const FOTO_DA_CAMERA = { uri: 'file:///cache/foto.jpg', width: 3024, height: 4032, format: 'jpg' };
@@ -45,7 +48,7 @@ const DEDO_NA_TELA = {
 };
 
 async function abrirCamera() {
-  const acoes = { onClose: jest.fn(), onCapture: jest.fn(), onCaptureError: jest.fn() };
+  const acoes = { onClose: jest.fn(), onCapture: jest.fn(), onCaptureError: jest.fn(), onMountError: jest.fn() };
   await render(<DocumentCamera {...acoes} />, { wrapper: SettingsProvider });
   return { ...acoes, obturador: await screen.findByLabelText('Tirar foto') };
 }
@@ -55,6 +58,7 @@ describe('DocumentCamera', () => {
     await AsyncStorage.clear();
     jest.clearAllMocks();
     mockCameraFicaPronta = true;
+    mockCameraFalhaAoAbrir = false;
   });
 
   test('entrega a foto tirada com a qualidade do documento', async () => {
@@ -79,6 +83,14 @@ describe('DocumentCamera', () => {
     expect(obturador.props.accessibilityState).toEqual({ disabled: true });
     expect(StyleSheet.flatten(obturador.props.style).opacity).toBe(tokens.opacity.disabled);
     expect(mockTirarFoto).not.toHaveBeenCalled();
+  });
+
+  test('avisa quando a câmera não abre e deixa o obturador desativado', async () => {
+    mockCameraFalhaAoAbrir = true;
+    const { onMountError, obturador } = await abrirCamera();
+
+    expect(onMountError).toHaveBeenCalledWith({ message: 'Câmera ocupada' });
+    expect(obturador.props.accessibilityState).toEqual({ disabled: true });
   });
 
   test('ignora o segundo toque enquanto a foto é tirada', async () => {
