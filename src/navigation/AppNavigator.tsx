@@ -59,7 +59,7 @@ export function AppNavigator() {
                 />
               )}
             </Stack.Screen>
-            <Stack.Screen name="PosicionarAssinatura" options={{ title: 'Posicionar assinatura' }}>
+            <Stack.Screen name="PosicionarAssinatura" options={{ title: 'Posicionar assinatura', gestureEnabled: false }}>
               {({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'PosicionarAssinatura'>) => (
                 <PosicionarAssinaturaScreen
                   foto={route.params.foto}
