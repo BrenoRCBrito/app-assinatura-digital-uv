@@ -4,4 +4,5 @@ export type RootStackParamList = {
   Settings: undefined;
   Assinaturas: undefined;
   NovaAssinatura: undefined;
+  DigitalizarDocumento: undefined;
 };
