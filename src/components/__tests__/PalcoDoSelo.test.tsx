@@ -85,6 +85,12 @@ describe('PalcoDoSelo', () => {
     expect(descendentes(moldura as TestInstance).filter((no) => no.type === 'RNSVGSvgView')).toHaveLength(2);
   });
 
+  test('deixa a alça do selo passar da borda do palco sem cortar', async () => {
+    const palco = await mostrarPalco(null);
+
+    expect(StyleSheet.flatten(palco.props.style).overflow).toBeUndefined();
+  });
+
   test('com posição salva, põe o selo na posição em frações da foto', async () => {
     const posicao = { x: createFraction(0.1), y: createFraction(0.2), largura: LARGURA };
     const palco = await mostrarPalco(posicao);
