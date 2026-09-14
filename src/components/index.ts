@@ -15,6 +15,7 @@ export { List } from './List';
 export { LoadingIndicator } from './LoadingIndicator';
 export { Logo } from './Logo';
 export { MenuList, type MenuItem } from './MenuList';
+export { PalcoDoSelo } from './PalcoDoSelo';
 export { PapelDeAssinatura } from './PapelDeAssinatura';
 export { PhotoPreview } from './PhotoPreview';
 export { Screen } from './Screen';
