@@ -16,6 +16,10 @@ export function showSuccess(message: string): void {
   Toast.show({ type: 'success', text1: message });
 }
 
+export function showInfo(message: string): void {
+  Toast.show({ type: 'info', text1: message });
+}
+
 export function confirm({ title, message, confirmLabel, onConfirm }: ConfirmOptions): void {
   Alert.alert(title, message, [
     { text: 'Cancelar', style: 'cancel' },

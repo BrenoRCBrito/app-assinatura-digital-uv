@@ -1,7 +1,7 @@
 import { Alert } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-import { confirm, confirmDestructive, showError, showSuccess } from '../feedback';
+import { confirm, confirmDestructive, showError, showInfo, showSuccess } from '../feedback';
 
 describe('feedback', () => {
   let alerta: jest.SpyInstance;
@@ -28,6 +28,13 @@ describe('feedback', () => {
     showSuccess('Assinatura salva');
 
     expect(toast).toHaveBeenCalledWith({ type: 'success', text1: 'Assinatura salva' });
+    expect(alerta).not.toHaveBeenCalled();
+  });
+
+  test('showInfo mostra um toast informativo', () => {
+    showInfo('Cópia não salva na galeria');
+
+    expect(toast).toHaveBeenCalledWith({ type: 'info', text1: 'Cópia não salva na galeria' });
     expect(alerta).not.toHaveBeenCalled();
   });
 
