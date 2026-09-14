@@ -57,6 +57,15 @@ export const iconShapes = {
     },
   ],
   chevronRight: [{ d: 'M9 6l6 6-6 6', strokeLinecap: 'round', strokeLinejoin: 'round' }],
+  check: [{ d: 'M5 12.5l4.5 4.5L19 7.5', strokeLinecap: 'round', strokeLinejoin: 'round' }],
+  minus: [{ d: 'M5 12h14', strokeLinecap: 'round' }],
+  move: [
+    {
+      d: 'M12 3v18M3 12h18M12 3l-2.5 2.5M12 3l2.5 2.5M12 21l-2.5-2.5M12 21l2.5-2.5M3 12l2.5-2.5M3 12l2.5 2.5M21 12l-2.5-2.5M21 12l-2.5 2.5',
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+    },
+  ],
 } satisfies Record<string, readonly IconPath[]>;
 
 export const iconSizes = {
@@ -66,6 +75,9 @@ export const iconSizes = {
   trailing: (theme: Theme) => ({ size: theme.size.iconMenu, strokeWidth: theme.lineWidth.iconTrailing }),
   feature: (theme: Theme) => ({ size: theme.size.iconFeature, strokeWidth: theme.lineWidth.iconFeature }),
   overlay: (theme: Theme) => ({ size: theme.size.iconMedium, strokeWidth: theme.lineWidth.iconOverlay }),
+  chip: (theme: Theme) => ({ size: theme.size.choiceChipIcon, strokeWidth: theme.lineWidth.choiceChipIcon }),
+  stepper: (theme: Theme) => ({ size: theme.size.stepperIcon, strokeWidth: theme.lineWidth.stepperIcon }),
+  handle: (theme: Theme) => ({ size: theme.size.stampHandleIcon, strokeWidth: theme.lineWidth.stampHandleIcon }),
 } satisfies Record<string, (theme: Theme) => IconSize>;
 
 export type IconName = keyof typeof iconShapes;

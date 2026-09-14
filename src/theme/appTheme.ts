@@ -89,4 +89,8 @@ export const FIXED_COLORS = {
   cameraControl: createColorToken('rgba(224, 225, 221, 0.14)'),
   cameraHint: createColorToken('rgba(13, 27, 42, 0.72)'),
   shutterRing: createColorToken('rgba(224, 225, 221, 0.55)'),
+  stampBorder: createColorToken('#415A77'),
+  stampFill: createColorToken('rgba(224, 225, 221, 0.4)'),
+  stampHandle: createColorToken('#0D1B2A'),
+  stampHandleIcon: createColorToken('#E0E1DD'),
 } as const;
