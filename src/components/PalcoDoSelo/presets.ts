@@ -17,7 +17,6 @@ export const palcoDoSeloPresets = {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
-      overflow: 'hidden',
       borderRadius: theme.radius.surface,
       backgroundColor: theme.stage,
     },
