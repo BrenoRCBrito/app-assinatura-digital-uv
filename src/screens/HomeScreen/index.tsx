@@ -21,7 +21,7 @@ export function HomeScreen({ onOpenAssinaturas, onOpenSettings }: HomeScreenProp
         <Stack gap="actions" align="center">
           <Button label="Minhas assinaturas" onPress={onOpenAssinaturas} />
           <Button label="Configurações" onPress={onOpenSettings} preset="secondary" />
-          <Button label="Sair" onPress={lock} preset="danger" size="sm" />
+          <Button label="Sair" icon="logout" onPress={lock} preset="danger" size="sm" />
         </Stack>
       </Stack>
     </Screen>

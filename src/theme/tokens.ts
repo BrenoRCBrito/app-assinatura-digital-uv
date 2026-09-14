@@ -22,6 +22,7 @@ const gap = {
   list: 12,
   actions: 12,
   label: 8,
+  icon: 8,
   card: 12,
   text: 4,
   row: 16,

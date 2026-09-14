@@ -103,6 +103,21 @@ exports[`estilo das telas no tema dark lista com assinatura: lista com assinatur
     "width": "100%",
   },
   {
+    "elemento": "svg",
+    "height": 18,
+    "width": 18,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4279049002,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
     "color": "#0D1B2A",
     "elemento": "texto",
     "fontSize": 16,
@@ -139,6 +154,21 @@ exports[`estilo das telas no tema dark lista vazia e nova assinatura em pé e de
     "paddingVertical": 12,
     "papel": "button",
     "width": "100%",
+  },
+  {
+    "elemento": "svg",
+    "height": 18,
+    "width": 18,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4279049002,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
   },
   {
     "color": "#0D1B2A",
@@ -669,6 +699,41 @@ exports[`estilo das telas no tema dark login, início e configurações: início
     "papel": "button",
   },
   {
+    "elemento": "svg",
+    "height": 18,
+    "width": 18,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4294243569,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4294243569,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4294243569,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
     "color": "#F4F4F1",
     "elemento": "texto",
     "fontSize": 16,
@@ -719,6 +784,61 @@ exports[`estilo das telas no tema dark login, início e configurações: login 1
     "paddingVertical": 12,
     "papel": "button",
     "width": "100%",
+  },
+  {
+    "elemento": "svg",
+    "height": 18,
+    "width": 18,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4279049002,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4279049002,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4279049002,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4279049002,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4279049002,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
   },
   {
     "color": "#0D1B2A",
@@ -833,6 +953,21 @@ exports[`estilo das telas no tema light lista com assinatura: lista com assinatu
     "width": "100%",
   },
   {
+    "elemento": "svg",
+    "height": 18,
+    "width": 18,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4292927965,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
     "color": "#E0E1DD",
     "elemento": "texto",
     "fontSize": 16,
@@ -869,6 +1004,21 @@ exports[`estilo das telas no tema light lista vazia e nova assinatura em pé e d
     "paddingVertical": 12,
     "papel": "button",
     "width": "100%",
+  },
+  {
+    "elemento": "svg",
+    "height": 18,
+    "width": 18,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4292927965,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
   },
   {
     "color": "#E0E1DD",
@@ -1399,6 +1549,41 @@ exports[`estilo das telas no tema light login, início e configurações: iníci
     "papel": "button",
   },
   {
+    "elemento": "svg",
+    "height": 18,
+    "width": 18,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4294243569,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4294243569,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4294243569,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
     "color": "#F4F4F1",
     "elemento": "texto",
     "fontSize": 16,
@@ -1449,6 +1634,61 @@ exports[`estilo das telas no tema light login, início e configurações: login 
     "paddingVertical": 12,
     "papel": "button",
     "width": "100%",
+  },
+  {
+    "elemento": "svg",
+    "height": 18,
+    "width": 18,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4279049002,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4279049002,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4279049002,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4279049002,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
+  },
+  {
+    "elemento": "traço",
+    "stroke": {
+      "payload": 4279049002,
+      "type": 0,
+    },
+    "strokeLinecap": 1,
+    "strokeLinejoin": 1,
+    "strokeWidth": 2,
   },
   {
     "color": "#0D1B2A",

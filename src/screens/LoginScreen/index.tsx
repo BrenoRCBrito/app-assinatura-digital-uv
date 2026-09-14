@@ -17,7 +17,12 @@ export function LoginScreen() {
     <Screen
       preset="immersive"
       footer={
-        <Button label={authenticating ? 'Autenticando…' : 'Entrar'} onPress={unlock} disabled={authenticating} />
+        <Button
+          label={authenticating ? 'Autenticando…' : 'Entrar'}
+          icon="fingerprint"
+          onPress={unlock}
+          disabled={authenticating}
+        />
       }
     >
       <Stack gap="hero" align="center">

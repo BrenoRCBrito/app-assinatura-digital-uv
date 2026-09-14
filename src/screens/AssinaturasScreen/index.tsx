@@ -55,7 +55,7 @@ export function AssinaturasScreen({ onNovaAssinatura }: AssinaturasScreenProps) 
   }
 
   return (
-    <Screen preset="list" footer={<Button label="Nova assinatura" onPress={onNovaAssinatura} />}>
+    <Screen preset="list" footer={<Button label="Nova assinatura" icon="plus" onPress={onNovaAssinatura} />}>
       <List
         items={assinaturas}
         keyOf={(assinatura) => assinatura.id}

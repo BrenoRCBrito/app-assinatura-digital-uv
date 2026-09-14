@@ -25,7 +25,7 @@ export function ChipButton({ label, icon, onPress, disabled = false, preset = 'a
       onPress={onPress}
       style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
     >
-      <Icon name={icon} />
+      <Icon name={icon} size="inline" color={styles.iconColor} />
       <Text preset="chip">{label}</Text>
     </Pressable>
   );
