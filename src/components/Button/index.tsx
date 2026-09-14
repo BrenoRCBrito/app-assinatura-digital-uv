@@ -50,7 +50,9 @@ export function Button({
       disabled={disabled}
     >
       {icon === undefined ? null : <Icon name={icon} size="inline" color={iconColor(theme)} />}
-      <Text preset={labelPreset}>{label}</Text>
+      <View style={styles.label}>
+        <Text preset={labelPreset}>{label}</Text>
+      </View>
     </Pressable>
   );
 
@@ -62,5 +64,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  label: {
+    flexShrink: 1,
   },
 });

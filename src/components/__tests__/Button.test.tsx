@@ -62,4 +62,14 @@ describe('Button', () => {
     );
     expect(StyleSheet.flatten(botao.props.style).gap).toBe(tokens.gap.icon);
   });
+
+  test('deixa o rótulo encolher e quebrar linha dentro do botão', async () => {
+    await render(<Button label="Limpar" onPress={() => undefined} preset="secondary" flex={1} />, {
+      wrapper: SettingsProvider,
+    });
+
+    const contornoDoRotulo = (await screen.findByText('Limpar')).parent;
+
+    expect(StyleSheet.flatten(contornoDoRotulo?.props.style)?.flexShrink).toBe(1);
+  });
 });
