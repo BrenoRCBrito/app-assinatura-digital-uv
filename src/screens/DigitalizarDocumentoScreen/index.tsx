@@ -27,11 +27,20 @@ export function DigitalizarDocumentoScreen({ onFechar }: DigitalizarDocumentoScr
   const [foto, setFoto] = useState<CapturedPhoto | null>(null);
   const [usandoFoto, setUsandoFoto] = useState(false);
   const usandoFotoRef = useRef(false);
+  const fechandoRef = useRef(false);
+
+  function fechar() {
+    if (fechandoRef.current) {
+      return;
+    }
+    fechandoRef.current = true;
+    onFechar();
+  }
 
   function avisarFalhaAoAbrirCamera(error: unknown) {
     console.error('Falha ao abrir a câmera:', error);
     showError('Erro', 'Não foi possível abrir a câmera. Tente de novo.');
-    onFechar();
+    fechar();
   }
 
   function avisarFalhaNaFoto(error: unknown) {
@@ -51,7 +60,7 @@ export function DigitalizarDocumentoScreen({ onFechar }: DigitalizarDocumentoScr
     } else {
       showSuccess('Documento fotografado');
     }
-    onFechar();
+    fechar();
   }
 
   if (permissao.status === 'checking') {
@@ -75,7 +84,7 @@ export function DigitalizarDocumentoScreen({ onFechar }: DigitalizarDocumentoScr
             ) : (
               <Button label="Permitir câmera" icon="camera" onPress={permissao.request} />
             )}
-            <Button label="Voltar" onPress={onFechar} preset="secondary" />
+            <Button label="Voltar" onPress={fechar} preset="secondary" />
           </Stack>
         }
       >
@@ -94,7 +103,7 @@ export function DigitalizarDocumentoScreen({ onFechar }: DigitalizarDocumentoScr
   return (
     <Screen preset="camera">
       <DocumentCamera
-        onClose={onFechar}
+        onClose={fechar}
         onCapture={setFoto}
         onCaptureError={avisarFalhaNaFoto}
         onMountError={avisarFalhaAoAbrirCamera}
