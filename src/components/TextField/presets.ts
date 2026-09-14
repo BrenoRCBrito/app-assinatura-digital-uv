@@ -10,7 +10,7 @@ type TextFieldStyles = Readonly<{
 
 export const textFieldPresets = {
   default: (theme: Theme) => ({
-    field: { gap: theme.gap.fieldLabel },
+    field: { gap: theme.gap.label },
     input: {
       height: theme.size.control,
       paddingHorizontal: theme.inset.inputX,

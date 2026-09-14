@@ -118,7 +118,7 @@ export function NovaAssinaturaScreen({ onSalva }: NovaAssinaturaScreenProps) {
         </Row>
       }
     >
-      <Stack gap="form" flex={1}>
+      <Stack gap="block" flex={1}>
         {deitado ? null : (
           <TextField
             label="Nome"
@@ -129,7 +129,7 @@ export function NovaAssinaturaScreen({ onSalva }: NovaAssinaturaScreenProps) {
             maxLength={40}
           />
         )}
-        <Stack gap="fieldLabel" flex={1}>
+        <Stack gap="label" flex={1}>
           <Row align="center" justify="between">
             <Text preset="sectionLabel">Assinatura</Text>
             <ChipButton

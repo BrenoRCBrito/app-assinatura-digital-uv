@@ -14,7 +14,7 @@ export function HomeScreen({ onOpenAssinaturas, onOpenSettings }: HomeScreenProp
   return (
     <Screen preset="centered">
       <Stack gap="heroActions" align="center">
-        <Stack gap="hero" align="center">
+        <Stack gap="titleText" align="center">
           <Text preset="screenTitle">Área Segura</Text>
           <Text preset="subtitle">Usuário logado com sucesso!</Text>
         </Stack>
