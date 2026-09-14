@@ -1,7 +1,8 @@
 import React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { render, screen } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import { processColor, StyleSheet } from 'react-native';
+import type { TestInstance } from 'test-renderer';
 
 import { SettingsProvider } from '../../storage/SettingsProvider';
 import { tokens } from '../../theme';
@@ -10,6 +11,10 @@ import { Button } from '../Button';
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
+
+function descendentes(no: TestInstance): TestInstance[] {
+  return no.children.flatMap((filho) => (typeof filho === 'string' ? [] : [filho, ...descendentes(filho)]));
+}
 
 describe('Button', () => {
   beforeEach(async () => {
@@ -35,5 +40,26 @@ describe('Button', () => {
     const estilo = StyleSheet.flatten((await screen.findByRole('button')).props.style);
 
     expect([estilo.minHeight, estilo.paddingVertical]).toEqual([tokens.size.control, tokens.inset.buttonY]);
+  });
+
+  test('mostra o ícone antes do rótulo, no tamanho de ícone junto a texto e na cor do rótulo', async () => {
+    await render(<Button label="Entrar" icon="fingerprint" onPress={() => undefined} />, { wrapper: SettingsProvider });
+
+    const botao = await screen.findByRole('button');
+    const nos = descendentes(botao);
+    const svg = nos.find((no) => no.type === 'RNSVGSvgView');
+    const tracos = nos.filter((no) => no.type === 'RNSVGPath');
+    const corDoRotulo = processColor(StyleSheet.flatten(screen.getByText('Entrar').props.style).color);
+
+    expect(svg === undefined ? null : StyleSheet.flatten(svg.props.style)).toMatchObject({
+      width: tokens.size.iconSmall,
+      height: tokens.size.iconSmall,
+    });
+    expect(nos.findIndex((no) => no.type === 'RNSVGSvgView')).toBeLessThan(nos.findIndex((no) => no.type === 'Text'));
+    expect(tracos).toHaveLength(5);
+    expect(tracos.map((traco) => [traco.props.stroke, traco.props.strokeWidth])).toEqual(
+      tracos.map(() => [{ type: 0, payload: corDoRotulo }, tokens.lineWidth.iconSmall]),
+    );
+    expect(StyleSheet.flatten(botao.props.style).gap).toBe(tokens.gap.icon);
   });
 });

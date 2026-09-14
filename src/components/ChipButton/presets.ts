@@ -2,6 +2,12 @@ import type { ViewStyle } from 'react-native';
 
 import type { Theme } from '../../theme';
 
+type ChipButtonStyles = Readonly<{
+  chip: ViewStyle;
+  pressed: ViewStyle;
+  iconColor: string;
+}>;
+
 export const chipButtonPresets = {
   action: (theme: Theme) => ({
     chip: {
@@ -18,7 +24,8 @@ export const chipButtonPresets = {
     pressed: {
       opacity: theme.opacity.pressed,
     },
+    iconColor: theme.textSecondary,
   }),
-} satisfies Record<string, (theme: Theme) => Record<string, ViewStyle>>;
+} satisfies Record<string, (theme: Theme) => ChipButtonStyles>;
 
 export type ChipButtonPresetName = keyof typeof chipButtonPresets;

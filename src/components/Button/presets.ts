@@ -6,12 +6,14 @@ import type { TextPresetName } from '../Text/presets';
 type ButtonPreset = Readonly<{
   label: TextPresetName;
   container: (theme: Theme) => ViewStyle;
+  iconColor: (theme: Theme) => string;
 }>;
 
 export const buttonPresets = {
   primary: {
     label: 'buttonPrimary',
     container: (theme: Theme) => ({ backgroundColor: theme.primary }),
+    iconColor: (theme: Theme) => theme.onPrimary,
   },
   secondary: {
     label: 'buttonSecondary',
@@ -19,10 +21,12 @@ export const buttonPresets = {
       borderWidth: theme.lineWidth.outline,
       borderColor: theme.textSecondary,
     }),
+    iconColor: (theme: Theme) => theme.textSecondary,
   },
   danger: {
     label: 'buttonDanger',
     container: (theme: Theme) => ({ backgroundColor: theme.danger }),
+    iconColor: (theme: Theme) => theme.onDanger,
   },
 } satisfies Record<string, ButtonPreset>;
 

@@ -2,6 +2,12 @@ import type { ViewStyle } from 'react-native';
 
 import type { Theme } from '../../theme';
 
+type IconButtonStyles = Readonly<{
+  button: ViewStyle;
+  pressed: ViewStyle;
+  iconColor: string;
+}>;
+
 export const iconButtonPresets = {
   plain: (theme: Theme) => ({
     button: {
@@ -13,7 +19,8 @@ export const iconButtonPresets = {
     pressed: {
       opacity: theme.opacity.pressed,
     },
+    iconColor: theme.textSecondary,
   }),
-} satisfies Record<string, (theme: Theme) => Record<string, ViewStyle>>;
+} satisfies Record<string, (theme: Theme) => IconButtonStyles>;
 
 export type IconButtonPresetName = keyof typeof iconButtonPresets;
