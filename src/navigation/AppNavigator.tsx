@@ -4,6 +4,7 @@ import { createNativeStackNavigator, type NativeStackNavigationProp } from '@rea
 
 import { useAuthentication } from '../hooks/useAuthentication';
 import { AssinaturasScreen } from '../screens/AssinaturasScreen';
+import { DigitalizarDocumentoScreen } from '../screens/DigitalizarDocumentoScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { NovaAssinaturaScreen } from '../screens/NovaAssinaturaScreen';
@@ -42,6 +43,11 @@ export function AppNavigator() {
             <Stack.Screen name="NovaAssinatura" options={{ title: 'Nova assinatura', gestureEnabled: false }}>
               {({ navigation }: { navigation: AppNavigation }) => (
                 <NovaAssinaturaScreen onSalva={() => navigation.goBack()} />
+              )}
+            </Stack.Screen>
+            <Stack.Screen name="DigitalizarDocumento" options={{ headerShown: false }}>
+              {({ navigation }: { navigation: AppNavigation }) => (
+                <DigitalizarDocumentoScreen onFechar={() => navigation.goBack()} />
               )}
             </Stack.Screen>
             <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configurações' }} />
