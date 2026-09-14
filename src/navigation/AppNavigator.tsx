@@ -1,6 +1,10 @@
 import React, { useMemo } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator, type NativeStackNavigationProp } from '@react-navigation/native-stack';
+import {
+  createNativeStackNavigator,
+  type NativeStackNavigationProp,
+  type NativeStackScreenProps,
+} from '@react-navigation/native-stack';
 
 import { useAuthentication } from '../hooks/useAuthentication';
 import { AssinaturasScreen } from '../screens/AssinaturasScreen';
@@ -8,6 +12,7 @@ import { DigitalizarDocumentoScreen } from '../screens/DigitalizarDocumentoScree
 import { HomeScreen } from '../screens/HomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { NovaAssinaturaScreen } from '../screens/NovaAssinaturaScreen';
+import { PosicionarAssinaturaScreen } from '../screens/PosicionarAssinaturaScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { createNavigationTheme } from '../theme/createNavigationTheme';
 import { useAppTheme } from '../theme/useAppTheme';
@@ -48,7 +53,18 @@ export function AppNavigator() {
             </Stack.Screen>
             <Stack.Screen name="DigitalizarDocumento" options={{ headerShown: false }}>
               {({ navigation }: { navigation: AppNavigation }) => (
-                <DigitalizarDocumentoScreen onFechar={() => navigation.goBack()} />
+                <DigitalizarDocumentoScreen
+                  onFechar={() => navigation.goBack()}
+                  onUsarFoto={(foto) => navigation.replace('PosicionarAssinatura', { foto })}
+                />
+              )}
+            </Stack.Screen>
+            <Stack.Screen name="PosicionarAssinatura" options={{ title: 'Posicionar assinatura' }}>
+              {({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'PosicionarAssinatura'>) => (
+                <PosicionarAssinaturaScreen
+                  foto={route.params.foto}
+                  onNovaAssinatura={() => navigation.navigate('NovaAssinatura')}
+                />
               )}
             </Stack.Screen>
             <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configurações' }} />

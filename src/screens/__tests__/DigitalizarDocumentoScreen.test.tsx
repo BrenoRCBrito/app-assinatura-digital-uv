@@ -5,6 +5,7 @@ import * as MediaLibrary from 'expo-media-library';
 import { Alert, Linking } from 'react-native';
 import Toast from 'react-native-toast-message';
 
+import { createCapturedPhoto } from '../../domain/photo';
 import { DEFAULT_SETTINGS } from '../../domain/settings';
 import { SettingsProvider } from '../../storage/SettingsProvider';
 import { SETTINGS_STORAGE_KEY } from '../../storage/settingsStorage';
@@ -49,6 +50,7 @@ const galeria = MediaLibrary as unknown as Readonly<{
 }>;
 
 const FOTO_DA_CAMERA = { uri: 'file:///cache/foto.jpg', width: 3024, height: 4032, format: 'jpg' };
+const FOTO = createCapturedPhoto('file:///cache/foto.jpg', 3024, 4032);
 const COM_PERMISSAO = { granted: true, canAskAgain: true };
 
 type Permissao = Readonly<{ granted: boolean; canAskAgain: boolean }> | null;
@@ -58,8 +60,11 @@ async function abrirTela(permissao: Permissao, { salvarCopiaNaGaleria = false } 
   const pedirPermissao = jest.fn().mockResolvedValue(permissao);
   camera.useCameraPermissions.mockReturnValue([permissao, pedirPermissao, jest.fn()]);
   const onFechar = jest.fn();
-  await render(<DigitalizarDocumentoScreen onFechar={onFechar} />, { wrapper: SettingsProvider });
-  return { onFechar, pedirPermissao };
+  const onUsarFoto = jest.fn();
+  await render(<DigitalizarDocumentoScreen onFechar={onFechar} onUsarFoto={onUsarFoto} />, {
+    wrapper: SettingsProvider,
+  });
+  return { onFechar, onUsarFoto, pedirPermissao };
 }
 
 async function fotografar() {
@@ -147,38 +152,39 @@ describe('DigitalizarDocumentoScreen', () => {
     expect(screen.getByLabelText('Tirar foto')).toBeTruthy();
   });
 
-  test('Usar foto sem a cópia na galeria fecha a tela com o toast de sucesso', async () => {
-    const { onFechar } = await abrirTela(COM_PERMISSAO);
+  test('Usar foto sem a cópia na galeria abre o Posicionar com a foto, sem toast', async () => {
+    const { onFechar, onUsarFoto } = await abrirTela(COM_PERMISSAO);
 
     await fotografar();
     await fireEvent.press(screen.getByText('Usar foto'));
 
-    await waitFor(() => expect(onFechar).toHaveBeenCalledTimes(1));
-    expect(toast).toHaveBeenCalledWith({ type: 'success', text1: 'Documento fotografado' });
+    await waitFor(() => expect(onUsarFoto).toHaveBeenCalledWith(FOTO));
+    expect(toast).not.toHaveBeenCalled();
+    expect(onFechar).not.toHaveBeenCalled();
     expect(galeria.requestPermissionsAsync).not.toHaveBeenCalled();
   });
 
-  test('Usar foto com a cópia ligada salva a foto na galeria', async () => {
+  test('Usar foto com a cópia ligada salva a foto na galeria e abre o Posicionar', async () => {
     galeria.requestPermissionsAsync.mockResolvedValue({ granted: true });
     galeria.Asset.create.mockResolvedValue({});
-    const { onFechar } = await abrirTela(COM_PERMISSAO, { salvarCopiaNaGaleria: true });
+    const { onUsarFoto } = await abrirTela(COM_PERMISSAO, { salvarCopiaNaGaleria: true });
 
     await fotografar();
     await fireEvent.press(screen.getByText('Usar foto'));
 
-    await waitFor(() => expect(onFechar).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onUsarFoto).toHaveBeenCalledWith(FOTO));
     expect(galeria.Asset.create).toHaveBeenCalledWith('file:///cache/foto.jpg');
-    expect(toast).toHaveBeenCalledWith({ type: 'success', text1: 'Documento fotografado' });
+    expect(toast).not.toHaveBeenCalled();
   });
 
-  test('quando a cópia falha, avisa com o toast informativo e fecha a tela', async () => {
+  test('quando a cópia falha, avisa com o toast informativo e abre o Posicionar', async () => {
     galeria.requestPermissionsAsync.mockResolvedValue({ granted: false });
-    const { onFechar } = await abrirTela(COM_PERMISSAO, { salvarCopiaNaGaleria: true });
+    const { onUsarFoto } = await abrirTela(COM_PERMISSAO, { salvarCopiaNaGaleria: true });
 
     await fotografar();
     await fireEvent.press(screen.getByText('Usar foto'));
 
-    await waitFor(() => expect(onFechar).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onUsarFoto).toHaveBeenCalledWith(FOTO));
     expect(toast).toHaveBeenCalledWith({ type: 'info', text1: 'Cópia não salva na galeria' });
     expect(galeria.Asset.create).not.toHaveBeenCalled();
   });

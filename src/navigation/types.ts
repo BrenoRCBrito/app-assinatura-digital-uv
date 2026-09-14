@@ -1,3 +1,5 @@
+import type { CapturedPhoto } from '../domain/photo';
+
 export type RootStackParamList = {
   Login: undefined;
   Home: undefined;
@@ -5,4 +7,5 @@ export type RootStackParamList = {
   Assinaturas: undefined;
   NovaAssinatura: undefined;
   DigitalizarDocumento: undefined;
+  PosicionarAssinatura: { foto: CapturedPhoto };
 };
