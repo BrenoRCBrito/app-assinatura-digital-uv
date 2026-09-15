@@ -62,7 +62,8 @@ describe('useAssinarDocumento', () => {
       documentos: result.current.repositorios.documentos,
     });
     expect(dependencias.criarDocumentoId()).toMatch(/^\d+$/);
-    expect(new Date(dependencias.agora()).toISOString()).toBe(dependencias.agora().slice(0, 24));
+    const agora = dependencias.agora();
+    expect(new Date(agora).toISOString()).toBe(agora);
   });
 
   test('fica assinando enquanto o caso de uso roda e ignora o segundo toque', async () => {
