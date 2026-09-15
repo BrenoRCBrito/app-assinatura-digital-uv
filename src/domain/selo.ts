@@ -93,3 +93,10 @@ export function paraPosicaoSelo(ponto: ScreenPoint, tamanho: Size, area: Size): 
 export function paraPontoNaArea(posicao: PosicaoSelo, area: Size): ScreenPoint {
   return { x: createPixels(posicao.x * area.width), y: createPixels(posicao.y * area.height) };
 }
+
+export function seloNaFoto(posicao: PosicaoSelo | null, largura: Fraction, foto: Size, quadro: Size): PosicaoSelo {
+  const { tamanho } = layoutDoSelo(largura, foto, quadro);
+  const ponto = posicao === null ? posicaoInicialDoSelo(tamanho, foto) : paraPontoNaArea(posicao, foto);
+  const dentro = clampToArea(ponto, tamanho, foto);
+  return paraPosicaoSelo({ x: createPixels(dentro.x), y: createPixels(dentro.y) }, tamanho, foto);
+}
