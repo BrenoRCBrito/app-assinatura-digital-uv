@@ -9,5 +9,6 @@ export type RootStackParamList = {
   NovaAssinatura: undefined;
   DigitalizarDocumento: undefined;
   PosicionarAssinatura: { foto: CapturedPhoto };
+  Historico: undefined;
   Documento: { documentoId: DocumentoId };
 };

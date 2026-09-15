@@ -6,10 +6,16 @@ import { useAuthentication } from '../../hooks/useAuthentication';
 type HomeScreenProps = Readonly<{
   onDigitalizarDocumento: () => void;
   onOpenAssinaturas: () => void;
+  onOpenHistorico: () => void;
   onOpenSettings: () => void;
 }>;
 
-export function HomeScreen({ onDigitalizarDocumento, onOpenAssinaturas, onOpenSettings }: HomeScreenProps) {
+export function HomeScreen({
+  onDigitalizarDocumento,
+  onOpenAssinaturas,
+  onOpenHistorico,
+  onOpenSettings,
+}: HomeScreenProps) {
   const { lock } = useAuthentication();
 
   return (
@@ -32,6 +38,7 @@ export function HomeScreen({ onDigitalizarDocumento, onOpenAssinaturas, onOpenSe
         <MenuList
           items={[
             { label: 'Minhas assinaturas', icon: 'signatures', onPress: onOpenAssinaturas },
+            { label: 'Histórico', icon: 'history', onPress: onOpenHistorico },
             { label: 'Configurações', icon: 'settings', onPress: onOpenSettings },
           ]}
         />

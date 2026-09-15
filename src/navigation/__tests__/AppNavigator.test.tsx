@@ -97,4 +97,15 @@ describe('AppNavigator', () => {
     await screen.findByText('PDF A4, 1 página');
     expect(telasDaPilha()).toHaveLength(2);
   });
+
+  test('o Histórico do Início abre o documento assinado por cima da lista', async () => {
+    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await render(<App />);
+    await fireEvent.press(await screen.findByText('Entrar'));
+    await fireEvent.press(await screen.findByText('Histórico'));
+    await fireEvent.press(await screen.findByText('Contrato de locação'));
+
+    await screen.findByText('PDF A4, 1 página');
+    expect(telasDaPilha()).toHaveLength(3);
+  });
 });

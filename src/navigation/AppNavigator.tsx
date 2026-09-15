@@ -10,6 +10,7 @@ import { useAuthentication } from '../hooks/useAuthentication';
 import { AssinaturasScreen } from '../screens/AssinaturasScreen';
 import { DigitalizarDocumentoScreen } from '../screens/DigitalizarDocumentoScreen';
 import { DocumentoScreen } from '../screens/DocumentoScreen';
+import { HistoricoScreen } from '../screens/HistoricoScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { NovaAssinaturaScreen } from '../screens/NovaAssinaturaScreen';
@@ -38,6 +39,7 @@ export function AppNavigator() {
                 <HomeScreen
                   onDigitalizarDocumento={() => navigation.navigate('DigitalizarDocumento')}
                   onOpenAssinaturas={() => navigation.navigate('Assinaturas')}
+                  onOpenHistorico={() => navigation.navigate('Historico')}
                   onOpenSettings={() => navigation.navigate('Settings')}
                 />
               )}
@@ -69,6 +71,13 @@ export function AppNavigator() {
                   foto={route.params.foto}
                   onNovaAssinatura={() => navigation.navigate('NovaAssinatura')}
                   onAssinado={(documentoId) => navigation.replace('Documento', { documentoId })}
+                />
+              )}
+            </Stack.Screen>
+            <Stack.Screen name="Historico" options={{ title: 'Histórico' }}>
+              {({ navigation }: { navigation: AppNavigation }) => (
+                <HistoricoScreen
+                  onAbrirDocumento={(documentoId) => navigation.navigate('Documento', { documentoId })}
                 />
               )}
             </Stack.Screen>
