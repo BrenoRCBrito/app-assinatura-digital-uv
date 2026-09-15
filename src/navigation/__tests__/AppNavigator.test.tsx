@@ -1,6 +1,7 @@
 import React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 import type { TestInstance } from 'test-renderer';
 
 import App from '../../../App';
@@ -20,6 +21,10 @@ jest.mock('react-native-safe-area-context', () => require('react-native-safe-are
 jest.mock('../../services/localAuthentication', () => ({
   authenticateDeviceOwner: jest.fn(),
   getBiometricStatus: jest.fn(),
+}));
+jest.mock('../../services/fileSystem', () => ({
+  ...jest.requireActual('../../services/fileSystem'),
+  excluirArquivosDocumento: jest.fn(),
 }));
 jest.mock('../../hooks/useAssinarDocumento', () => ({ useAssinarDocumento: jest.fn() }));
 jest.mock('expo-camera', () => {
@@ -46,6 +51,7 @@ jest.mock('expo-camera', () => {
 });
 
 const DOCUMENTO = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z');
+const HISTORICO_VAZIO = 'Nenhum documento assinado. Toque em Digitalizar documento no Início para assinar o primeiro.';
 
 function descendentes(no: TestInstance): TestInstance[] {
   return no.children.flatMap((filho) => (typeof filho === 'string' ? [] : [filho, ...descendentes(filho)]));
@@ -65,6 +71,15 @@ async function abrirPosicionar() {
   await fireEvent.press(await screen.findByLabelText('Tirar foto'));
   await fireEvent.press(await screen.findByText('Usar foto'));
   await screen.findByRole('radio', { name: 'Rubrica' });
+}
+
+async function abrirDocumentoPeloHistorico() {
+  await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+  await render(<App />);
+  await fireEvent.press(await screen.findByText('Entrar'));
+  await fireEvent.press(await screen.findByText('Histórico'));
+  await fireEvent.press(await screen.findByText('Contrato de locação'));
+  await screen.findByText('PDF A4, 1 página');
 }
 
 describe('AppNavigator', () => {
@@ -99,13 +114,21 @@ describe('AppNavigator', () => {
   });
 
   test('o Histórico do Início abre o documento assinado por cima da lista', async () => {
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
-    await render(<App />);
-    await fireEvent.press(await screen.findByText('Entrar'));
-    await fireEvent.press(await screen.findByText('Histórico'));
-    await fireEvent.press(await screen.findByText('Contrato de locação'));
+    await abrirDocumentoPeloHistorico();
 
-    await screen.findByText('PDF A4, 1 página');
     expect(telasDaPilha()).toHaveLength(3);
+  });
+
+  test('Excluir no documento volta ao Histórico sem o documento', async () => {
+    const alerta: jest.SpyInstance = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    await abrirDocumentoPeloHistorico();
+
+    await fireEvent.press(screen.getByText('Excluir documento'));
+    const [, , botoes] = alerta.mock.calls[0];
+    botoes[1].onPress();
+
+    expect(await screen.findByText(HISTORICO_VAZIO)).toBeTruthy();
+    expect(telasDaPilha()).toHaveLength(2);
+    alerta.mockRestore();
   });
 });
