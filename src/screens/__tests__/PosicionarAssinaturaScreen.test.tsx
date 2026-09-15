@@ -254,7 +254,7 @@ describe('PosicionarAssinaturaScreen', () => {
     alerta.mockRestore();
   });
 
-  test('enquanto assina, o botão mostra Assinando… e fica desativado', async () => {
+  test('enquanto assina, cobre a tela com o aviso e deixa o botão Assinando… desativado', async () => {
     jest.mocked(useAssinarDocumento).mockReturnValue({ assinando: true, assinar });
     await salvarAssinaturas();
     await abrirTela();
@@ -262,5 +262,15 @@ describe('PosicionarAssinaturaScreen', () => {
     const botao = await screen.findByRole('button', { name: 'Assinando…' });
 
     expect(botao.props.accessibilityState).toEqual({ disabled: true });
+    expect(screen.getByText('Assinando o documento…')).toBeTruthy();
+  });
+
+  test('sem assinatura em andamento, não mostra o aviso', async () => {
+    await salvarAssinaturas();
+    await abrirTela();
+
+    await screen.findByText('Assinar');
+
+    expect(screen.queryByText('Assinando o documento…')).toBeNull();
   });
 });

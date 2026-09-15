@@ -15,6 +15,7 @@ export { IconButton } from './IconButton';
 export { Row, Stack } from './Layout';
 export { List } from './List';
 export { LoadingIndicator } from './LoadingIndicator';
+export { LoadingOverlay } from './LoadingOverlay';
 export { Logo } from './Logo';
 export { MapaDoLocal } from './MapaDoLocal';
 export { MenuList, type MenuItem } from './MenuList';

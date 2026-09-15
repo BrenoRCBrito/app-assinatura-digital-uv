@@ -93,4 +93,5 @@ export const FIXED_COLORS = {
   stampFill: createColorToken('rgba(224, 225, 221, 0.4)'),
   stampHandle: createColorToken('#0D1B2A'),
   stampHandleIcon: createColorToken('#E0E1DD'),
+  scrim: createColorToken('rgba(13, 27, 42, 0.48)'),
 } as const;

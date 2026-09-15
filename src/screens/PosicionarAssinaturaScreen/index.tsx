@@ -6,6 +6,7 @@ import {
   ChoiceChips,
   confirm,
   LoadingIndicator,
+  LoadingOverlay,
   PalcoDoSelo,
   Screen,
   showError,
@@ -223,6 +224,7 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura, onAssinado 
           </>
         )}
       </Stack>
+      <LoadingOverlay visible={assinando} message="Assinando o documento…" />
     </Screen>
   );
 }
