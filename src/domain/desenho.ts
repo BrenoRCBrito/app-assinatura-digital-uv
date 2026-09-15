@@ -1,5 +1,6 @@
 import { ValidationError, type Brand } from './brand';
-import { createPixels, createSize, distanceBetween, type ScreenPoint, type Size } from './geometry';
+import { createPixels, createSize, distanceBetween, paraSize, type ScreenPoint, type Size } from './geometry';
+import { lerLista, lerObjeto, lerTexto } from './leitura';
 
 export type Traco = Brand<string, 'Traco'>;
 
@@ -27,6 +28,16 @@ export function criarDesenho(tracos: readonly Traco[], quadro: Size): Desenho {
     throw new ValidationError('O quadro do desenho precisa ter largura e altura.');
   }
   return { tracos, quadro };
+}
+
+export function paraDesenho(dado: unknown, mensagem: string): Desenho {
+  const desenho = lerObjeto(dado, mensagem);
+  const tracos = lerLista('tracos' in desenho ? desenho.tracos : undefined, mensagem);
+
+  return criarDesenho(
+    tracos.map((traco) => criarTraco(lerTexto(traco, mensagem))),
+    paraSize('quadro' in desenho ? desenho.quadro : undefined, mensagem),
+  );
 }
 
 export function adicionarPonto(pontos: readonly ScreenPoint[], ponto: ScreenPoint): readonly ScreenPoint[] {
