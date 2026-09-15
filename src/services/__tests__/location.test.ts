@@ -68,7 +68,7 @@ describe('obterLocalAssinatura', () => {
     expect(getCurrentPositionAsync).toHaveBeenCalledWith({ accuracy: 4 });
   });
 
-  test('depois de 15 s sem posição atual, usa a última posição conhecida', async () => {
+  test('depois de 15 s sem posição atual, usa a última posição conhecida de até 5 minutos', async () => {
     jest.useFakeTimers();
     jest.mocked(getCurrentPositionAsync).mockReturnValue(new Promise(() => undefined));
     jest.mocked(getLastKnownPositionAsync).mockResolvedValue(POSICAO);
@@ -81,6 +81,7 @@ describe('obterLocalAssinatura', () => {
       tipo: 'obtido',
       local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: null },
     });
+    expect(getLastKnownPositionAsync).toHaveBeenCalledWith({ maxAge: 300000 });
   });
 
   test('sem posição atual nem última conhecida, devolve indisponivel', async () => {
