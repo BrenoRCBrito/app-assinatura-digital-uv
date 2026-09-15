@@ -66,6 +66,11 @@ export const iconShapes = {
       strokeLinejoin: 'round',
     },
   ],
+  share: [
+    { d: 'M12 3.5v11', strokeLinecap: 'round', strokeLinejoin: 'round' },
+    { d: 'M8 7.5l4-4 4 4', strokeLinecap: 'round', strokeLinejoin: 'round' },
+    { d: 'M5 11.5V20h14v-8.5', strokeLinecap: 'round', strokeLinejoin: 'round' },
+  ],
 } satisfies Record<string, readonly IconPath[]>;
 
 export const iconSizes = {

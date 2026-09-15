@@ -41,4 +41,35 @@ describe('Text', () => {
       lineHeight: 11.5,
     });
   });
+
+  test('os dados do documento têm rótulo discreto, valor forte e coordenadas tabulares', async () => {
+    await render(
+      <>
+        <Text preset="dataLabel">Coordenadas</Text>
+        <Text preset="dataValue">12/09/2026 14:32</Text>
+        <Text preset="coordinates">-22.40418, -43.66283</Text>
+      </>,
+      { wrapper: SettingsProvider },
+    );
+
+    expect(StyleSheet.flatten((await screen.findByText('Coordenadas')).props.style)).toEqual({
+      fontSize: 12,
+      fontWeight: '600',
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+      color: lightTheme.textMuted,
+    });
+    expect(StyleSheet.flatten(screen.getByText('12/09/2026 14:32').props.style)).toEqual({
+      fontSize: 15,
+      fontWeight: '600',
+      fontVariant: ['tabular-nums'],
+      color: lightTheme.textPrimary,
+    });
+    expect(StyleSheet.flatten(screen.getByText('-22.40418, -43.66283').props.style)).toEqual({
+      fontSize: 14,
+      fontWeight: '500',
+      fontVariant: ['tabular-nums'],
+      color: lightTheme.textPrimary,
+    });
+  });
 });

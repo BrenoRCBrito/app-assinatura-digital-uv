@@ -1,11 +1,11 @@
 import type { TextStyle } from 'react-native';
 
 type SpaceStep = 4 | 6 | 8 | 10 | 12 | 14 | 16 | 18 | 20 | 22 | 24 | 28 | 36 | 48;
-type SizeStep = 13 | 16 | 18 | 20 | 22 | 28 | 36 | 44 | 48 | 52 | 56 | 58 | 60 | 76 | 116 | 150 | 200;
+type SizeStep = 13 | 16 | 18 | 20 | 22 | 28 | 36 | 44 | 48 | 52 | 56 | 58 | 60 | 76 | 116 | 132 | 150 | 200;
 type FontSizeStep = 12 | 13 | 14 | 15 | 16 | 17 | 20 | 22 | 32;
 type LineHeightStep = 20 | 23;
 type LetterSpacingStep = -0.5 | -0.3 | 0.6;
-type RadiusStep = 4 | 6 | 7 | 8 | 10 | 14 | 16 | 22 | 29 | 38;
+type RadiusStep = 2 | 4 | 6 | 7 | 8 | 10 | 14 | 16 | 22 | 29 | 38;
 type LineWidthStep = 1 | 1.5 | 1.7 | 1.8 | 2 | 2.4 | 2.5 | 3 | 4;
 type OpacityStep = 0.45 | 0.6;
 
@@ -40,6 +40,9 @@ const gap = {
   choiceChip: 8,
   stepper: 12,
   stepperLabel: 8,
+  documentSummary: 18,
+  documentData: 12,
+  dataItem: 4,
 } satisfies Record<string, SpaceStep>;
 
 const inset = {
@@ -98,6 +101,7 @@ const size = {
   stepperIcon: 20,
   stampHandle: 20,
   stampHandleIcon: 13,
+  documentPreview: 132,
 } satisfies Record<string, SizeStep>;
 
 const radius = {
@@ -118,6 +122,7 @@ const radius = {
   stepper: 10,
   stamp: 4,
   stampHandle: 10,
+  documentPreview: 2,
 } satisfies Record<string, RadiusStep>;
 
 const lineWidth = {
@@ -162,6 +167,8 @@ const typography = {
   photoTitle: { fontSize: 17, fontWeight: '600' },
   choiceChip: { fontSize: 15, fontWeight: '600' },
   stepperValue: { fontSize: 16, fontWeight: '600', fontVariant: ['tabular-nums'] },
+  dataValue: { fontSize: 15, fontWeight: '600', fontVariant: ['tabular-nums'] },
+  coordinates: { fontSize: 14, fontWeight: '500', fontVariant: ['tabular-nums'] },
 } satisfies Record<string, TypographyToken>;
 
 export const tokens = { gap, inset, size, radius, lineWidth, opacity, typography };
