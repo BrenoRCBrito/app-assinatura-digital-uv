@@ -1,5 +1,5 @@
 import type { IsoDateTime } from './dateTime';
-import type { Coordinates } from './documento';
+import type { Coordinates, LocalAssinatura } from './documento';
 import type { Fraction } from './geometry';
 
 const COORDINATE_DECIMALS = 5;
@@ -24,4 +24,8 @@ export function formatPercent(fraction: Fraction): string {
 
 export function formatCoordinates({ latitude, longitude }: Coordinates): string {
   return `${latitude.toFixed(COORDINATE_DECIMALS)}, ${longitude.toFixed(COORDINATE_DECIMALS)}`;
+}
+
+export function formatLocal(local: LocalAssinatura): string {
+  return local.cidade ?? formatCoordinates(local.coordenadas);
 }
