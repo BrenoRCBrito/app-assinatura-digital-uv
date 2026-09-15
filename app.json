@@ -43,6 +43,17 @@
           "granularPermissions": ["photo"]
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permitir que o $(PRODUCT_NAME) use sua localização para registrar onde o documento foi assinado.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false
+        }
+      ],
       "expo-sqlite",
       "expo-status-bar",
       [
@@ -56,7 +67,8 @@
           },
           "imageWidth": 200
         }
-      ]
+      ],
+      "expo-sharing"
     ]
   }
 }
