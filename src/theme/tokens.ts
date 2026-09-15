@@ -76,6 +76,9 @@ const inset = {
   shutterTop: 18,
   photoY: 8,
   choiceChipX: 16,
+  mapLabel: 12,
+  mapLabelX: 10,
+  mapLabelY: 6,
 } satisfies Record<string, SpaceStep>;
 
 const size = {
@@ -103,6 +106,7 @@ const size = {
   stampHandleIcon: 13,
   documentPreview: 132,
   documentItem: 72,
+  map: 200,
 } satisfies Record<string, SizeStep>;
 
 const radius = {
@@ -124,6 +128,8 @@ const radius = {
   stamp: 4,
   stampHandle: 10,
   documentPreview: 2,
+  map: 14,
+  mapLabel: 8,
 } satisfies Record<string, RadiusStep>;
 
 const lineWidth = {
@@ -170,6 +176,7 @@ const typography = {
   stepperValue: { fontSize: 16, fontWeight: '600', fontVariant: ['tabular-nums'] },
   dataValue: { fontSize: 15, fontWeight: '600', fontVariant: ['tabular-nums'] },
   coordinates: { fontSize: 14, fontWeight: '500', fontVariant: ['tabular-nums'] },
+  mapLabel: { fontSize: 13, fontWeight: '600' },
 } satisfies Record<string, TypographyToken>;
 
 export const tokens = { gap, inset, size, radius, lineWidth, opacity, typography };
