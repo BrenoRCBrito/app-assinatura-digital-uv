@@ -1,7 +1,7 @@
-import { Alert } from 'react-native';
+import { Alert, Linking } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-import { confirm, confirmDestructive, showError, showInfo, showSuccess } from '../feedback';
+import { confirm, confirmDestructive, showError, showErrorWithSettings, showInfo, showSuccess } from '../feedback';
 
 describe('feedback', () => {
   let alerta: jest.SpyInstance;
@@ -22,6 +22,24 @@ describe('feedback', () => {
 
     expect(alerta).toHaveBeenCalledWith('Erro', 'Não foi possível salvar a assinatura.');
     expect(toast).not.toHaveBeenCalled();
+  });
+
+  test('showErrorWithSettings oferece Fechar e Abrir configurações', () => {
+    const abrirConfiguracoes = jest.spyOn(Linking, 'openSettings').mockResolvedValue(undefined);
+    const mensagemEsperada = 'O local é obrigatório para assinar. Permita o acesso à localização.';
+
+    showErrorWithSettings('Não foi possível assinar', mensagemEsperada);
+
+    const [titulo, mensagem, botoes] = alerta.mock.calls[0];
+    expect([titulo, mensagem]).toEqual(['Não foi possível assinar', mensagemEsperada]);
+    expect(botoes).toEqual([
+      { text: 'Fechar', style: 'cancel' },
+      { text: 'Abrir configurações', onPress: expect.any(Function) },
+    ]);
+    expect(abrirConfiguracoes).not.toHaveBeenCalled();
+    botoes[1].onPress();
+    expect(abrirConfiguracoes).toHaveBeenCalledTimes(1);
+    abrirConfiguracoes.mockRestore();
   });
 
   test('showSuccess mostra um toast de sucesso', () => {

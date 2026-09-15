@@ -8,7 +8,7 @@ export { DesenhoSvg } from './DesenhoSvg';
 export { DocumentCamera } from './DocumentCamera';
 export { EmptyState } from './EmptyState';
 export { FeatureCard } from './FeatureCard';
-export { confirm, confirmDestructive, showError, showInfo, showSuccess } from './feedback';
+export { confirm, confirmDestructive, showError, showErrorWithSettings, showInfo, showSuccess } from './feedback';
 export { Icon, type IconName } from './Icon';
 export { IconButton } from './IconButton';
 export { Row, Stack } from './Layout';

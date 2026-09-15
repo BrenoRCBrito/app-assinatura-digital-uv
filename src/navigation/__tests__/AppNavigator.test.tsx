@@ -4,9 +4,14 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { TestInstance } from 'test-renderer';
 
 import App from '../../../App';
+import { useAssinarDocumento } from '../../hooks/useAssinarDocumento';
 import { authenticateDeviceOwner, getBiometricStatus } from '../../services/localAuthentication';
 import { createAsyncStorageAssinaturaRepository } from '../../storage/asyncStorage/asyncStorageAssinaturaRepository';
+import {
+  createAsyncStorageDocumentoAssinadoRepository,
+} from '../../storage/asyncStorage/asyncStorageDocumentoAssinadoRepository';
 import { criarAssinaturaDeTeste } from '../../storage/testing/assinaturaRepositoryContract';
+import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -16,6 +21,7 @@ jest.mock('../../services/localAuthentication', () => ({
   authenticateDeviceOwner: jest.fn(),
   getBiometricStatus: jest.fn(),
 }));
+jest.mock('../../hooks/useAssinarDocumento', () => ({ useAssinarDocumento: jest.fn() }));
 jest.mock('expo-camera', () => {
   const { Component } = require('react');
 
@@ -39,6 +45,8 @@ jest.mock('expo-camera', () => {
   };
 });
 
+const DOCUMENTO = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z');
+
 function descendentes(no: TestInstance): TestInstance[] {
   return no.children.flatMap((filho) => (typeof filho === 'string' ? [] : [filho, ...descendentes(filho)]));
 }
@@ -47,27 +55,46 @@ function telasDaPilha(): TestInstance[] {
   return descendentes(screen.container).filter((no) => no.type === 'RNSScreen');
 }
 
+async function abrirPosicionar() {
+  await createAsyncStorageAssinaturaRepository().save(
+    criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T12:00:00.000Z'),
+  );
+  await render(<App />);
+  await fireEvent.press(await screen.findByText('Entrar'));
+  await fireEvent.press(await screen.findByText('Digitalizar documento'));
+  await fireEvent.press(await screen.findByLabelText('Tirar foto'));
+  await fireEvent.press(await screen.findByText('Usar foto'));
+  await screen.findByRole('radio', { name: 'Rubrica' });
+}
+
 describe('AppNavigator', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
     jest.mocked(getBiometricStatus).mockResolvedValue('enrolled');
     jest.mocked(authenticateDeviceOwner).mockResolvedValue({ type: 'authenticated' });
+    jest.mocked(useAssinarDocumento).mockReturnValue({
+      assinando: false,
+      assinar: jest.fn().mockResolvedValue({ tipo: 'assinado', documento: DOCUMENTO }),
+    });
   });
 
   test('Usar foto troca a câmera pelo Posicionar, sem o gesto de voltar do iOS', async () => {
-    await createAsyncStorageAssinaturaRepository().save(
-      criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T12:00:00.000Z'),
-    );
-    await render(<App />);
-    await fireEvent.press(await screen.findByText('Entrar'));
-    await fireEvent.press(await screen.findByText('Digitalizar documento'));
-    await fireEvent.press(await screen.findByLabelText('Tirar foto'));
-    await fireEvent.press(await screen.findByText('Usar foto'));
-    await screen.findByRole('radio', { name: 'Rubrica' });
+    await abrirPosicionar();
 
     const pilha = telasDaPilha();
 
     expect(pilha).toHaveLength(2);
     expect(pilha.at(-1)?.props.gestureEnabled).toBe(false);
+  });
+
+  test('Assinar troca o Posicionar pelo documento assinado', async () => {
+    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await abrirPosicionar();
+
+    await fireEvent.changeText(screen.getByLabelText('Título do documento'), 'Contrato de locação');
+    await fireEvent.press(screen.getByText('Assinar'));
+
+    await screen.findByText('PDF A4, 1 página');
+    expect(telasDaPilha()).toHaveLength(2);
   });
 });

@@ -1,4 +1,4 @@
-import { Alert } from 'react-native';
+import { Alert, Linking } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 type ConfirmOptions = Readonly<{
@@ -10,6 +10,18 @@ type ConfirmOptions = Readonly<{
 
 export function showError(title: string, message: string): void {
   Alert.alert(title, message);
+}
+
+export function showErrorWithSettings(title: string, message: string): void {
+  Alert.alert(title, message, [
+    { text: 'Fechar', style: 'cancel' },
+    {
+      text: 'Abrir configurações',
+      onPress: () => {
+        void Linking.openSettings();
+      },
+    },
+  ]);
 }
 
 export function showSuccess(message: string): void {
