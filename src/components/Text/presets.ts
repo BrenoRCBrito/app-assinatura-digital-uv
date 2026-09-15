@@ -34,6 +34,7 @@ export const textPresets = {
   dataLabel: (theme: Theme) => ({ ...theme.typography.sectionLabel, color: theme.textMuted }),
   dataValue: (theme: Theme) => ({ ...theme.typography.dataValue, color: theme.textPrimary }),
   coordinates: (theme: Theme) => ({ ...theme.typography.coordinates, color: theme.textPrimary }),
+  mapLabel: (theme: Theme) => ({ ...theme.typography.mapLabel, color: theme.textPrimary }),
   paperMark: (theme: Theme) => ({ ...theme.typography.paperMark, color: FIXED_COLORS.paperGuide }),
   paperHint: (theme: Theme) => ({
     ...theme.typography.supporting,

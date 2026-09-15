@@ -72,4 +72,14 @@ describe('Text', () => {
       color: lightTheme.textPrimary,
     });
   });
+
+  test('o rótulo do mapa usa o texto forte de 13 na cor principal', async () => {
+    await render(<Text preset="mapLabel">Vassouras</Text>, { wrapper: SettingsProvider });
+
+    expect(StyleSheet.flatten((await screen.findByText('Vassouras')).props.style)).toEqual({
+      fontSize: 13,
+      fontWeight: '600',
+      color: lightTheme.textPrimary,
+    });
+  });
 });
