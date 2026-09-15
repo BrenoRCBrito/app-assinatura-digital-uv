@@ -9,14 +9,18 @@ import {
   PalcoDoSelo,
   Screen,
   showError,
+  showErrorWithSettings,
   SizeStepper,
   Stack,
   Text,
   TextField,
 } from '../../components';
 import type { Assinatura, AssinaturaId } from '../../domain/assinatura';
+import { ValidationError } from '../../domain/brand';
 import { createIsoDateTime } from '../../domain/dateTime';
+import { criarTituloDocumento, type DocumentoId, type TituloDocumento } from '../../domain/documento';
 import { formatDateTime, formatPercent } from '../../domain/format';
+import type { Fraction } from '../../domain/geometry';
 import type { CapturedPhoto } from '../../domain/photo';
 import {
   aumentarSelo,
@@ -26,17 +30,43 @@ import {
   limitarLarguraDoSelo,
   podeAumentarSelo,
   podeDiminuirSelo,
+  seloNaFoto,
   type PosicaoSelo,
 } from '../../domain/selo';
+import { useAssinarDocumento } from '../../hooks/useAssinarDocumento';
 import { useRepositories } from '../../storage/RepositoriesProvider';
+import type { MotivoFalhaAssinatura } from '../../useCases/assinarDocumento';
 
 type PosicionarAssinaturaScreenProps = Readonly<{
   foto: CapturedPhoto;
   onNovaAssinatura: () => void;
+  onAssinado: (documentoId: DocumentoId) => void;
 }>;
 
-export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura }: PosicionarAssinaturaScreenProps) {
+const MENSAGENS_DE_FALHA: Readonly<Record<MotivoFalhaAssinatura, string>> = {
+  autenticacaoBloqueada: 'Muitas tentativas. Use a senha do aparelho.',
+  autenticacaoIndisponivel: 'Ative um bloqueio de tela no aparelho.',
+  autenticacaoFalhou: 'Não foi possível autenticar. Tente de novo.',
+  localSemPermissao: 'O local é obrigatório para assinar. Permita o acesso à localização.',
+  localIndisponivel: 'Não foi possível obter o local. Tente em área aberta.',
+  erroAoGerarDocumento: 'Não foi possível gerar o documento. Tente de novo.',
+};
+
+function lerTitulo(texto: string): TituloDocumento | null {
+  try {
+    return criarTituloDocumento(texto);
+  } catch (error) {
+    if (!(error instanceof ValidationError)) {
+      throw error;
+    }
+    showError('Confira o título', error.message);
+    return null;
+  }
+}
+
+export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura, onAssinado }: PosicionarAssinaturaScreenProps) {
   const { assinaturas: repositorio } = useRepositories();
+  const { assinando, assinar } = useAssinarDocumento();
   const [assinaturas, setAssinaturas] = useState<readonly Assinatura[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [titulo, setTitulo] = useState('');
@@ -81,13 +111,42 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura }: Posiciona
     });
   }, [assinaturas.length, carregando, onNovaAssinatura]);
 
-  function medirSelo({ desenho }: Assinatura) {
-    const larguraMaxima = larguraMaximaDoSelo(foto.size, desenho.quadro);
-    return { desenho, larguraMaxima, largura: limitarLarguraDoSelo(largura, larguraMaxima) };
+  function montarSelo(assinaturaEscolhida: Assinatura) {
+    const larguraMaxima = larguraMaximaDoSelo(foto.size, assinaturaEscolhida.desenho.quadro);
+    return {
+      assinatura: assinaturaEscolhida,
+      larguraMaxima,
+      largura: limitarLarguraDoSelo(largura, larguraMaxima),
+    };
   }
 
-  const assinatura = assinaturas.find((item) => item.id === assinaturaId);
-  const selo = assinatura === undefined ? null : medirSelo(assinatura);
+  const escolhida = assinaturas.find((item) => item.id === assinaturaId);
+  const selo = escolhida === undefined ? null : montarSelo(escolhida);
+
+  async function assinarDocumento(assinaturaEscolhida: Assinatura, larguraDoSelo: Fraction) {
+    const tituloDoDocumento = lerTitulo(titulo);
+    if (tituloDoDocumento === null) {
+      return;
+    }
+    const resultado = await assinar({
+      titulo: tituloDoDocumento,
+      assinatura: assinaturaEscolhida,
+      foto,
+      selo: seloNaFoto(posicao, larguraDoSelo, foto.size, assinaturaEscolhida.desenho.quadro),
+    });
+    if (resultado === null || resultado.tipo === 'cancelado') {
+      return;
+    }
+    if (resultado.tipo === 'assinado') {
+      onAssinado(resultado.documento.id);
+      return;
+    }
+    if (resultado.motivo === 'localSemPermissao') {
+      showErrorWithSettings('Não foi possível assinar', MENSAGENS_DE_FALHA.localSemPermissao);
+      return;
+    }
+    showError('Não foi possível assinar', MENSAGENS_DE_FALHA[resultado.motivo]);
+  }
 
   function escolhaDaAssinatura() {
     if (carregando) {
@@ -116,19 +175,14 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura }: Posiciona
       preset="form"
       footer={
         selo === null ? undefined : (
-          <Stack gap="block">
-            <Text preset="supportingCentered">Arraste o selo até a linha de assinatura.</Text>
-            <SizeStepper
-              label="Tamanho do selo"
-              value={formatPercent(selo.largura)}
-              canDecrease={podeDiminuirSelo(selo.largura)}
-              canIncrease={podeAumentarSelo(selo.largura, selo.larguraMaxima)}
-              decreaseLabel="Diminuir o selo"
-              increaseLabel="Aumentar o selo"
-              onDecrease={() => setLargura(diminuirSelo(selo.largura))}
-              onIncrease={() => setLargura(aumentarSelo(selo.largura, selo.larguraMaxima))}
-            />
-          </Stack>
+          <Button
+            label={assinando ? 'Assinando…' : 'Assinar'}
+            icon="fingerprint"
+            onPress={() => {
+              void assinarDocumento(selo.assinatura, selo.largura);
+            }}
+            disabled={assinando}
+          />
         )
       }
     >
@@ -146,14 +200,27 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura }: Posiciona
           {escolhaDaAssinatura()}
         </Stack>
         {selo === null ? null : (
-          <PalcoDoSelo
-            foto={foto}
-            desenho={selo.desenho}
-            largura={selo.largura}
-            linhas={[formatDateTime(agora), 'Local ao assinar']}
-            posicao={posicao}
-            onMudarPosicao={setPosicao}
-          />
+          <>
+            <PalcoDoSelo
+              foto={foto}
+              desenho={selo.assinatura.desenho}
+              largura={selo.largura}
+              linhas={[formatDateTime(agora), 'Local ao assinar']}
+              posicao={posicao}
+              onMudarPosicao={setPosicao}
+            />
+            <Text preset="supportingCentered">Arraste o selo até a linha de assinatura.</Text>
+            <SizeStepper
+              label="Tamanho do selo"
+              value={formatPercent(selo.largura)}
+              canDecrease={podeDiminuirSelo(selo.largura)}
+              canIncrease={podeAumentarSelo(selo.largura, selo.larguraMaxima)}
+              decreaseLabel="Diminuir o selo"
+              increaseLabel="Aumentar o selo"
+              onDecrease={() => setLargura(diminuirSelo(selo.largura))}
+              onIncrease={() => setLargura(aumentarSelo(selo.largura, selo.larguraMaxima))}
+            />
+          </>
         )}
       </Stack>
     </Screen>

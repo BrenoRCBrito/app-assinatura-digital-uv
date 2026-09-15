@@ -68,6 +68,7 @@ export function AppNavigator() {
                 <PosicionarAssinaturaScreen
                   foto={route.params.foto}
                   onNovaAssinatura={() => navigation.navigate('NovaAssinatura')}
+                  onAssinado={(documentoId) => navigation.replace('Documento', { documentoId })}
                 />
               )}
             </Stack.Screen>
