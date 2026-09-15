@@ -15,14 +15,15 @@ export type ResultadoLocalAssinatura =
   | Readonly<{ tipo: 'indisponivel' }>;
 
 const LIMITE_DO_GPS_MS = 15000;
+const LIMITE_DA_CIDADE_MS = 5000;
 
-function obterPosicaoAtual(): Promise<LocationObject | null> {
+function comLimiteDeTempo<T>(promessa: Promise<T>, limiteMs: number): Promise<T | null> {
   return new Promise((resolve, reject) => {
-    const limite = setTimeout(() => resolve(null), LIMITE_DO_GPS_MS);
-    getCurrentPositionAsync({ accuracy: Accuracy.High }).then(
-      (posicao) => {
+    const limite = setTimeout(() => resolve(null), limiteMs);
+    promessa.then(
+      (valor) => {
         clearTimeout(limite);
-        resolve(posicao);
+        resolve(valor);
       },
       (error: unknown) => {
         clearTimeout(limite);
@@ -32,9 +33,13 @@ function obterPosicaoAtual(): Promise<LocationObject | null> {
   });
 }
 
+function obterPosicaoAtual(): Promise<LocationObject | null> {
+  return comLimiteDeTempo(getCurrentPositionAsync({ accuracy: Accuracy.High }), LIMITE_DO_GPS_MS);
+}
+
 async function obterCidade(posicao: LocationObject): Promise<City | null> {
   try {
-    const [endereco] = await reverseGeocodeAsync(posicao.coords);
+    const [endereco] = (await comLimiteDeTempo(reverseGeocodeAsync(posicao.coords), LIMITE_DA_CIDADE_MS)) ?? [];
     const cidade = endereco?.city?.trim();
     return cidade ? createCity(cidade) : null;
   } catch (error) {

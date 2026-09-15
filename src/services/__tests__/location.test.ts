@@ -116,4 +116,18 @@ describe('obterLocalAssinatura', () => {
     expect(erro).toHaveBeenCalledTimes(1);
     erro.mockRestore();
   });
+
+  test('quando a busca da cidade não responde em 5 s, devolve as coordenadas sem cidade', async () => {
+    jest.useFakeTimers();
+    jest.mocked(getCurrentPositionAsync).mockResolvedValue(POSICAO);
+    jest.mocked(reverseGeocodeAsync).mockReturnValue(new Promise(() => undefined));
+
+    const resultado = obterLocalAssinatura();
+    await jest.advanceTimersByTimeAsync(5000);
+
+    await expect(resultado).resolves.toEqual({
+      tipo: 'obtido',
+      local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: null },
+    });
+  });
 });
