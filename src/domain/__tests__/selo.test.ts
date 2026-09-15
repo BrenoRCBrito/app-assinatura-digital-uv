@@ -11,6 +11,7 @@ import {
   podeAumentarSelo,
   podeDiminuirSelo,
   posicaoInicialDoSelo,
+  seloNaFoto,
 } from '../selo';
 
 describe('tamanho do selo', () => {
@@ -98,5 +99,26 @@ describe('conversão da posição', () => {
 
   test('paraPontoNaArea volta a posição para pixels da área', () => {
     expect(paraPontoNaArea(paraPosicaoSelo(ponto, createSize(200, 120), area), area)).toEqual({ x: 100, y: 200 });
+  });
+});
+
+describe('seloNaFoto', () => {
+  const foto = createSize(400, 1000);
+  const quadro = createSize(300, 150);
+
+  test('sem arrasto, grava a posição inicial em frações da foto', () => {
+    expect(seloNaFoto(null, createFraction(0.5), foto, quadro)).toEqual({ x: 0.25, y: 0.65, largura: 0.5 });
+  });
+
+  test('com arrasto, mantém o canto do selo e grava a largura atual', () => {
+    const posicao = { x: createFraction(0.1), y: createFraction(0.2), largura: createFraction(0.35) };
+
+    expect(seloNaFoto(posicao, createFraction(0.5), foto, quadro)).toEqual({ x: 0.1, y: 0.2, largura: 0.5 });
+  });
+
+  test('traz o selo para dentro quando a largura atual passaria da borda', () => {
+    const posicao = { x: createFraction(0.9), y: createFraction(0.95), largura: createFraction(0.15) };
+
+    expect(seloNaFoto(posicao, createFraction(0.5), foto, quadro)).toEqual({ x: 0.5, y: 0.85, largura: 0.5 });
   });
 });
