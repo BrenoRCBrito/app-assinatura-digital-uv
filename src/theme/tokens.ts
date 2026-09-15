@@ -1,7 +1,7 @@
 import type { TextStyle } from 'react-native';
 
 type SpaceStep = 4 | 6 | 8 | 10 | 12 | 14 | 16 | 18 | 20 | 22 | 24 | 28 | 36 | 48;
-type SizeStep = 13 | 16 | 18 | 20 | 22 | 28 | 36 | 44 | 48 | 52 | 56 | 58 | 60 | 76 | 116 | 132 | 150 | 200;
+type SizeStep = 13 | 16 | 18 | 20 | 22 | 28 | 36 | 44 | 48 | 52 | 56 | 58 | 60 | 72 | 76 | 116 | 132 | 150 | 200;
 type FontSizeStep = 12 | 13 | 14 | 15 | 16 | 17 | 20 | 22 | 32;
 type LineHeightStep = 20 | 23;
 type LetterSpacingStep = -0.5 | -0.3 | 0.6;
@@ -102,6 +102,7 @@ const size = {
   stampHandle: 20,
   stampHandleIcon: 13,
   documentPreview: 132,
+  documentItem: 72,
 } satisfies Record<string, SizeStep>;
 
 const radius = {

@@ -1,6 +1,6 @@
 import { createIsoDateTime } from '../dateTime';
-import { createLatitude, createLongitude } from '../documento';
-import { formatCoordinates, formatDate, formatDateTime, formatPercent } from '../format';
+import { createCity, createLatitude, createLongitude } from '../documento';
+import { formatCoordinates, formatDate, formatDateTime, formatLocal, formatPercent } from '../format';
 import { createFraction } from '../geometry';
 
 describe('formatDate', () => {
@@ -34,5 +34,15 @@ describe('formatCoordinates', () => {
     expect(formatCoordinates({ latitude: createLatitude(-22.404183), longitude: createLongitude(-43.66283) })).toBe(
       '-22.40418, -43.66283',
     );
+  });
+});
+
+describe('formatLocal', () => {
+  test('mostra a cidade e, sem cidade, as coordenadas', () => {
+    const coordenadas = { latitude: createLatitude(-22.40418), longitude: createLongitude(-43.66283) };
+    const comCidade = formatLocal({ coordenadas, cidade: createCity('Vassouras') });
+    const semCidade = formatLocal({ coordenadas, cidade: null });
+
+    expect([comCidade, semCidade]).toEqual(['Vassouras', '-22.40418, -43.66283']);
   });
 });

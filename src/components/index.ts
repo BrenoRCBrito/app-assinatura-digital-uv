@@ -6,6 +6,7 @@ export { ChoiceChips, type ChoiceOption } from './ChoiceChips';
 export { DadoDoDocumento } from './DadoDoDocumento';
 export { DesenhoSvg } from './DesenhoSvg';
 export { DocumentCamera } from './DocumentCamera';
+export { DocumentoItem } from './DocumentoItem';
 export { EmptyState } from './EmptyState';
 export { FeatureCard } from './FeatureCard';
 export { confirm, confirmDestructive, showError, showErrorWithSettings, showInfo, showSuccess } from './feedback';

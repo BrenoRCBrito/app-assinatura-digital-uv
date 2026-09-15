@@ -1,7 +1,7 @@
 import { printToFileAsync } from 'expo-print';
 
 import { createHtml, type Base64, type DocumentoAssinado, type Html } from '../domain/documento';
-import { formatCoordinates, formatDateTime } from '../domain/format';
+import { formatDateTime, formatLocal } from '../domain/format';
 import { layoutDaPagina, TAMANHO_DA_FOLHA_A4 } from '../domain/pagina';
 import { createFileUri, type FileUri } from '../domain/photo';
 import { layoutDoSelo } from '../domain/selo';
@@ -18,7 +18,7 @@ export function montarHtmlDocumento(documento: DocumentoAssinado, fotoBase64: Ba
   const { pagina, foto, esquerda, topo } = layoutDaPagina(documento.tamanhoFoto, TAMANHO_DA_FOLHA_A4.width);
   const { desenho } = documento.assinaturaUsada;
   const selo = layoutDoSelo(documento.selo.largura, foto, desenho.quadro);
-  const local = documento.local.cidade ?? formatCoordinates(documento.local.coordenadas);
+  const local = formatLocal(documento.local);
   const tracos = desenho.tracos.map((traco) => `<path d="${traco}" />`).join('');
 
   return createHtml(`<!DOCTYPE html>

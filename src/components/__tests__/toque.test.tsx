@@ -4,10 +4,12 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
 import { SettingsProvider } from '../../storage/SettingsProvider';
+import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
 import { tokens } from '../../theme';
 import { Button } from '../Button';
 import { ChipButton } from '../ChipButton';
 import { ChoiceChips } from '../ChoiceChips';
+import { DocumentoItem } from '../DocumentoItem';
 import { IconButton } from '../IconButton';
 import { MenuList } from '../MenuList';
 import { SegmentedControl } from '../SegmentedControl';
@@ -102,6 +104,13 @@ describe('retorno ao pressionar', () => {
     await render(<MenuList items={[{ label: 'Configurações', icon: 'settings', onPress: () => undefined }]} />, {
       wrapper: SettingsProvider,
     });
+
+    expect((await estiloPressionado('button')).opacity).toBe(tokens.opacity.pressed);
+  });
+
+  test('a linha do documento fica com a opacidade de pressionado', async () => {
+    const documento = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z');
+    await render(<DocumentoItem documento={documento} onPress={() => undefined} />, { wrapper: SettingsProvider });
 
     expect((await estiloPressionado('button')).opacity).toBe(tokens.opacity.pressed);
   });
