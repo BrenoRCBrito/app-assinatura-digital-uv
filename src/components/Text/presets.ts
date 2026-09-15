@@ -31,6 +31,9 @@ export const textPresets = {
   segment: (theme: Theme) => ({ ...theme.typography.segment, color: theme.textSecondary }),
   segmentSelected: (theme: Theme) => ({ ...theme.typography.segment, color: theme.onPrimary }),
   stepperValue: (theme: Theme) => ({ ...theme.typography.stepperValue, color: theme.textPrimary }),
+  dataLabel: (theme: Theme) => ({ ...theme.typography.sectionLabel, color: theme.textMuted }),
+  dataValue: (theme: Theme) => ({ ...theme.typography.dataValue, color: theme.textPrimary }),
+  coordinates: (theme: Theme) => ({ ...theme.typography.coordinates, color: theme.textPrimary }),
   paperMark: (theme: Theme) => ({ ...theme.typography.paperMark, color: FIXED_COLORS.paperGuide }),
   paperHint: (theme: Theme) => ({
     ...theme.typography.supporting,
