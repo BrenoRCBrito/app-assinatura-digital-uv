@@ -9,6 +9,7 @@ import {
 import { useAuthentication } from '../hooks/useAuthentication';
 import { AssinaturasScreen } from '../screens/AssinaturasScreen';
 import { DigitalizarDocumentoScreen } from '../screens/DigitalizarDocumentoScreen';
+import { DocumentoScreen } from '../screens/DocumentoScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { NovaAssinaturaScreen } from '../screens/NovaAssinaturaScreen';
@@ -59,11 +60,22 @@ export function AppNavigator() {
                 />
               )}
             </Stack.Screen>
-            <Stack.Screen name="PosicionarAssinatura" options={{ title: 'Posicionar assinatura', gestureEnabled: false }}>
+            <Stack.Screen
+              name="PosicionarAssinatura"
+              options={{ title: 'Posicionar assinatura', gestureEnabled: false }}
+            >
               {({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'PosicionarAssinatura'>) => (
                 <PosicionarAssinaturaScreen
                   foto={route.params.foto}
                   onNovaAssinatura={() => navigation.navigate('NovaAssinatura')}
+                />
+              )}
+            </Stack.Screen>
+            <Stack.Screen name="Documento" options={{ title: 'Documento assinado' }}>
+              {({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'Documento'>) => (
+                <DocumentoScreen
+                  documentoId={route.params.documentoId}
+                  onNaoEncontrado={() => navigation.goBack()}
                 />
               )}
             </Stack.Screen>
