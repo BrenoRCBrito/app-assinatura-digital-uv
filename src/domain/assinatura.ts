@@ -1,7 +1,7 @@
 import { ValidationError, type Brand } from './brand';
 import { createIsoDateTime, type IsoDateTime } from './dateTime';
-import { criarDesenho, criarTraco, type Desenho } from './desenho';
-import { createSize } from './geometry';
+import { paraDesenho, type Desenho } from './desenho';
+import { lerObjeto, lerTexto } from './leitura';
 
 export type AssinaturaId = Brand<string, 'AssinaturaId'>;
 export type NomeAssinatura = Brand<string, 'NomeAssinatura'>;
@@ -15,7 +15,7 @@ export type Assinatura = Readonly<{
 
 const ASSINATURA_ID = /^\d+$/;
 const TAMANHO_MAXIMO_DO_NOME = 40;
-const ASSINATURA_SALVA_INVALIDA = 'Assinatura salva inválida.';
+const ASSINATURA_INVALIDA = 'Assinatura salva inválida.';
 
 export function criarAssinaturaId(texto: string = Date.now().toString()): AssinaturaId {
   if (!ASSINATURA_ID.test(texto)) {
@@ -44,46 +44,15 @@ export function ordenarAssinaturasMaisNovasPrimeiro(assinaturas: readonly Assina
   });
 }
 
-function lerObjeto(valor: unknown): object {
-  if (typeof valor !== 'object' || valor === null) {
-    throw new ValidationError(ASSINATURA_SALVA_INVALIDA);
-  }
-  return valor;
-}
-
-function lerTexto(valor: unknown): string {
-  if (typeof valor !== 'string') {
-    throw new ValidationError(ASSINATURA_SALVA_INVALIDA);
-  }
-  return valor;
-}
-
-function lerNumero(valor: unknown): number {
-  if (typeof valor !== 'number') {
-    throw new ValidationError(ASSINATURA_SALVA_INVALIDA);
-  }
-  return valor;
-}
-
 export function paraAssinatura(dado: unknown): Assinatura {
-  const assinatura = lerObjeto(dado);
-  const desenho = lerObjeto('desenho' in assinatura ? assinatura.desenho : undefined);
-  const quadro = lerObjeto('quadro' in desenho ? desenho.quadro : undefined);
-  const tracos = 'tracos' in desenho ? desenho.tracos : undefined;
-  if (!Array.isArray(tracos)) {
-    throw new ValidationError(ASSINATURA_SALVA_INVALIDA);
-  }
+  const assinatura = lerObjeto(dado, ASSINATURA_INVALIDA);
 
   return {
-    id: criarAssinaturaId(lerTexto('id' in assinatura ? assinatura.id : undefined)),
-    nome: criarNomeAssinatura(lerTexto('nome' in assinatura ? assinatura.nome : undefined)),
-    desenho: criarDesenho(
-      tracos.map((traco) => criarTraco(lerTexto(traco))),
-      createSize(
-        lerNumero('width' in quadro ? quadro.width : undefined),
-        lerNumero('height' in quadro ? quadro.height : undefined),
-      ),
+    id: criarAssinaturaId(lerTexto('id' in assinatura ? assinatura.id : undefined, ASSINATURA_INVALIDA)),
+    nome: criarNomeAssinatura(lerTexto('nome' in assinatura ? assinatura.nome : undefined, ASSINATURA_INVALIDA)),
+    desenho: paraDesenho('desenho' in assinatura ? assinatura.desenho : undefined, ASSINATURA_INVALIDA),
+    criadaEm: createIsoDateTime(
+      lerTexto('criadaEm' in assinatura ? assinatura.criadaEm : undefined, ASSINATURA_INVALIDA),
     ),
-    criadaEm: createIsoDateTime(lerTexto('criadaEm' in assinatura ? assinatura.criadaEm : undefined)),
   };
 }

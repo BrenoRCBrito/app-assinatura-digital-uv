@@ -1,4 +1,5 @@
 import { ValidationError, type Brand } from './brand';
+import { lerNumero, lerObjeto } from './leitura';
 
 export type Pixels = Brand<number, 'Pixels'>;
 
@@ -28,6 +29,15 @@ export function createFraction(value: number): Fraction {
 
 export function createSize(width: number, height: number): Size {
   return { width: createPixels(width), height: createPixels(height) };
+}
+
+export function paraSize(dado: unknown, mensagem: string): Size {
+  const tamanho = lerObjeto(dado, mensagem);
+
+  return createSize(
+    lerNumero('width' in tamanho ? tamanho.width : undefined, mensagem),
+    lerNumero('height' in tamanho ? tamanho.height : undefined, mensagem),
+  );
 }
 
 export function clampPointToSize(x: number, y: number, size: Size): ScreenPoint {

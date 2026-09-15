@@ -1,5 +1,6 @@
 import { createIsoDateTime } from '../dateTime';
-import { formatDate, formatDateTime, formatPercent } from '../format';
+import { createLatitude, createLongitude } from '../documento';
+import { formatCoordinates, formatDate, formatDateTime, formatPercent } from '../format';
 import { createFraction } from '../geometry';
 
 describe('formatDate', () => {
@@ -25,5 +26,13 @@ describe('formatPercent', () => {
       '60%',
       '15%',
     ]);
+  });
+});
+
+describe('formatCoordinates', () => {
+  test('mostra latitude e longitude com 5 casas, separadas por vírgula', () => {
+    expect(formatCoordinates({ latitude: createLatitude(-22.404183), longitude: createLongitude(-43.66283) })).toBe(
+      '-22.40418, -43.66283',
+    );
   });
 });
