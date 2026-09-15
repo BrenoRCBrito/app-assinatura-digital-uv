@@ -1,3 +1,4 @@
+import type { DocumentoId } from '../domain/documento';
 import type { CapturedPhoto } from '../domain/photo';
 
 export type RootStackParamList = {
@@ -8,4 +9,5 @@ export type RootStackParamList = {
   NovaAssinatura: undefined;
   DigitalizarDocumento: undefined;
   PosicionarAssinatura: { foto: CapturedPhoto };
+  Documento: { documentoId: DocumentoId };
 };
