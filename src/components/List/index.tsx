@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { FlatList } from 'react-native';
+import { FlatList, View } from 'react-native';
 
 import { useAppTheme } from '../../theme';
 import { EmptyState } from '../EmptyState';
@@ -18,6 +18,7 @@ type ListProps<Item> = Readonly<{
 export function List<Item>({ items, keyOf, renderItem, loading, emptyMessage, preset = 'default' }: ListProps<Item>) {
   const { theme } = useAppTheme();
   const styles = useMemo(() => listPresets[preset](theme), [preset, theme]);
+  const ultimo = items.length - 1;
 
   return (
     <FlatList
@@ -25,7 +26,12 @@ export function List<Item>({ items, keyOf, renderItem, loading, emptyMessage, pr
       keyExtractor={keyOf}
       contentContainerStyle={styles.content}
       ListEmptyComponent={loading ? <LoadingIndicator /> : <EmptyState message={emptyMessage} />}
-      renderItem={({ item }) => renderItem(item)}
+      renderItem={({ item, index }) => (
+        <View style={[styles.item, index === 0 && styles.first, index === ultimo && styles.last]}>
+          {styles.divider === null || index === 0 ? null : <View style={styles.divider} />}
+          {renderItem(item)}
+        </View>
+      )}
     />
   );
 }
