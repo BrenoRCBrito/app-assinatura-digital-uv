@@ -15,6 +15,7 @@ export type ResultadoLocalAssinatura =
   | Readonly<{ tipo: 'indisponivel' }>;
 
 const LIMITE_DO_GPS_MS = 15000;
+const IDADE_MAXIMA_DA_ULTIMA_POSICAO_MS = 300000;
 const LIMITE_DA_CIDADE_MS = 5000;
 
 function comLimiteDeTempo<T>(promessa: Promise<T>, limiteMs: number): Promise<T | null> {
@@ -37,6 +38,10 @@ function obterPosicaoAtual(): Promise<LocationObject | null> {
   return comLimiteDeTempo(getCurrentPositionAsync({ accuracy: Accuracy.High }), LIMITE_DO_GPS_MS);
 }
 
+function obterUltimaPosicao(): Promise<LocationObject | null> {
+  return getLastKnownPositionAsync({ maxAge: IDADE_MAXIMA_DA_ULTIMA_POSICAO_MS });
+}
+
 async function obterCidade(posicao: LocationObject): Promise<City | null> {
   try {
     const [endereco] = (await comLimiteDeTempo(reverseGeocodeAsync(posicao.coords), LIMITE_DA_CIDADE_MS)) ?? [];
@@ -54,7 +59,7 @@ export async function obterLocalAssinatura(): Promise<ResultadoLocalAssinatura> 
     if (!permissao.granted) {
       return { tipo: 'semPermissao' };
     }
-    const posicao = (await obterPosicaoAtual()) ?? (await getLastKnownPositionAsync());
+    const posicao = (await obterPosicaoAtual()) ?? (await obterUltimaPosicao());
     if (posicao === null) {
       return { tipo: 'indisponivel' };
     }
