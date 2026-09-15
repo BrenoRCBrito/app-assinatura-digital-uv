@@ -86,6 +86,7 @@ export function AppNavigator() {
                 <DocumentoScreen
                   documentoId={route.params.documentoId}
                   onNaoEncontrado={() => navigation.goBack()}
+                  onExcluido={() => navigation.goBack()}
                 />
               )}
             </Stack.Screen>

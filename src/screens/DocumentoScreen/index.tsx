@@ -2,30 +2,36 @@ import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
 
 import {
   Button,
+  confirmDestructive,
   DadoDoDocumento,
   LoadingIndicator,
+  MapaDoLocal,
   PreviaDocumento,
   Row,
   Screen,
   showError,
+  showSuccess,
   Stack,
   Text,
 } from '../../components';
 import type { DocumentoAssinado, DocumentoId } from '../../domain/documento';
-import { formatCoordinates, formatDateTime } from '../../domain/format';
-import { uriFotoDocumento } from '../../services/fileSystem';
+import { formatCoordinates, formatDateTime, formatLocal } from '../../domain/format';
+import { excluirArquivosDocumento, uriFotoDocumento } from '../../services/fileSystem';
 import { compartilharPdf } from '../../services/sharing';
 import { useRepositories } from '../../storage/RepositoriesProvider';
+import { excluirDocumento } from '../../useCases/excluirDocumento';
 
 type DocumentoScreenProps = Readonly<{
   documentoId: DocumentoId;
   onNaoEncontrado: () => void;
+  onExcluido: () => void;
 }>;
 
-export function DocumentoScreen({ documentoId, onNaoEncontrado }: DocumentoScreenProps) {
+export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: DocumentoScreenProps) {
   const { documentos } = useRepositories();
   const [documento, setDocumento] = useState<DocumentoAssinado | null>(null);
   const compartilhandoRef = useRef(false);
+  const excluindoRef = useRef(false);
 
   const sairComErro = useEffectEvent((mensagem: string) => {
     showError('Erro', mensagem);
@@ -74,6 +80,31 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado }: DocumentoScree
     }
   }
 
+  async function excluir(documentoAberto: DocumentoAssinado) {
+    if (excluindoRef.current) {
+      return;
+    }
+    excluindoRef.current = true;
+    if ((await excluirDocumento({ documentos, excluirArquivosDocumento }, documentoAberto.id)) === 'falhou') {
+      excluindoRef.current = false;
+      showError('Erro', 'Não foi possível excluir o documento.');
+      return;
+    }
+    showSuccess('Documento excluído');
+    onExcluido();
+  }
+
+  function confirmarExclusao(documentoAberto: DocumentoAssinado) {
+    confirmDestructive({
+      title: 'Excluir documento',
+      message: `Excluir "${documentoAberto.titulo}"? O PDF e a foto também são apagados.`,
+      confirmLabel: 'Excluir',
+      onConfirm: () => {
+        void excluir(documentoAberto);
+      },
+    });
+  }
+
   if (documento === null) {
     return (
       <Screen preset="centered">
@@ -83,19 +114,29 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado }: DocumentoScree
   }
 
   const assinadoEm = formatDateTime(documento.assinadoEm);
-  const coordenadas = formatCoordinates(documento.local.coordenadas);
 
   return (
     <Screen
       preset="menu"
       footer={
-        <Button
-          label="Compartilhar PDF"
-          icon="share"
-          onPress={() => {
-            void compartilhar(documento);
-          }}
-        />
+        <Stack gap="actions">
+          <Button
+            label="Compartilhar PDF"
+            icon="share"
+            onPress={() => {
+              void compartilhar(documento);
+            }}
+          />
+          <Row justify="center">
+            <Button
+              label="Excluir documento"
+              icon="trash"
+              onPress={() => confirmarExclusao(documento)}
+              preset="danger"
+              size="sm"
+            />
+          </Row>
+        </Stack>
       }
     >
       <Stack gap="block">
@@ -109,17 +150,22 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado }: DocumentoScree
             tamanhoFoto={documento.tamanhoFoto}
             desenho={documento.assinaturaUsada.desenho}
             selo={documento.selo}
-            linhas={[assinadoEm, documento.local.cidade ?? coordenadas]}
+            linhas={[assinadoEm, formatLocal(documento.local)]}
           />
           <Stack gap="documentData" flex={1}>
             <DadoDoDocumento rotulo="Assinado em" valor={assinadoEm} />
             {documento.local.cidade === null ? null : (
               <DadoDoDocumento rotulo="Local" valor={documento.local.cidade} />
             )}
-            <DadoDoDocumento rotulo="Coordenadas" valor={coordenadas} preset="coordenadas" />
+            <DadoDoDocumento
+              rotulo="Coordenadas"
+              valor={formatCoordinates(documento.local.coordenadas)}
+              preset="coordenadas"
+            />
             <DadoDoDocumento rotulo="Assinatura" valor={documento.assinaturaUsada.nome} />
           </Stack>
         </Row>
+        <MapaDoLocal coordenadas={documento.local.coordenadas} rotulo={documento.local.cidade} />
       </Stack>
     </Screen>
   );
