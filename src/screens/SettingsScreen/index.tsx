@@ -1,8 +1,9 @@
 import React from 'react';
 
-import { Card, Screen, Section, SegmentedControl, Stack, ToggleRow, type SegmentOption } from '../../components';
+import { Button, Card, Screen, Section, SegmentedControl, Stack, ToggleRow, type SegmentOption } from '../../components';
 import type { GestureEngine, ThemeName } from '../../domain/settings';
 import { useSettings } from '../../storage/SettingsProvider';
+import { useRepositories } from "../../storage/RepositoriesProvider";
 
 const THEME_OPTIONS: readonly SegmentOption<ThemeName>[] = [
   { value: 'light', label: 'Claro' },
@@ -16,6 +17,7 @@ const GESTURE_ENGINE_OPTIONS: readonly SegmentOption<GestureEngine>[] = [
 
 export function SettingsScreen() {
   const { settings, updateSettings } = useSettings();
+  const { assinaturas: repositorioAssinatura, documentos: repositorioDocumentos, usuarios: repositorioUsuarios } = useRepositories();
 
   return (
     <Screen preset="scroll">
@@ -46,6 +48,17 @@ export function SettingsScreen() {
             description="Guarda a foto original do documento nas suas fotos."
             value={settings.salvarCopiaNaGaleria}
             onValueChange={(salvarCopiaNaGaleria) => updateSettings({ salvarCopiaNaGaleria })}
+          />
+        </Section>
+
+        <Section label="Dados">
+          <Button
+            label="Limpar dados do app"
+            onPress={async () => {
+              await repositorioAssinatura.clear();
+              await repositorioDocumentos.clear();
+              await repositorioUsuarios.clear();
+            }}
           />
         </Section>
       </Stack>

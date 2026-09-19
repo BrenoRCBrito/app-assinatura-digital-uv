@@ -21,6 +21,11 @@ async function gravarAssinaturas(assinaturas: readonly Assinatura[]): Promise<vo
   await AsyncStorage.setItem(ASSINATURAS_STORAGE_KEY, JSON.stringify(assinaturas));
 }
 
+async function clearAsyncStorageAssinaturaRepository() {
+  await AsyncStorage.clear();
+  console.log('Assinaturas AsyncStorage wiped');
+}
+
 export function createAsyncStorageAssinaturaRepository(): AssinaturaRepository {
   return {
     async list(usuarioId) {
@@ -35,6 +40,11 @@ export function createAsyncStorageAssinaturaRepository(): AssinaturaRepository {
       const atuais = await lerAssinaturas();
       await gravarAssinaturas(atuais.filter((atual) => atual.id !== id));
     },
+    async clear() {
+      await clearAsyncStorageAssinaturaRepository();
+    }
   };
 }
+
+
 
