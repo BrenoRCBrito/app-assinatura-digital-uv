@@ -19,6 +19,8 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 import { createNavigationTheme } from '../theme/createNavigationTheme';
 import { useAppTheme } from '../theme/useAppTheme';
 import type { RootStackParamList } from './types';
+import { CriarContaScreen } from '../screens/CriarContaScreen';
+
 
 type AppNavigation = NativeStackNavigationProp<RootStackParamList, keyof RootStackParamList>;
 
@@ -93,8 +95,23 @@ export function AppNavigator() {
             <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configurações' }} />
           </>
         ) : (
-          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <>
+            <Stack.Screen name="Login" options={{ headerShown: false }}>
+              {({ navigation }: { navigation: AppNavigation }) => (
+                <LoginScreen onCriarConta={() => navigation.navigate('CriarConta')} />
+              )}
+            </Stack.Screen>
+            <Stack.Screen name="CriarConta" options={{ headerShown: false }}>
+              {({ navigation }: { navigation: AppNavigation }) => (
+                <CriarContaScreen
+                  onContaCriada={() => navigation.navigate('Login')}
+                  onJaTenhoConta={() => navigation.navigate('Login')}
+                />
+              )}
+            </Stack.Screen>
+          </>
         )}
+
       </Stack.Navigator>
     </NavigationContainer>
   );

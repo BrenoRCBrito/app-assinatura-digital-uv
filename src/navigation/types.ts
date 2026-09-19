@@ -3,6 +3,7 @@ import type { CapturedPhoto } from '../domain/photo';
 
 export type RootStackParamList = {
   Login: undefined;
+  CriarConta: undefined;
   Home: undefined;
   Settings: undefined;
   Assinaturas: undefined;
