@@ -9,7 +9,7 @@ import { DEFAULT_SETTINGS, type ThemeName } from '../domain/settings';
 import { authenticateDeviceOwner, getBiometricStatus } from '../services/localAuthentication';
 import { createAsyncStorageAssinaturaRepository } from '../storage/asyncStorage/asyncStorageAssinaturaRepository';
 import { SETTINGS_STORAGE_KEY } from '../storage/settingsStorage';
-import { criarAssinaturaDeTeste } from '../storage/testing/assinaturaRepositoryContract';
+import { criarAssinaturaDeTeste, USUARIO_DE_TESTE } from '../storage/testing/assinaturaRepositoryContract';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -111,24 +111,34 @@ function capturarTelaEmFoco(): readonly Amostra[] {
 
 async function entrar() {
   await render(<App />);
-  await fireEvent.press(await screen.findByText('Entrar'));
+  await fireEvent.press(await screen.findByText('Entrar com biometria'));
   await screen.findByText('Assinar documento');
 }
 
 describe.each(['light', 'dark'] as const)('estilo das telas no tema %s', (themeName: ThemeName) => {
   beforeEach(async () => {
     await AsyncStorage.clear();
-    await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, theme: themeName }));
+    await AsyncStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({
+        ...DEFAULT_SETTINGS,
+        theme: themeName,
+        loginBiometricoAtivado: true,
+        perguntaBiometriaRespondida: true,
+        ultimoUsuarioIdBiometria: USUARIO_DE_TESTE,
+      }),
+    );
     jest.mocked(getBiometricStatus).mockResolvedValue('enrolled');
     jest.mocked(authenticateDeviceOwner).mockResolvedValue({ type: 'authenticated' });
   });
 
+
   test('login, início e configurações', async () => {
     await render(<App />);
-    await screen.findByText('Use sua biometria ou a senha do aparelho para entrar.');
+    await screen.findByText('Entrar com biometria');
     expect(capturarTelaEmFoco()).toMatchSnapshot('login');
 
-    await fireEvent.press(screen.getByText('Entrar'));
+    await fireEvent.press(screen.getByText('Entrar com biometria'));
     await screen.findByText('Assinar documento');
     expect(capturarTelaEmFoco()).toMatchSnapshot('início');
 
@@ -136,6 +146,7 @@ describe.each(['light', 'dark'] as const)('estilo das telas no tema %s', (themeN
     await screen.findByText('Motor de gestos');
     expect(capturarTelaEmFoco()).toMatchSnapshot('configurações');
   });
+
 
   test('lista vazia e nova assinatura em pé e deitada', async () => {
     await entrar();

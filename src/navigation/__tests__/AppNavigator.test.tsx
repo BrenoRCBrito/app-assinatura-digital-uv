@@ -11,8 +11,11 @@ import { createAsyncStorageAssinaturaRepository } from '../../storage/asyncStora
 import {
   createAsyncStorageDocumentoAssinadoRepository,
 } from '../../storage/asyncStorage/asyncStorageDocumentoAssinadoRepository';
-import { criarAssinaturaDeTeste } from '../../storage/testing/assinaturaRepositoryContract';
 import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
+import { DEFAULT_SETTINGS } from '../../domain/settings';
+import { SETTINGS_STORAGE_KEY } from '../../storage/settingsStorage';
+import { criarAssinaturaDeTeste, USUARIO_DE_TESTE } from '../../storage/testing/assinaturaRepositoryContract';
+
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -66,7 +69,7 @@ async function abrirPosicionar() {
     criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T12:00:00.000Z'),
   );
   await render(<App />);
-  await fireEvent.press(await screen.findByText('Entrar'));
+  await fireEvent.press(await screen.findByText('Entrar com biometria'));
   await fireEvent.press(await screen.findByText('Digitalizar documento'));
   await fireEvent.press(await screen.findByLabelText('Tirar foto'));
   await fireEvent.press(await screen.findByText('Usar foto'));
@@ -76,7 +79,7 @@ async function abrirPosicionar() {
 async function abrirDocumentoPeloHistorico() {
   await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
   await render(<App />);
-  await fireEvent.press(await screen.findByText('Entrar'));
+  await fireEvent.press(await screen.findByText('Entrar com biometria'));
   await fireEvent.press(await screen.findByText('Histórico'));
   await fireEvent.press(await screen.findByText('Contrato de locação'));
   await screen.findByText('PDF A4, 1 página');
@@ -85,13 +88,22 @@ async function abrirDocumentoPeloHistorico() {
 describe('AppNavigator', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
+    await AsyncStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({
+        ...DEFAULT_SETTINGS,
+        loginBiometricoAtivado: true,
+        perguntaBiometriaRespondida: true,
+        ultimoUsuarioIdBiometria: USUARIO_DE_TESTE,
+      }),
+    );
     jest.mocked(getBiometricStatus).mockResolvedValue('enrolled');
     jest.mocked(authenticateDeviceOwner).mockResolvedValue({ type: 'authenticated' });
     jest.mocked(useAssinarDocumento).mockReturnValue({
       assinando: false,
       assinar: jest.fn().mockResolvedValue({ tipo: 'assinado', documento: DOCUMENTO }),
     });
-  });
+});
 
   test('Usar foto troca a câmera pelo Posicionar, sem o gesto de voltar do iOS', async () => {
     await abrirPosicionar();
