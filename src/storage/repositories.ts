@@ -6,6 +6,7 @@ export interface AssinaturaRepository {
   list(usuarioId: UsuarioId): Promise<readonly Assinatura[]>;
   save(assinatura: Assinatura): Promise<void>;
   delete(id: AssinaturaId): Promise<void>;
+  clear(): Promise<void>;
 }
 
 export interface DocumentoAssinadoRepository {
@@ -13,11 +14,13 @@ export interface DocumentoAssinadoRepository {
   findById(id: DocumentoId): Promise<DocumentoAssinado | null>;
   save(documento: DocumentoAssinado): Promise<void>;
   delete(id: DocumentoId): Promise<void>;
+  clear(): Promise<void>;
 }
 
 export interface UsuarioRepository {
   findByEmail(email: Email): Promise<Usuario | null>;
   create(dados: Readonly<{ email: Email; senhaHash: string }>): Promise<Usuario>;
+  clear(): Promise<void>;
 }
 
 export type Repositories = Readonly<{

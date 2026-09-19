@@ -25,6 +25,11 @@ async function gravarDocumentos(documentos: readonly DocumentoAssinado[]): Promi
   await AsyncStorage.setItem(DOCUMENTOS_STORAGE_KEY, JSON.stringify(documentos));
 }
 
+ async function clearAsyncStorageDocumentoAssinadoRepository() {
+  await AsyncStorage.clear();
+  console.log('Documentos AsyncStorage wiped');
+}
+
 export function createAsyncStorageDocumentoAssinadoRepository(): DocumentoAssinadoRepository {
   return {
     async list(usuarioId) {
@@ -42,5 +47,10 @@ export function createAsyncStorageDocumentoAssinadoRepository(): DocumentoAssina
       const atuais = await lerDocumentos();
       await gravarDocumentos(atuais.filter((atual) => atual.id !== id));
     },
+    async clear() {
+      await clearAsyncStorageDocumentoAssinadoRepository();
+    }
   };
 }
+
+
