@@ -34,7 +34,14 @@ describe('settingsStorage', () => {
   });
 
   test('carrega o que foi salvo', async () => {
-    const settings: Settings = { theme: 'dark', gestureEngine: 'reanimated', salvarCopiaNaGaleria: true };
+    const settings: Settings = {
+      theme: 'dark',
+      gestureEngine: 'reanimated',
+      salvarCopiaNaGaleria: true,
+      loginBiometricoAtivado: true,
+      perguntaBiometriaRespondida: true,
+      ultimoUsuarioIdBiometria: '1',
+    };
 
     await saveSettings(settings);
 

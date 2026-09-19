@@ -17,11 +17,36 @@ describe('parseSettings', () => {
     expect(parseSettings(salvo)).toEqual(salvo);
   });
 
+  test('mantém valores válidos', () => {
+    const salvo = {
+      theme: 'dark',
+      gestureEngine: 'reanimated',
+      salvarCopiaNaGaleria: true,
+      loginBiometricoAtivado: true,
+      perguntaBiometriaRespondida: true,
+      ultimoUsuarioIdBiometria: '1',
+    };
+
+    expect(parseSettings(salvo)).toEqual(salvo);
+  });
+
   test('troca só os campos inválidos pelo padrão', () => {
-    expect(parseSettings({ theme: 'sepia', gestureEngine: 'reanimated', salvarCopiaNaGaleria: 'sim' })).toEqual({
+    expect(
+      parseSettings({
+        theme: 'sepia',
+        gestureEngine: 'reanimated',
+        salvarCopiaNaGaleria: 'sim',
+        loginBiometricoAtivado: true,
+        perguntaBiometriaRespondida: true,
+        ultimoUsuarioIdBiometria: '1',
+      }),
+    ).toEqual({
       theme: 'light',
       gestureEngine: 'reanimated',
       salvarCopiaNaGaleria: false,
+      loginBiometricoAtivado: true,
+      perguntaBiometriaRespondida: true,
+      ultimoUsuarioIdBiometria: '1',
     });
   });
 
