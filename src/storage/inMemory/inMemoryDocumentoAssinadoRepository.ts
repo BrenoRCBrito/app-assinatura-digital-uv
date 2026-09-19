@@ -5,8 +5,8 @@ export function createInMemoryDocumentoAssinadoRepository(): DocumentoAssinadoRe
   let documentos: readonly DocumentoAssinado[] = [];
 
   return {
-    async list() {
-      return ordenarDocumentosMaisNovosPrimeiro(documentos);
+    async list(usuarioId) {
+      return ordenarDocumentosMaisNovosPrimeiro(documentos.filter((d) => d.usuarioId === usuarioId));
     },
     async findById(id) {
       return documentos.find((documento) => documento.id === id) ?? null;

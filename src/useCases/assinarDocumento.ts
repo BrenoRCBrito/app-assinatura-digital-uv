@@ -6,6 +6,7 @@ import type { PosicaoSelo } from '../domain/selo';
 import type { AuthenticationPurpose, AuthenticationResult } from '../services/localAuthentication';
 import type { ResultadoLocalAssinatura } from '../services/location';
 import type { DocumentoAssinadoRepository } from '../storage/repositories';
+import type { UsuarioId } from '../domain/usuario';
 
 export type PedidoAssinatura = Readonly<{
   titulo: TituloDocumento;
@@ -39,7 +40,9 @@ export type DependenciasAssinatura = Readonly<{
   documentos: DocumentoAssinadoRepository;
   agora: () => IsoDateTime;
   criarDocumentoId: () => DocumentoId;
+  usuarioId: UsuarioId;
 }>;
+
 
 type FalhaDeAutenticacao = Exclude<AuthenticationResult['type'], 'authenticated' | 'cancelled'>;
 
@@ -78,14 +81,16 @@ export async function assinarDocumento(
   }
 
   const documento: DocumentoAssinado = {
-    id: dependencias.criarDocumentoId(),
-    titulo: pedido.titulo,
-    assinaturaUsada: { nome: pedido.assinatura.nome, desenho: pedido.assinatura.desenho },
-    tamanhoFoto: pedido.foto.size,
-    selo: pedido.selo,
-    local: local.local,
-    assinadoEm: dependencias.agora(),
+  id: dependencias.criarDocumentoId(),
+  usuarioId: dependencias.usuarioId,
+  titulo: pedido.titulo,
+  assinaturaUsada: { nome: pedido.assinatura.nome, desenho: pedido.assinatura.desenho },
+  tamanhoFoto: pedido.foto.size,
+  selo: pedido.selo,
+  local: local.local,
+  assinadoEm: dependencias.agora(),
   };
+
 
   try {
     await dependencias.copiarFotoDocumento(documento.id, pedido.foto);

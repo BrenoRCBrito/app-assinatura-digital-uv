@@ -27,8 +27,9 @@ async function gravarDocumentos(documentos: readonly DocumentoAssinado[]): Promi
 
 export function createAsyncStorageDocumentoAssinadoRepository(): DocumentoAssinadoRepository {
   return {
-    async list() {
-      return ordenarDocumentosMaisNovosPrimeiro(await lerDocumentos());
+    async list(usuarioId) {
+      const todos = await lerDocumentos();
+      return ordenarDocumentosMaisNovosPrimeiro(todos.filter((documento) => documento.usuarioId === usuarioId));
     },
     async findById(id) {
       return (await lerDocumentos()).find((documento) => documento.id === id) ?? null;

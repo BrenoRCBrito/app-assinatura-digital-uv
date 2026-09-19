@@ -10,6 +10,7 @@ import {
   type DocumentoAssinado,
 } from '../../domain/documento';
 import { createFraction, createSize } from '../../domain/geometry';
+import { criarUsuarioId, type UsuarioId } from '../../domain/usuario';
 import type { DocumentoAssinadoRepository } from '../repositories';
 
 type OpcoesDoContrato = Readonly<{
@@ -17,9 +18,18 @@ type OpcoesDoContrato = Readonly<{
   corromperDados?: () => Promise<void>;
 }>;
 
-export function criarDocumentoDeTeste(id: string, titulo: string, assinadoEm: string): DocumentoAssinado {
+export const USUARIO_DE_TESTE = criarUsuarioId('1');
+export const OUTRO_USUARIO_DE_TESTE = criarUsuarioId('2');
+
+export function criarDocumentoDeTeste(
+  id: string,
+  titulo: string,
+  assinadoEm: string,
+  usuarioId: UsuarioId = USUARIO_DE_TESTE,
+): DocumentoAssinado {
   return {
     id: criarDocumentoId(id),
+    usuarioId,
     titulo: criarTituloDocumento(titulo),
     assinaturaUsada: {
       nome: criarNomeAssinatura('Rubrica'),
@@ -46,7 +56,7 @@ export function testarContratoDocumentoAssinadoRepository(
     });
 
     test('list devolve vazio quando nada foi salvo', async () => {
-      await expect(criarRepositorio().list()).resolves.toEqual([]);
+      await expect(criarRepositorio().list(USUARIO_DE_TESTE)).resolves.toEqual([]);
     });
 
     test('list devolve do mais novo para o mais antigo', async () => {
@@ -57,7 +67,24 @@ export function testarContratoDocumentoAssinadoRepository(
       await repositorio.save(antigo);
       await repositorio.save(novo);
 
-      await expect(repositorio.list()).resolves.toEqual([novo, antigo]);
+      await expect(repositorio.list(USUARIO_DE_TESTE)).resolves.toEqual([novo, antigo]);
+    });
+
+    test('list só devolve os documentos do usuário pedido', async () => {
+      const repositorio = criarRepositorio();
+      const meu = criarDocumentoDeTeste('1', 'Meu', '2026-09-10T10:00:00.000Z', USUARIO_DE_TESTE);
+      const daOutraConta = criarDocumentoDeTeste(
+        '2',
+        'De outra conta',
+        '2026-09-12T10:00:00.000Z',
+        OUTRO_USUARIO_DE_TESTE,
+      );
+
+      await repositorio.save(meu);
+      await repositorio.save(daOutraConta);
+
+      await expect(repositorio.list(USUARIO_DE_TESTE)).resolves.toEqual([meu]);
+      await expect(repositorio.list(OUTRO_USUARIO_DE_TESTE)).resolves.toEqual([daOutraConta]);
     });
 
     test('findById devolve o documento salvo ou null', async () => {
@@ -76,7 +103,7 @@ export function testarContratoDocumentoAssinadoRepository(
 
       await repositorio.save(renomeado);
 
-      await expect(repositorio.list()).resolves.toEqual([renomeado]);
+      await expect(repositorio.list(USUARIO_DE_TESTE)).resolves.toEqual([renomeado]);
     });
 
     test('delete remove só o documento pedido', async () => {
@@ -87,7 +114,7 @@ export function testarContratoDocumentoAssinadoRepository(
 
       await repositorio.delete(criarDocumentoId('2'));
 
-      await expect(repositorio.list()).resolves.toEqual([fica]);
+      await expect(repositorio.list(USUARIO_DE_TESTE)).resolves.toEqual([fica]);
     });
 
     test('delete de id inexistente não faz nada', async () => {
@@ -97,7 +124,7 @@ export function testarContratoDocumentoAssinadoRepository(
 
       await repositorio.delete(criarDocumentoId('999'));
 
-      await expect(repositorio.list()).resolves.toEqual([documento]);
+      await expect(repositorio.list(USUARIO_DE_TESTE)).resolves.toEqual([documento]);
     });
 
     const { corromperDados } = opcoes;
@@ -105,7 +132,7 @@ export function testarContratoDocumentoAssinadoRepository(
       test('list lança erro quando o dado salvo está corrompido', async () => {
         await corromperDados();
 
-        await expect(criarRepositorio().list()).rejects.toThrow();
+        await expect(criarRepositorio().list(USUARIO_DE_TESTE)).rejects.toThrow();
       });
     }
   });

@@ -1,4 +1,5 @@
 import { createIsoDateTime } from '../../domain/dateTime';
+import { criarUsuarioId } from '../../domain/usuario';
 import {
   createBase64,
   createCity,
@@ -16,6 +17,7 @@ import { assinarDocumento, type DependenciasAssinatura, type PedidoAssinatura } 
 
 const ID = criarDocumentoId('1757680000000');
 const ASSINATURA = criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-10T10:00:00.000Z');
+const USUARIO_ID = criarUsuarioId('42');
 const LOCAL = {
   coordenadas: { latitude: createLatitude(-22.40418), longitude: createLongitude(-43.66283) },
   cidade: createCity('Vassouras'),
@@ -31,7 +33,7 @@ const PDF = createFileUri('file:///cache/Print/documento.pdf');
 function criarDependencias(sobrescrever: Partial<DependenciasAssinatura> = {}) {
   const passos: string[] = [];
   const registro = createInMemoryDocumentoAssinadoRepository();
-  const dependencias: DependenciasAssinatura = {
+    const dependencias: DependenciasAssinatura = {
     authenticateDeviceOwner: jest.fn(async (purpose) => {
       passos.push(`autenticar ${purpose}`);
       return { type: 'authenticated' as const };
@@ -70,6 +72,7 @@ function criarDependencias(sobrescrever: Partial<DependenciasAssinatura> = {}) {
     },
     agora: () => createIsoDateTime('2026-09-12T14:32:00.000Z'),
     criarDocumentoId: () => ID,
+    usuarioId: USUARIO_ID,
     ...sobrescrever,
   };
   return { dependencias, passos, registro };
@@ -133,7 +136,7 @@ describe('assinarDocumento', () => {
       motivo: 'erroAoGerarDocumento',
     });
     expect(passos.at(-1)).toBe(`apagar pasta ${ID}`);
-    await expect(registro.list()).resolves.toEqual([]);
+    await expect(registro.list(USUARIO_ID)).resolves.toEqual([]);
     expect(erro).toHaveBeenCalledTimes(1);
     erro.mockRestore();
   });
@@ -161,8 +164,9 @@ describe('assinarDocumento', () => {
 
     const resultado = await assinarDocumento(dependencias, PEDIDO);
 
-    const documento = {
+        const documento = {
       id: ID,
+      usuarioId: USUARIO_ID,
       titulo: PEDIDO.titulo,
       assinaturaUsada: { nome: ASSINATURA.nome, desenho: ASSINATURA.desenho },
       tamanhoFoto: PEDIDO.foto.size,

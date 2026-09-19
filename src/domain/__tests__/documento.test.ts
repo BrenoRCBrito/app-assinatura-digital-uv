@@ -15,10 +15,12 @@ import {
   type DocumentoAssinado,
 } from '../documento';
 import { createFraction, createSize } from '../geometry';
+import { criarUsuarioId } from '../usuario';
 
 function documentoValido(id: string, assinadoEm: string, cidade: string | null = 'Vassouras'): DocumentoAssinado {
   return {
     id: criarDocumentoId(id),
+    usuarioId: criarUsuarioId('1'),
     titulo: criarTituloDocumento('Contrato de locação'),
     assinaturaUsada: {
       nome: criarNomeAssinatura('Rubrica'),
@@ -33,6 +35,7 @@ function documentoValido(id: string, assinadoEm: string, cidade: string | null =
     assinadoEm: createIsoDateTime(assinadoEm),
   };
 }
+
 
 describe('criarDocumentoId', () => {
   test('gera um id numérico a partir do relógio', () => {

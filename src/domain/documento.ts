@@ -5,6 +5,8 @@ import { paraDesenho, type Desenho } from './desenho';
 import { createFraction, paraSize, type Size } from './geometry';
 import { lerNumero, lerObjeto, lerTexto } from './leitura';
 import type { PosicaoSelo } from './selo';
+import { criarUsuarioId, type UsuarioId } from './usuario';
+
 
 export type DocumentoId = Brand<string, 'DocumentoId'>;
 export type TituloDocumento = Brand<string, 'TituloDocumento'>;
@@ -22,6 +24,7 @@ export type AssinaturaUsada = Readonly<{ nome: NomeAssinatura; desenho: Desenho 
 
 export type DocumentoAssinado = Readonly<{
   id: DocumentoId;
+  usuarioId: UsuarioId;
   titulo: TituloDocumento;
   assinaturaUsada: AssinaturaUsada;
   tamanhoFoto: Size;
@@ -142,6 +145,9 @@ export function paraDocumentoAssinado(dado: unknown): DocumentoAssinado {
 
   return {
     id: criarDocumentoId(lerTexto('id' in documento ? documento.id : undefined, DOCUMENTO_INVALIDO)),
+    usuarioId: criarUsuarioId(
+      lerTexto('usuarioId' in documento ? documento.usuarioId : undefined, DOCUMENTO_INVALIDO),
+    ),
     titulo: criarTituloDocumento(lerTexto('titulo' in documento ? documento.titulo : undefined, DOCUMENTO_INVALIDO)),
     assinaturaUsada: paraAssinaturaUsada('assinaturaUsada' in documento ? documento.assinaturaUsada : undefined),
     tamanhoFoto: paraSize('tamanhoFoto' in documento ? documento.tamanhoFoto : undefined, DOCUMENTO_INVALIDO),
@@ -152,3 +158,4 @@ export function paraDocumentoAssinado(dado: unknown): DocumentoAssinado {
     ),
   };
 }
+

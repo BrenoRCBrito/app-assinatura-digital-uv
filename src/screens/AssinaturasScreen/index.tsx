@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import { useAuthentication } from '../../hooks/useAuthentication';
 
 import { AssinaturaItem, Button, confirmDestructive, List, Screen, showError } from '../../components';
 import type { Assinatura } from '../../domain/assinatura';
@@ -13,19 +14,23 @@ export function AssinaturasScreen({ onNovaAssinatura }: AssinaturasScreenProps) 
   const { assinaturas: repositorio } = useRepositories();
   const [assinaturas, setAssinaturas] = useState<readonly Assinatura[]>([]);
   const [carregando, setCarregando] = useState(true);
-
+  const { usuarioId } = useAuthentication();
+  
   const carregar = useCallback(async () => {
-    setCarregando(true);
-    try {
-      setAssinaturas(await repositorio.list());
-    } catch (error) {
-      console.error('Falha ao carregar as assinaturas:', error);
-      setAssinaturas([]);
-      showError('Erro', 'Não foi possível carregar os dados.');
-    } finally {
-      setCarregando(false);
-    }
-  }, [repositorio]);
+  if (usuarioId === null) {
+    return;
+  }
+  setCarregando(true);
+  try {
+    setAssinaturas(await repositorio.list(usuarioId));
+  } catch (error) {
+    console.error('Falha ao carregar as assinaturas:', error);
+    setAssinaturas([]);
+    showError('Erro', 'Não foi possível carregar os dados.');
+  } finally {
+    setCarregando(false);
+  }
+}, [repositorio, usuarioId]);
 
   useFocusEffect(
     useCallback(() => {

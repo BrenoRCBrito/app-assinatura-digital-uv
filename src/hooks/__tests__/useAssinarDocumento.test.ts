@@ -4,6 +4,7 @@ import { act, renderHook } from '@testing-library/react-native';
 import { criarTituloDocumento } from '../../domain/documento';
 import { createFraction } from '../../domain/geometry';
 import { createCapturedPhoto } from '../../domain/photo';
+import { criarUsuarioId } from '../../domain/usuario';
 import {
   copiarFotoDocumento,
   excluirArquivosDocumento,
@@ -17,11 +18,15 @@ import { RepositoriesProvider, useRepositories } from '../../storage/Repositorie
 import { criarAssinaturaDeTeste } from '../../storage/testing/assinaturaRepositoryContract';
 import { assinarDocumento, type PedidoAssinatura, type ResultadoAssinatura } from '../../useCases/assinarDocumento';
 import { useAssinarDocumento } from '../useAssinarDocumento';
+import { useAuthentication } from '../useAuthentication';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 jest.mock('../../useCases/assinarDocumento', () => ({ assinarDocumento: jest.fn() }));
+jest.mock('../useAuthentication', () => ({ useAuthentication: jest.fn() }));
+
+const USUARIO_ID = criarUsuarioId('1');
 
 const PEDIDO: PedidoAssinatura = {
   titulo: criarTituloDocumento('Contrato de locação'),
@@ -38,9 +43,10 @@ describe('useAssinarDocumento', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
     jest.mocked(assinarDocumento).mockReset();
+    jest.mocked(useAuthentication).mockReturnValue({ usuarioId: USUARIO_ID } as ReturnType<typeof useAuthentication>);
   });
 
-  test('liga o caso de uso aos services reais e ao repositório de documentos', async () => {
+  test('liga o caso de uso aos services reais, ao repositório de documentos e ao usuário logado', async () => {
     jest.mocked(assinarDocumento).mockResolvedValue({ tipo: 'cancelado' });
     const { result } = await renderHook(useAssinarComRepositorios, { wrapper: RepositoriesProvider });
 
@@ -60,10 +66,21 @@ describe('useAssinarDocumento', () => {
       montarHtmlDocumento,
       gerarPdf,
       documentos: result.current.repositorios.documentos,
+      usuarioId: USUARIO_ID,
     });
     expect(dependencias.criarDocumentoId()).toMatch(/^\d+$/);
     const agora = dependencias.agora();
     expect(new Date(agora).toISOString()).toBe(agora);
+  });
+
+  test('sem usuário logado, não chama o caso de uso', async () => {
+    jest.mocked(useAuthentication).mockReturnValue({ usuarioId: null } as ReturnType<typeof useAuthentication>);
+    const { result } = await renderHook(() => useAssinarDocumento(), { wrapper: RepositoriesProvider });
+
+    const resultado = await act(async () => result.current.assinar(PEDIDO));
+
+    expect(resultado).toBeNull();
+    expect(assinarDocumento).not.toHaveBeenCalled();
   });
 
   test('fica assinando enquanto o caso de uso roda e ignora o segundo toque', async () => {

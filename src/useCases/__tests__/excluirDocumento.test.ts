@@ -1,5 +1,5 @@
 import { createInMemoryDocumentoAssinadoRepository } from '../../storage/inMemory/inMemoryDocumentoAssinadoRepository';
-import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
+import { criarDocumentoDeTeste, USUARIO_DE_TESTE } from '../../storage/testing/documentoAssinadoRepositoryContract';
 import { excluirDocumento, type DependenciasExclusao } from '../excluirDocumento';
 
 const DOCUMENTO = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z');
@@ -29,7 +29,7 @@ describe('excluirDocumento', () => {
 
     await expect(excluirDocumento(dependencias, DOCUMENTO.id)).resolves.toBe('excluido');
     expect(passos).toEqual(['apagar registro 1757680000000', 'apagar pasta 1757680000000']);
-    await expect(registro.list()).resolves.toEqual([]);
+    await expect(registro.list(USUARIO_DE_TESTE)).resolves.toEqual([]);
   });
 
   test('quando apagar o registro falha, devolve falhou e não apaga a pasta', async () => {
@@ -42,7 +42,7 @@ describe('excluirDocumento', () => {
 
     await expect(excluirDocumento(semRegistro, DOCUMENTO.id)).resolves.toBe('falhou');
     expect(dependencias.excluirArquivosDocumento).not.toHaveBeenCalled();
-    await expect(registro.list()).resolves.toEqual([DOCUMENTO]);
+    await expect(registro.list(USUARIO_DE_TESTE)).resolves.toEqual([DOCUMENTO]);
     expect(erro).toHaveBeenCalledTimes(1);
     erro.mockRestore();
   });
@@ -58,7 +58,7 @@ describe('excluirDocumento', () => {
     };
 
     await expect(excluirDocumento(semPasta, DOCUMENTO.id)).resolves.toBe('excluido');
-    await expect(registro.list()).resolves.toEqual([]);
+    await expect(registro.list(USUARIO_DE_TESTE)).resolves.toEqual([]);
     expect(erro).toHaveBeenCalledTimes(1);
     erro.mockRestore();
   });

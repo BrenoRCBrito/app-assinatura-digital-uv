@@ -2,12 +2,14 @@ import { ValidationError, type Brand } from './brand';
 import { createIsoDateTime, type IsoDateTime } from './dateTime';
 import { paraDesenho, type Desenho } from './desenho';
 import { lerObjeto, lerTexto } from './leitura';
+import { criarUsuarioId, type UsuarioId } from './usuario';
 
 export type AssinaturaId = Brand<string, 'AssinaturaId'>;
 export type NomeAssinatura = Brand<string, 'NomeAssinatura'>;
 
 export type Assinatura = Readonly<{
   id: AssinaturaId;
+  usuarioId: UsuarioId;
   nome: NomeAssinatura;
   desenho: Desenho;
   criadaEm: IsoDateTime;
@@ -49,6 +51,9 @@ export function paraAssinatura(dado: unknown): Assinatura {
 
   return {
     id: criarAssinaturaId(lerTexto('id' in assinatura ? assinatura.id : undefined, ASSINATURA_INVALIDA)),
+    usuarioId: criarUsuarioId(
+      lerTexto('usuarioId' in assinatura ? assinatura.usuarioId : undefined, ASSINATURA_INVALIDA),
+    ),
     nome: criarNomeAssinatura(lerTexto('nome' in assinatura ? assinatura.nome : undefined, ASSINATURA_INVALIDA)),
     desenho: paraDesenho('desenho' in assinatura ? assinatura.desenho : undefined, ASSINATURA_INVALIDA),
     criadaEm: createIsoDateTime(

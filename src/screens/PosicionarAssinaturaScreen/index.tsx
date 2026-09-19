@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import { useAuthentication } from '../../hooks/useAuthentication';
 
 import {
   Button,
@@ -67,6 +68,7 @@ function lerTitulo(texto: string): TituloDocumento | null {
 
 export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura, onAssinado }: PosicionarAssinaturaScreenProps) {
   const { assinaturas: repositorio } = useRepositories();
+  const { usuarioId } = useAuthentication();
   const { assinando, assinar } = useAssinarDocumento();
   const [assinaturas, setAssinaturas] = useState<readonly Assinatura[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -78,20 +80,24 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura, onAssinado 
   const perguntouRef = useRef(false);
 
   const carregar = useCallback(async () => {
-    setCarregando(true);
-    try {
-      const lista = await repositorio.list();
-      setAssinaturas(lista);
-      setAssinaturaId((atual) => (lista.some((item) => item.id === atual) ? atual : (lista[0]?.id ?? null)));
-    } catch (error) {
-      console.error('Falha ao carregar as assinaturas:', error);
-      perguntouRef.current = true;
-      setAssinaturas([]);
-      showError('Erro', 'Não foi possível carregar os dados.');
-    } finally {
-      setCarregando(false);
-    }
-  }, [repositorio]);
+  if (usuarioId === null) {
+    return;
+  }
+  setCarregando(true);
+  try {
+    const lista = await repositorio.list(usuarioId);
+    setAssinaturas(lista);
+    setAssinaturaId((atual) => (lista.some((item) => item.id === atual) ? atual : (lista[0]?.id ?? null)));
+  } catch (error) {
+    console.error('Falha ao carregar as assinaturas:', error);
+    perguntouRef.current = true;
+    setAssinaturas([]);
+    showError('Erro', 'Não foi possível carregar os dados.');
+  } finally {
+    setCarregando(false);
+  }
+  }, [repositorio, usuarioId]);
+
 
   useFocusEffect(
     useCallback(() => {

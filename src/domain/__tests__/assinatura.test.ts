@@ -9,15 +9,18 @@ import { ValidationError } from '../brand';
 import { createIsoDateTime } from '../dateTime';
 import { criarDesenho, criarTraco } from '../desenho';
 import { createSize } from '../geometry';
+import { criarUsuarioId } from '../usuario';
 
 function assinaturaValida(id: string, criadaEm: string): Assinatura {
   return {
     id: criarAssinaturaId(id),
+    usuarioId: criarUsuarioId('1'),
     nome: criarNomeAssinatura('Rubrica'),
     desenho: criarDesenho([criarTraco('M10,20 L30,40')], createSize(300, 150)),
     criadaEm: createIsoDateTime(criadaEm),
   };
 }
+
 
 describe('criarAssinaturaId', () => {
   test('gera um id numérico a partir do relógio', () => {

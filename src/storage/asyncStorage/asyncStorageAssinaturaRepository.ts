@@ -23,8 +23,9 @@ async function gravarAssinaturas(assinaturas: readonly Assinatura[]): Promise<vo
 
 export function createAsyncStorageAssinaturaRepository(): AssinaturaRepository {
   return {
-    async list() {
-      return ordenarAssinaturasMaisNovasPrimeiro(await lerAssinaturas());
+    async list(usuarioId) {
+      const todas = await lerAssinaturas();
+      return ordenarAssinaturasMaisNovasPrimeiro(todas.filter((assinatura) => assinatura.usuarioId === usuarioId));
     },
     async save(assinatura) {
       const atuais = await lerAssinaturas();
@@ -36,3 +37,4 @@ export function createAsyncStorageAssinaturaRepository(): AssinaturaRepository {
     },
   };
 }
+

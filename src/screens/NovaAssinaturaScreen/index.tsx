@@ -1,5 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import { useAuthentication } from '../../hooks/useAuthentication';
+
 
 import {
   Button,
@@ -27,6 +29,7 @@ type NovaAssinaturaScreenProps = Readonly<{
 
 export function NovaAssinaturaScreen({ onSalva }: NovaAssinaturaScreenProps) {
   const { assinaturas } = useRepositories();
+  const { usuarioId } = useAuthentication();
   const [nome, setNome] = useState('');
   const [tracos, setTracos] = useState<readonly Traco[]>([]);
   const [deitado, setDeitado] = useState(false);
@@ -44,14 +47,18 @@ export function NovaAssinaturaScreen({ onSalva }: NovaAssinaturaScreenProps) {
     }, []),
   );
 
-  function montarAssinatura(): Assinatura {
-    return {
-      id: criarAssinaturaId(),
-      nome: criarNomeAssinatura(nome),
-      desenho: recortarDesenho(tracos),
-      criadaEm: createIsoDateTime(new Date().toISOString()),
-    };
+function montarAssinatura(): Assinatura {
+  if (usuarioId === null) {
+    throw new ValidationError('Você precisa estar logado para salvar uma assinatura.');
   }
+  return {
+    id: criarAssinaturaId(),
+    usuarioId,
+    nome: criarNomeAssinatura(nome),
+    desenho: recortarDesenho(tracos),
+    criadaEm: createIsoDateTime(new Date().toISOString()),
+  };
+}
 
   async function salvar() {
     if (salvandoRef.current) {

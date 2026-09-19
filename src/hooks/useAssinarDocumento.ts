@@ -18,6 +18,7 @@ import {
   type PedidoAssinatura,
   type ResultadoAssinatura,
 } from '../useCases/assinarDocumento';
+import { useAuthentication } from './useAuthentication';
 
 export type AssinarDocumento = Readonly<{
   assinando: boolean;
@@ -26,30 +27,35 @@ export type AssinarDocumento = Readonly<{
 
 export function useAssinarDocumento(): AssinarDocumento {
   const { documentos } = useRepositories();
+  const { usuarioId } = useAuthentication();
   const [assinando, setAssinando] = useState(false);
   // O state só chega à tela no próximo render; a ref barra o segundo toque antes disso.
   const assinandoRef = useRef(false);
 
-  const dependencias = useMemo<DependenciasAssinatura>(
-    () => ({
-      authenticateDeviceOwner,
-      obterLocalAssinatura,
-      copiarFotoDocumento,
-      lerFotoDocumentoBase64,
-      guardarPdfDocumento,
-      excluirArquivosDocumento,
-      montarHtmlDocumento,
-      gerarPdf,
-      documentos,
-      agora: () => createIsoDateTime(new Date().toISOString()),
-      criarDocumentoId: () => criarDocumentoId(),
-    }),
-    [documentos],
+  const dependencias = useMemo<DependenciasAssinatura | null>(
+    () =>
+      usuarioId === null
+        ? null
+        : {
+            authenticateDeviceOwner,
+            obterLocalAssinatura,
+            copiarFotoDocumento,
+            lerFotoDocumentoBase64,
+            guardarPdfDocumento,
+            excluirArquivosDocumento,
+            montarHtmlDocumento,
+            gerarPdf,
+            documentos,
+            agora: () => createIsoDateTime(new Date().toISOString()),
+            criarDocumentoId: () => criarDocumentoId(),
+            usuarioId,
+          },
+    [documentos, usuarioId],
   );
 
   const assinar = useCallback(
     async (pedido: PedidoAssinatura) => {
-      if (assinandoRef.current) {
+      if (assinandoRef.current || dependencias === null) {
         return null;
       }
       assinandoRef.current = true;

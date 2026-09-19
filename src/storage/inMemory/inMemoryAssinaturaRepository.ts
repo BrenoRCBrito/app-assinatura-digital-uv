@@ -5,8 +5,8 @@ export function createInMemoryAssinaturaRepository(): AssinaturaRepository {
   let assinaturas: readonly Assinatura[] = [];
 
   return {
-    async list() {
-      return ordenarAssinaturasMaisNovasPrimeiro(assinaturas);
+    async list(usuarioId) {
+      return ordenarAssinaturasMaisNovasPrimeiro(assinaturas.filter((a) => a.usuarioId === usuarioId));
     },
     async save(assinatura) {
       assinaturas = [...assinaturas.filter((atual) => atual.id !== assinatura.id), assinatura];
@@ -16,3 +16,4 @@ export function createInMemoryAssinaturaRepository(): AssinaturaRepository {
     },
   };
 }
+

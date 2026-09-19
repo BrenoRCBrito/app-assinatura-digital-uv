@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { createRepositories } from '../createRepositories';
-import { criarAssinaturaDeTeste } from '../testing/assinaturaRepositoryContract';
+import { criarAssinaturaDeTeste, USUARIO_DE_TESTE } from '../testing/assinaturaRepositoryContract';
 import { criarDocumentoDeTeste } from '../testing/documentoAssinadoRepositoryContract';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -18,7 +18,9 @@ describe('createRepositories', () => {
 
     await createRepositories('asyncStorage').assinaturas.save(assinatura);
 
-    await expect(createRepositories('asyncStorage').assinaturas.list()).resolves.toEqual([assinatura]);
+    await expect(createRepositories('asyncStorage').assinaturas.list(USUARIO_DE_TESTE)).resolves.toEqual([
+      assinatura,
+    ]);
   });
 
   test('com AsyncStorage, os documentos também continuam de uma instância para a outra', async () => {
@@ -34,6 +36,6 @@ describe('createRepositories', () => {
       criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T10:00:00.000Z'),
     );
 
-    await expect(createRepositories('inMemory').assinaturas.list()).resolves.toEqual([]);
+    await expect(createRepositories('inMemory').assinaturas.list(USUARIO_DE_TESTE)).resolves.toEqual([]);
   });
 });
