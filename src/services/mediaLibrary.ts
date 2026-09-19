@@ -1,4 +1,4 @@
-import { Asset, requestPermissionsAsync } from 'expo-media-library';
+import { requestPermissionsAsync, saveToLibraryAsync } from 'expo-media-library/legacy';
 
 import type { CapturedPhoto } from '../domain/photo';
 
@@ -8,7 +8,7 @@ export async function salvarCopiaNaGaleria(foto: CapturedPhoto): Promise<boolean
     if (!permissao.granted) {
       return false;
     }
-    await Asset.create(foto.uri);
+    await saveToLibraryAsync(foto.uri);
     return true;
   } catch (error) {
     console.error('Falha ao salvar a cópia na galeria:', error);

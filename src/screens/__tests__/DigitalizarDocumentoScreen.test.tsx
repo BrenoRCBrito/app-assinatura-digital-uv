@@ -1,7 +1,7 @@
 import React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import * as MediaLibrary from 'expo-media-library';
+import * as MediaLibrary from 'expo-media-library/legacy';
 import { Alert, Linking } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -46,7 +46,7 @@ const camera = jest.requireMock<{ useCameraPermissions: jest.Mock }>('expo-camer
 
 const galeria = MediaLibrary as unknown as Readonly<{
   requestPermissionsAsync: jest.Mock;
-  Asset: Readonly<{ create: jest.Mock }>;
+  saveToLibraryAsync: jest.Mock;
 }>;
 
 const FOTO_DA_CAMERA = { uri: 'file:///cache/foto.jpg', width: 3024, height: 4032, format: 'jpg' };
@@ -166,14 +166,14 @@ describe('DigitalizarDocumentoScreen', () => {
 
   test('Usar foto com a cópia ligada salva a foto na galeria e abre o Posicionar', async () => {
     galeria.requestPermissionsAsync.mockResolvedValue({ granted: true });
-    galeria.Asset.create.mockResolvedValue({});
+    galeria.saveToLibraryAsync.mockResolvedValue({});
     const { onUsarFoto } = await abrirTela(COM_PERMISSAO, { salvarCopiaNaGaleria: true });
 
     await fotografar();
     await fireEvent.press(screen.getByText('Usar foto'));
 
     await waitFor(() => expect(onUsarFoto).toHaveBeenCalledWith(FOTO));
-    expect(galeria.Asset.create).toHaveBeenCalledWith('file:///cache/foto.jpg');
+    expect(galeria.saveToLibraryAsync).toHaveBeenCalledWith('file:///cache/foto.jpg');
     expect(toast).not.toHaveBeenCalled();
   });
 
@@ -186,7 +186,7 @@ describe('DigitalizarDocumentoScreen', () => {
 
     await waitFor(() => expect(onUsarFoto).toHaveBeenCalledWith(FOTO));
     expect(toast).toHaveBeenCalledWith({ type: 'info', text1: 'Cópia não salva na galeria' });
-    expect(galeria.Asset.create).not.toHaveBeenCalled();
+    expect(galeria.saveToLibraryAsync).not.toHaveBeenCalled();
   });
 
   test('Usar foto ignora o segundo toque enquanto salva a cópia', async () => {
