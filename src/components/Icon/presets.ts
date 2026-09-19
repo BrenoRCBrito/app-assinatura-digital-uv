@@ -80,6 +80,20 @@ export const iconShapes = {
     { d: 'M20.5 12a8.5 8.5 0 1 1-17 0a8.5 8.5 0 1 1 17 0', strokeLinecap: 'round', strokeLinejoin: 'round' },
     { d: 'M12 7.5V12l3 2', strokeLinecap: 'round', strokeLinejoin: 'round' },
   ],
+    eye: [
+    { d: 'M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z', strokeLinecap: 'round', strokeLinejoin: 'round' },
+    { d: 'M14.5 12a2.5 2.5 0 1 1-5 0a2.5 2.5 0 1 1 5 0', strokeLinecap: 'round', strokeLinejoin: 'round' },
+  ],
+  eyeOff: [
+    { d: 'M3.5 5.5l17 13', strokeLinecap: 'round', strokeLinejoin: 'round' },
+    {
+      d: 'M9.9 6.7c.7-.13 1.4-.2 2.1-.2 6.5 0 10 6.5 10 6.5a15.6 15.6 0 0 1-3.2 3.9M6.6 8.3A15.7 15.7 0 0 0 2 12s3.5 6.5 10 6.5c1.2 0 2.3-.2 3.3-.5',
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+    },
+    { d: 'M14.5 12a2.5 2.5 0 0 1-4.2 1.8M9.7 10.3A2.5 2.5 0 0 1 14 12', strokeLinecap: 'round', strokeLinejoin: 'round' },
+  ],
+
 } satisfies Record<string, readonly IconPath[]>;
 
 export const iconSizes = {

@@ -38,6 +38,7 @@ export type AppTheme = Readonly<{
   switchThumb: ColorToken;
   danger: ColorToken;
   onDanger: ColorToken;
+  success: ColorToken;
 }>;
 
 export const lightTheme: AppTheme = {
@@ -58,6 +59,8 @@ export const lightTheme: AppTheme = {
   switchThumb: createColorToken('#FAFAF8'),
   danger: createColorToken('#9E3B3B'),
   onDanger: createColorToken('#F4F4F1'),
+  success: createColorToken('#2F7D4F'),
+
 };
 
 export const darkTheme: AppTheme = {
@@ -78,6 +81,7 @@ export const darkTheme: AppTheme = {
   switchThumb: createColorToken('#E0E1DD'),
   danger: createColorToken('#9E3B3B'),
   onDanger: createColorToken('#F4F4F1'),
+  success: createColorToken('#6FCF97'),
 };
 
 export const FIXED_COLORS = {

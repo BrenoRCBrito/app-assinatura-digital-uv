@@ -4,6 +4,7 @@ import type { Theme } from '../../theme';
 
 type TextFieldStyles = Readonly<{
   field: ViewStyle;
+  container: ViewStyle;
   input: TextStyle;
   placeholderColor: string;
 }>;
@@ -11,13 +12,19 @@ type TextFieldStyles = Readonly<{
 export const textFieldPresets = {
   default: (theme: Theme) => ({
     field: { gap: theme.gap.label },
-    input: {
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.gap.icon,
       height: theme.size.control,
       paddingHorizontal: theme.inset.inputX,
       borderRadius: theme.radius.control,
       borderWidth: theme.lineWidth.hairline,
       borderColor: theme.border,
       backgroundColor: theme.surface,
+    },
+    input: {
+      flex: 1,
       fontSize: theme.typography.input.fontSize,
       color: theme.textPrimary,
     },
