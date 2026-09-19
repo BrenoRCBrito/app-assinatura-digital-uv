@@ -2,7 +2,9 @@ import { createAsyncStorageAssinaturaRepository } from './asyncStorage/asyncStor
 import { createAsyncStorageDocumentoAssinadoRepository } from './asyncStorage/asyncStorageDocumentoAssinadoRepository';
 import { createInMemoryAssinaturaRepository } from './inMemory/inMemoryAssinaturaRepository';
 import { createInMemoryDocumentoAssinadoRepository } from './inMemory/inMemoryDocumentoAssinadoRepository';
+import { createInMemoryUsuarioRepository } from './inMemory/inMemoryUsuarioRepository';
 import type { Repositories } from './repositories';
+import { createSqliteUsuarioRepository } from './sqlite/sqliteUsuarioRepository';
 
 export type StorageType = 'asyncStorage' | 'inMemory';
 
@@ -14,11 +16,13 @@ export function createRepositories(storageType: StorageType): Repositories {
       return {
         assinaturas: createAsyncStorageAssinaturaRepository(),
         documentos: createAsyncStorageDocumentoAssinadoRepository(),
+        usuarios: createSqliteUsuarioRepository(),
       };
     case 'inMemory':
       return {
         assinaturas: createInMemoryAssinaturaRepository(),
         documentos: createInMemoryDocumentoAssinadoRepository(),
+        usuarios: createInMemoryUsuarioRepository(),
       };
   }
 }
