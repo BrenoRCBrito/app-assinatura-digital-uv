@@ -12,12 +12,6 @@ describe('parseSettings', () => {
   });
 
   test('mantém valores válidos', () => {
-    const salvo = { theme: 'dark', gestureEngine: 'reanimated', salvarCopiaNaGaleria: true };
-
-    expect(parseSettings(salvo)).toEqual(salvo);
-  });
-
-  test('mantém valores válidos', () => {
     const salvo = {
       theme: 'dark',
       gestureEngine: 'reanimated',
