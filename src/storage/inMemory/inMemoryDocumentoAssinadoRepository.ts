@@ -17,5 +17,8 @@ export function createInMemoryDocumentoAssinadoRepository(): DocumentoAssinadoRe
     async delete(id) {
       documentos = documentos.filter((atual) => atual.id !== id);
     },
+    async clear() {
+      documentos = [];
+    },
   };
 }

@@ -127,6 +127,16 @@ export function testarContratoDocumentoAssinadoRepository(
       await expect(repositorio.list(USUARIO_DE_TESTE)).resolves.toEqual([documento]);
     });
 
+    test('clear apaga os documentos salvos', async () => {
+      const repositorio = criarRepositorio();
+      await repositorio.save(criarDocumentoDeTeste('1', 'Contrato de locação', '2026-09-10T10:00:00.000Z'));
+      await repositorio.save(criarDocumentoDeTeste('2', 'Termo de estágio', '2026-09-12T10:00:00.000Z'));
+
+      await repositorio.clear();
+
+      await expect(repositorio.list(USUARIO_DE_TESTE)).resolves.toEqual([]);
+    });
+
     const { corromperDados } = opcoes;
     if (corromperDados !== undefined) {
       test('list lança erro quando o dado salvo está corrompido', async () => {

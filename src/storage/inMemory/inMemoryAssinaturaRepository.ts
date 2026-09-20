@@ -14,6 +14,9 @@ export function createInMemoryAssinaturaRepository(): AssinaturaRepository {
     async delete(id) {
       assinaturas = assinaturas.filter((atual) => atual.id !== id);
     },
+    async clear() {
+      assinaturas = [];
+    },
   };
 }
 

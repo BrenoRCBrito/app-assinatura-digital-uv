@@ -19,5 +19,8 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
       usuarios = [...usuarios, usuario];
       return usuario;
     },
+    async clear() {
+      usuarios = [];
+    },
   };
 }

@@ -101,6 +101,19 @@ export function testarContratoAssinaturaRepository(
       await expect(repositorio.list(USUARIO_DE_TESTE)).resolves.toEqual([assinatura]);
     });
 
+    test('clear apaga as assinaturas de todas as contas', async () => {
+      const repositorio = criarRepositorio();
+      await repositorio.save(criarAssinaturaDeTeste('1', 'Minha', '2026-09-10T10:00:00.000Z'));
+      await repositorio.save(
+        criarAssinaturaDeTeste('2', 'De outra conta', '2026-09-12T10:00:00.000Z', OUTRO_USUARIO_DE_TESTE),
+      );
+
+      await repositorio.clear();
+
+      await expect(repositorio.list(USUARIO_DE_TESTE)).resolves.toEqual([]);
+      await expect(repositorio.list(OUTRO_USUARIO_DE_TESTE)).resolves.toEqual([]);
+    });
+
     const { corromperDados } = opcoes;
     if (corromperDados !== undefined) {
       test('list lança erro quando o dado salvo está corrompido', async () => {
