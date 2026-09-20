@@ -41,3 +41,6 @@ yarn-error.*
 /android
 
 .vfox
+
+# builds locais
+*.apk
