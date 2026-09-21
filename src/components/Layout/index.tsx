@@ -45,6 +45,16 @@ export function Stack(props: LayoutProps) {
   return <View style={[styles.stack, layoutStyle]}>{props.children}</View>;
 }
 
+export function FormColumn({ children }: Readonly<{ children: React.ReactNode }>) {
+  const { theme } = useAppTheme();
+
+  return (
+    <View style={[styles.column, { maxWidth: theme.size.formColumn, paddingTop: theme.inset.authTop }]}>
+      {children}
+    </View>
+  );
+}
+
 export function Row(props: LayoutProps) {
   const layoutStyle = useLayoutStyle(props);
 
@@ -54,6 +64,10 @@ export function Row(props: LayoutProps) {
 const styles = StyleSheet.create({
   stack: {
     alignSelf: 'stretch',
+  },
+  column: {
+    alignSelf: 'center',
+    width: '100%',
   },
   row: {
     alignSelf: 'stretch',

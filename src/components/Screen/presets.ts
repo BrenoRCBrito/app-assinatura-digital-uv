@@ -74,6 +74,13 @@ export const screenPresets = {
     background: themeBackground,
     content: (theme: Theme) => ({ paddingHorizontal: theme.inset.immersive }),
   },
+  auth: {
+    layout: 'center',
+    tone: 'dark',
+    edges: ['top', 'right', 'bottom', 'left'],
+    background: themeBackground,
+    content: (theme: Theme) => ({ paddingHorizontal: theme.inset.immersive, paddingBottom: theme.inset.authLift }),
+  },
   camera: {
     layout: 'fill',
     tone: 'dark',

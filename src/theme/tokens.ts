@@ -1,9 +1,9 @@
 import type { TextStyle } from 'react-native';
 
-type SpaceStep = 4 | 6 | 8 | 10 | 12 | 14 | 16 | 18 | 20 | 22 | 24 | 28 | 36 | 48;
-type SizeStep = 13 | 16 | 18 | 20 | 22 | 28 | 36 | 44 | 48 | 52 | 56 | 58 | 60 | 72 | 76 | 116 | 132 | 150 | 200;
-type FontSizeStep = 12 | 13 | 14 | 15 | 16 | 17 | 20 | 22 | 32;
-type LineHeightStep = 20 | 23;
+type SpaceStep = 4 | 6 | 8 | 10 | 12 | 14 | 16 | 18 | 20 | 22 | 24 | 28 | 36 | 48 | 50 | 120;
+type SizeStep = 13 | 16 | 18 | 20 | 22 | 28 | 36 | 44 | 48 | 52 | 56 | 58 | 60 | 72 | 76 | 116 | 132 | 150 | 200 | 480;
+type FontSizeStep = 12 | 13 | 14 | 15 | 16 | 17 | 18 | 20 | 21 | 22 | 32;
+type LineHeightStep = 20 | 23 | 25 | 27;
 type LetterSpacingStep = -0.5 | -0.3 | 0.6;
 type RadiusStep = 2 | 4 | 6 | 7 | 8 | 10 | 14 | 16 | 22 | 29 | 38;
 type LineWidthStep = 1 | 1.5 | 1.7 | 1.8 | 2 | 2.4 | 2.5 | 3 | 4;
@@ -79,6 +79,8 @@ const inset = {
   mapLabel: 12,
   mapLabelX: 10,
   mapLabelY: 6,
+  authTop: 50,
+  authLift: 120,
 } satisfies Record<string, SpaceStep>;
 
 const size = {
@@ -107,6 +109,7 @@ const size = {
   documentPreview: 132,
   documentItem: 72,
   map: 200,
+  formColumn: 480,
 } satisfies Record<string, SizeStep>;
 
 const radius = {
@@ -161,6 +164,8 @@ const typography = {
   brand: { fontSize: 32, fontWeight: '700', letterSpacing: -0.5 },
   screenTitle: { fontSize: 22, fontWeight: '700', letterSpacing: -0.3 },
   status: { fontSize: 16, lineHeight: 23, textAlign: 'center', maxWidth: 260 },
+  link: { fontSize: 18, lineHeight: 25, textAlign: 'center', maxWidth: 260 },
+  linkPrimary: { fontSize: 21, lineHeight: 27, textAlign: 'center', maxWidth: 260 },
   sectionLabel: { fontSize: 12, fontWeight: '600', letterSpacing: 0.6, textTransform: 'uppercase' },
   itemTitle: { fontSize: 16, fontWeight: '600' },
   supporting: { fontSize: 14, lineHeight: 20 },

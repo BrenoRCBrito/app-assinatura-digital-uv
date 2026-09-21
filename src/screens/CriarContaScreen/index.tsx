@@ -1,7 +1,19 @@
 import React, { useState } from 'react';
-import { Keyboard, Pressable, View } from 'react-native';
 
-import { Button, Icon, Row, Screen, Stack, Text, TextField, showError, showSuccess } from '../../components';
+import {
+  Button,
+  FormColumn,
+  Icon,
+  KeyboardDismissArea,
+  Link,
+  Row,
+  Screen,
+  Stack,
+  Text,
+  TextField,
+  showError,
+  showSuccess,
+} from '../../components';
 import { ValidationError } from '../../domain/brand';
 import { criarEmail, REQUISITOS_SENHA } from '../../domain/usuario';
 import { hashSenha } from '../../services/passwordHash';
@@ -57,11 +69,10 @@ export function CriarContaScreen({ onContaCriada, onJaTenhoConta }: CriarContaSc
   }
 
   return (
-    <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss} accessible={false}>
+    <KeyboardDismissArea>
       <Screen preset="scroll">
-        <View style={{ alignSelf: 'center', width: '100%', maxWidth: 480 }}>
+        <FormColumn>
           <Stack gap="block">
-            <View style={{ height:50 }} />
             <Text preset="screenTitle">Criar conta</Text>
 
             <Stack gap="label">
@@ -107,12 +118,12 @@ export function CriarContaScreen({ onContaCriada, onJaTenhoConta }: CriarContaSc
             {erro === null ? null : <Text preset="status">{erro}</Text>}
 
             <Button label={criando ? 'Criando…' : 'Criar conta'} onPress={criarConta} disabled={!podeCriarConta} />
-            <Pressable accessibilityRole="link" onPress={onJaTenhoConta} style={{ alignSelf: 'center',}}>
-              <Text preset="status">Já tenho conta</Text>
-            </Pressable>
+            <Stack align="center">
+              <Link label="Já tenho conta" onPress={onJaTenhoConta} preset="linkQuiet" />
+            </Stack>
           </Stack>
-        </View>
+        </FormColumn>
       </Screen>
-    </Pressable>
+    </KeyboardDismissArea>
   );
 }
