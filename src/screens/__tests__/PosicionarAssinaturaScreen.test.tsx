@@ -8,13 +8,14 @@ import { createFraction, createSize, fitSizeInside } from '../../domain/geometry
 import { createCapturedPhoto, type CapturedPhoto } from '../../domain/photo';
 import { layoutDoSelo, seloNaFoto } from '../../domain/selo';
 import { useAssinarDocumento } from '../../hooks/useAssinarDocumento';
+import { useAuthentication } from '../../hooks/useAuthentication';
 import {
   ASSINATURAS_STORAGE_KEY,
   createAsyncStorageAssinaturaRepository,
 } from '../../storage/asyncStorage/asyncStorageAssinaturaRepository';
 import { RepositoriesProvider } from '../../storage/RepositoriesProvider';
 import { SettingsProvider } from '../../storage/SettingsProvider';
-import { criarAssinaturaDeTeste } from '../../storage/testing/assinaturaRepositoryContract';
+import { criarAssinaturaDeTeste, USUARIO_DE_TESTE } from '../../storage/testing/assinaturaRepositoryContract';
 import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
 import { PosicionarAssinaturaScreen } from '../PosicionarAssinaturaScreen';
 
@@ -30,7 +31,9 @@ jest.mock('@react-navigation/native', () => {
   };
 });
 jest.mock('../../hooks/useAssinarDocumento', () => ({ useAssinarDocumento: jest.fn() }));
+jest.mock('../../hooks/useAuthentication', () => ({ useAuthentication: jest.fn() }));
 
+const USUARIO_LOGADO = { usuarioId: USUARIO_DE_TESTE } as ReturnType<typeof useAuthentication>;
 const FOTO = createCapturedPhoto('file:///cache/foto.jpg', 600, 800);
 const PALCO_MEDIDO = { nativeEvent: { layout: { x: 0, y: 0, width: 300, height: 300 } } };
 const RUBRICA = criarAssinaturaDeTeste('2', 'Rubrica', '2026-09-12T10:00:00.000Z');
@@ -71,6 +74,7 @@ describe('PosicionarAssinaturaScreen', () => {
     await AsyncStorage.clear();
     assinar.mockReset();
     jest.mocked(useAssinarDocumento).mockReturnValue({ assinando: false, assinar });
+    jest.mocked(useAuthentication).mockReturnValue(USUARIO_LOGADO);
   });
 
   test('com assinaturas, escolhe a mais nova e mostra o selo com a data de agora', async () => {

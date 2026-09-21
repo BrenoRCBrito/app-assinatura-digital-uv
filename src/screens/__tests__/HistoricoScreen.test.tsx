@@ -3,13 +3,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
+import { useAuthentication } from '../../hooks/useAuthentication';
 import {
   createAsyncStorageDocumentoAssinadoRepository,
   DOCUMENTOS_STORAGE_KEY,
 } from '../../storage/asyncStorage/asyncStorageDocumentoAssinadoRepository';
 import { RepositoriesProvider } from '../../storage/RepositoriesProvider';
 import { SettingsProvider } from '../../storage/SettingsProvider';
-import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
+import { criarDocumentoDeTeste, USUARIO_DE_TESTE } from '../../storage/testing/documentoAssinadoRepositoryContract';
 import { HistoricoScreen } from '../HistoricoScreen';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -23,7 +24,9 @@ jest.mock('@react-navigation/native', () => {
     useFocusEffect: (efeito: () => void) => useEffect(efeito, [efeito]),
   };
 });
+jest.mock('../../hooks/useAuthentication', () => ({ useAuthentication: jest.fn() }));
 
+const USUARIO_LOGADO = { usuarioId: USUARIO_DE_TESTE } as ReturnType<typeof useAuthentication>;
 const MENSAGEM_VAZIA = 'Nenhum documento assinado. Toque em Digitalizar documento no Início para assinar o primeiro.';
 const ANTIGO = criarDocumentoDeTeste('1757500000000', 'Termo de estágio', '2026-09-10T09:15:00.000Z');
 const NOVO = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z');
@@ -45,6 +48,7 @@ async function abrirHistorico() {
 describe('HistoricoScreen', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
+    jest.mocked(useAuthentication).mockReturnValue(USUARIO_LOGADO);
   });
 
   test('sem documentos, mostra a mensagem de vazio', async () => {
