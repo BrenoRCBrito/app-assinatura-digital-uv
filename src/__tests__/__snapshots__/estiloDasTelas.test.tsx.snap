@@ -627,6 +627,32 @@ exports[`estilo das telas no tema dark login, início e configurações: configu
     "thumbTintColor": "#E0E1DD",
     "tintColor": "#415A77",
   },
+  {
+    "color": "#778DA9",
+    "elemento": "texto",
+    "fontSize": 12,
+    "fontWeight": "600",
+    "letterSpacing": 0.6,
+    "textTransform": "uppercase",
+    "texto": "Dados",
+  },
+  {
+    "backgroundColor": "#E0E1DD",
+    "borderRadius": 8,
+    "elemento": "controle",
+    "minHeight": 48,
+    "paddingHorizontal": 28,
+    "paddingVertical": 12,
+    "papel": "button",
+    "width": "100%",
+  },
+  {
+    "color": "#0D1B2A",
+    "elemento": "texto",
+    "fontSize": 16,
+    "fontWeight": "600",
+    "texto": "Limpar dados do app",
+  },
 ]
 `;
 
@@ -1743,6 +1769,32 @@ exports[`estilo das telas no tema light login, início e configurações: config
     "papel": "switch",
     "thumbTintColor": "#FAFAF8",
     "tintColor": "#C9CCC6",
+  },
+  {
+    "color": "#415A77",
+    "elemento": "texto",
+    "fontSize": 12,
+    "fontWeight": "600",
+    "letterSpacing": 0.6,
+    "textTransform": "uppercase",
+    "texto": "Dados",
+  },
+  {
+    "backgroundColor": "#0D1B2A",
+    "borderRadius": 8,
+    "elemento": "controle",
+    "minHeight": 48,
+    "paddingHorizontal": 28,
+    "paddingVertical": 12,
+    "papel": "button",
+    "width": "100%",
+  },
+  {
+    "color": "#E0E1DD",
+    "elemento": "texto",
+    "fontSize": 16,
+    "fontWeight": "600",
+    "texto": "Limpar dados do app",
   },
 ]
 `;
