@@ -49,11 +49,21 @@ describe('montarHtmlDocumento', () => {
 });
 
 describe('gerarPdf', () => {
-  test('imprime o HTML na folha A4 e devolve o endereço do PDF', async () => {
+  test('imprime o HTML na folha A4 e devolve o PDF em base64', async () => {
     const html = createHtml('<!DOCTYPE html><html></html>');
+    jest.mocked(printToFileAsync).mockResolvedValue({
+      uri: 'file:///cache/Print/documento.pdf',
+      numberOfPages: 1,
+      base64: 'JVBERi0xLjQK',
+    });
+
+    await expect(gerarPdf(html)).resolves.toBe('JVBERi0xLjQK');
+    expect(printToFileAsync).toHaveBeenCalledWith({ html, width: 595, height: 842, base64: true });
+  });
+
+  test('sem o base64 no resultado, falha em vez de guardar um PDF vazio', async () => {
     jest.mocked(printToFileAsync).mockResolvedValue({ uri: 'file:///cache/Print/documento.pdf', numberOfPages: 1 });
 
-    await expect(gerarPdf(html)).resolves.toBe('file:///cache/Print/documento.pdf');
-    expect(printToFileAsync).toHaveBeenCalledWith({ html, width: 595, height: 842 });
+    await expect(gerarPdf(createHtml('<!DOCTYPE html><html></html>'))).rejects.toThrow('O PDF não voltou em base64.');
   });
 });

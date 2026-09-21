@@ -36,8 +36,9 @@ export async function lerFotoDocumentoBase64(id: DocumentoId): Promise<Base64> {
   return createBase64(await fotoDoDocumento(id).base64());
 }
 
-export async function guardarPdfDocumento(id: DocumentoId, pdf: FileUri): Promise<void> {
-  await new File(pdf).move(pdfDoDocumento(id), { overwrite: true });
+export async function guardarPdfDocumento(id: DocumentoId, pdf: Base64): Promise<void> {
+  pastaDoDocumento(id).create({ intermediates: true, idempotent: true });
+  pdfDoDocumento(id).write(pdf, { encoding: 'base64' });
 }
 
 export function excluirArquivosDocumento(id: DocumentoId): void {

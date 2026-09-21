@@ -10,7 +10,7 @@ import {
   criarTituloDocumento,
 } from '../../domain/documento';
 import { createFraction } from '../../domain/geometry';
-import { createCapturedPhoto, createFileUri } from '../../domain/photo';
+import { createCapturedPhoto } from '../../domain/photo';
 import { createInMemoryDocumentoAssinadoRepository } from '../../storage/inMemory/inMemoryDocumentoAssinadoRepository';
 import { criarAssinaturaDeTeste } from '../../storage/testing/assinaturaRepositoryContract';
 import { assinarDocumento, type DependenciasAssinatura, type PedidoAssinatura } from '../assinarDocumento';
@@ -28,7 +28,7 @@ const PEDIDO: PedidoAssinatura = {
   foto: createCapturedPhoto('file:///cache/foto.jpg', 3024, 4032),
   selo: { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35) },
 };
-const PDF = createFileUri('file:///cache/Print/documento.pdf');
+const PDF = createBase64('JVBERi0xLjQK');
 
 function criarDependencias(sobrescrever: Partial<DependenciasAssinatura> = {}) {
   const passos: string[] = [];

@@ -1,4 +1,4 @@
-import { criarDocumentoId } from '../../domain/documento';
+import { createBase64, criarDocumentoId } from '../../domain/documento';
 import { createCapturedPhoto, createFileUri } from '../../domain/photo';
 import {
   copiarFotoDocumento,
@@ -55,6 +55,10 @@ jest.mock('expo-file-system', () => {
       mockOperacoes.push(['ler base64', this.uri]);
       return Promise.resolve(mockBase64);
     }
+
+    write(conteudo: string, opcoes: unknown) {
+      mockOperacoes.push(['escrever', this.uri, conteudo, opcoes]);
+    }
   }
 
   return { Directory, File, Paths: { document: { uri: 'file:///app' } } };
@@ -94,11 +98,12 @@ describe('arquivos do documento', () => {
     expect(mockOperacoes).toEqual([['ler base64', `${PASTA}/foto.jpg`]]);
   });
 
-  test('move o PDF gerado para a pasta do documento', async () => {
-    await guardarPdfDocumento(ID, createFileUri('file:///cache/Print/documento.pdf'));
+  test('grava o PDF recebido em base64 na pasta do documento', async () => {
+    await guardarPdfDocumento(ID, createBase64('JVBERi0xLjQK'));
 
     expect(mockOperacoes).toEqual([
-      ['mover', 'file:///cache/Print/documento.pdf', `${PASTA}/documento.pdf`, { overwrite: true }],
+      ['criar pasta', PASTA, { intermediates: true, idempotent: true }],
+      ['escrever', `${PASTA}/documento.pdf`, 'JVBERi0xLjQK', { encoding: 'base64' }],
     ]);
   });
 

@@ -33,10 +33,10 @@ export type DependenciasAssinatura = Readonly<{
   obterLocalAssinatura: () => Promise<ResultadoLocalAssinatura>;
   copiarFotoDocumento: (id: DocumentoId, foto: CapturedPhoto) => Promise<void>;
   lerFotoDocumentoBase64: (id: DocumentoId) => Promise<Base64>;
-  guardarPdfDocumento: (id: DocumentoId, pdf: FileUri) => Promise<void>;
+  guardarPdfDocumento: (id: DocumentoId, pdf: Base64) => Promise<void>;
   excluirArquivosDocumento: (id: DocumentoId) => void;
   montarHtmlDocumento: (documento: DocumentoAssinado, fotoBase64: Base64) => Html;
-  gerarPdf: (html: Html) => Promise<FileUri>;
+  gerarPdf: (html: Html) => Promise<Base64>;
   documentos: DocumentoAssinadoRepository;
   agora: () => IsoDateTime;
   criarDocumentoId: () => DocumentoId;

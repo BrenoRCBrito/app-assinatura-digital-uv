@@ -1,9 +1,8 @@
 import { printToFileAsync } from 'expo-print';
 
-import { createHtml, type Base64, type DocumentoAssinado, type Html } from '../domain/documento';
+import { createBase64, createHtml, type Base64, type DocumentoAssinado, type Html } from '../domain/documento';
 import { formatDateTime, formatLocal } from '../domain/format';
 import { layoutDaPagina, TAMANHO_DA_FOLHA_A4 } from '../domain/pagina';
-import { createFileUri, type FileUri } from '../domain/photo';
 import { layoutDoSelo } from '../domain/selo';
 import { FIXED_COLORS } from '../theme/appTheme';
 import { tokens } from '../theme/tokens';
@@ -85,11 +84,15 @@ export function montarHtmlDocumento(documento: DocumentoAssinado, fotoBase64: Ba
 </html>`);
 }
 
-export async function gerarPdf(html: Html): Promise<FileUri> {
-  const { uri } = await printToFileAsync({
+export async function gerarPdf(html: Html): Promise<Base64> {
+  const { base64 } = await printToFileAsync({
     html,
     width: TAMANHO_DA_FOLHA_A4.width,
     height: TAMANHO_DA_FOLHA_A4.height,
+    base64: true,
   });
-  return createFileUri(uri);
+  if (base64 === undefined) {
+    throw new Error('O PDF não voltou em base64.');
+  }
+  return createBase64(base64);
 }
