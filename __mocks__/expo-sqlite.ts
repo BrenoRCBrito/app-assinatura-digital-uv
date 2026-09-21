@@ -33,6 +33,13 @@ export function openDatabaseSync(nomeBanco: string) {
       }
     }),
     runAsync: jest.fn(async (sql: string, ...params: unknown[]) => {
+      const apagar = /DELETE FROM\s+(\w+)/i.exec(sql);
+      if (apagar !== null) {
+        const linhas = linhasDaTabela(tabelas, apagar[1]);
+        const apagadas = linhas.length;
+        linhas.length = 0;
+        return { lastInsertRowId: 0, changes: apagadas };
+      }
       const match = /INSERT INTO\s+(\w+)\s*\(([^)]+)\)/i.exec(sql);
       if (match === null) {
         throw new Error(`Mock de expo-sqlite não sabe rodar: ${sql}`);

@@ -1,9 +1,7 @@
 import { openDatabaseSync } from 'expo-sqlite';
-import * as SQLite from 'expo-sqlite';
 import { createIsoDateTime } from '../../domain/dateTime';
 import { criarUsuarioId, paraUsuario, type Email, type Usuario } from '../../domain/usuario';
 import type { UsuarioRepository } from '../repositories';
-import * as FileSystem from 'expo-file-system';
 
 type LinhaUsuario = Readonly<{
   id: string;
@@ -19,15 +17,6 @@ function paraUsuarioDaLinha(linha: LinhaUsuario): Usuario {
     senhaHash: linha.senha_hash,
     criadoEm: linha.criado_em,
   });
-}
-
-const deleteMyDatabase = async () => {
-  try {
-    await SQLite.deleteDatabaseAsync('assinaaqui.db');
-    console.log('SQLite database deleted');
-  } catch (error) {
-    console.error('Error deleting database:', error);
-  }
 }
 
 export function createSqliteUsuarioRepository(): UsuarioRepository {
@@ -64,10 +53,10 @@ export function createSqliteUsuarioRepository(): UsuarioRepository {
       );
       return usuario;
     },
-    clear: async () => {
-      await deleteMyDatabase();
-      console.log('SQLite usuarios table cleared');
-    }
+    async clear() {
+      await pronto;
+      await db.runAsync('DELETE FROM usuarios');
+    },
   };
 }
 
