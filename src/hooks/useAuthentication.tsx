@@ -78,7 +78,7 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
           updateSettings({
             perguntaBiometriaRespondida: true,
             loginBiometricoAtivado: false,
-            ultimoUsuarioIdBiometria: null,
+            ultimoUsuarioIdBiometria: usuarioLogadoId,
           }),
       },
       {
