@@ -272,7 +272,7 @@ describe('AuthenticationProvider', () => {
       });
 
       expect(alerta).toHaveBeenCalledTimes(1);
-      act(() => {
+      await act(async () => {
         responderAlerta('Sim');
       });
 
@@ -287,7 +287,7 @@ describe('AuthenticationProvider', () => {
       await act(async () => {
         await result.current.loginComSenha('a@exemplo.com', 'Senha@123');
       });
-      act(() => {
+      await act(async () => {
         responderAlerta('Não');
       });
       alerta.mockClear();
