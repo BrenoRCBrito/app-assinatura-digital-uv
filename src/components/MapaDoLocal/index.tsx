@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
 import type { Coordinates } from '../../domain/documento';
@@ -29,6 +29,8 @@ export function MapaDoLocal({ coordenadas, rotulo }: MapaDoLocalProps) {
         zoomEnabled={false}
         rotateEnabled={false}
         pitchEnabled={false}
+        // A moldura arredondada recorta a SurfaceView do Google Maps e a deixa preta; o lite mode desenha um bitmap.
+        liteMode={Platform.OS === 'android'}
       >
         <Marker accessibilityLabel="Local da assinatura" coordinate={ponto} />
       </MapView>

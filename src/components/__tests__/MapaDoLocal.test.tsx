@@ -1,7 +1,7 @@
 import React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { render, screen } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 import { createLatitude, createLongitude } from '../../domain/documento';
 import { SettingsProvider } from '../../storage/SettingsProvider';
@@ -30,6 +30,7 @@ describe('MapaDoLocal', () => {
       zoomEnabled: false,
       rotateEnabled: false,
       pitchEnabled: false,
+      liteMode: false,
     });
     expect(screen.getByLabelText('Local da assinatura').props.coordinate).toEqual({
       latitude: -22.40418,
@@ -49,6 +50,19 @@ describe('MapaDoLocal', () => {
       borderRadius: tokens.radius.mapLabel,
       backgroundColor: lightTheme.surface,
     });
+  });
+
+  test('no Android, pede o mapa em lite mode para a moldura arredondada não pintar preto', async () => {
+    const sistema = Platform.OS;
+    Object.defineProperty(Platform, 'OS', { value: 'android', configurable: true });
+
+    try {
+      await render(<MapaDoLocal coordenadas={COORDENADAS} rotulo="Vassouras" />, { wrapper: SettingsProvider });
+
+      expect((await screen.findByLabelText('Mapa do local')).props.liteMode).toBe(true);
+    } finally {
+      Object.defineProperty(Platform, 'OS', { value: sistema, configurable: true });
+    }
   });
 
   test('sem cidade, mostra o mapa sem rótulo', async () => {
