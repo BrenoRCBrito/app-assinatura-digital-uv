@@ -1,9 +1,22 @@
 import React from 'react';
 
-import { Button, Card, Screen, Section, SegmentedControl, Stack, ToggleRow, type SegmentOption } from '../../components';
+import {
+  Button,
+  Card,
+  confirmDestructive,
+  Screen,
+  Section,
+  SegmentedControl,
+  showError,
+  showSuccess,
+  Stack,
+  ToggleRow,
+  type SegmentOption,
+} from '../../components';
 import type { GestureEngine, ThemeName } from '../../domain/settings';
+import { useAuthentication } from '../../hooks/useAuthentication';
+import { useRepositories } from '../../storage/RepositoriesProvider';
 import { useSettings } from '../../storage/SettingsProvider';
-import { useRepositories } from "../../storage/RepositoriesProvider";
 
 const THEME_OPTIONS: readonly SegmentOption<ThemeName>[] = [
   { value: 'light', label: 'Claro' },
@@ -17,7 +30,32 @@ const GESTURE_ENGINE_OPTIONS: readonly SegmentOption<GestureEngine>[] = [
 
 export function SettingsScreen() {
   const { settings, updateSettings } = useSettings();
-  const { assinaturas: repositorioAssinatura, documentos: repositorioDocumentos, usuarios: repositorioUsuarios } = useRepositories();
+  const { assinaturas, documentos, usuarios } = useRepositories();
+  const { lock } = useAuthentication();
+
+  async function limparDados() {
+    try {
+      await assinaturas.clear();
+      await documentos.clear();
+      await usuarios.clear();
+      showSuccess('Dados do app apagados.');
+      lock();
+    } catch (error) {
+      console.error('Falha ao limpar os dados do app:', error);
+      showError('Erro', 'Não foi possível limpar os dados.');
+    }
+  }
+
+  function confirmarLimpeza() {
+    confirmDestructive({
+      title: 'Limpar dados do app',
+      message: 'Apaga as assinaturas, os documentos e as contas deste aparelho. Não dá para desfazer.',
+      confirmLabel: 'Limpar',
+      onConfirm: () => {
+        void limparDados();
+      },
+    });
+  }
 
   return (
     <Screen preset="scroll">
@@ -52,14 +90,7 @@ export function SettingsScreen() {
         </Section>
 
         <Section label="Dados">
-          <Button
-            label="Limpar dados do app"
-            onPress={async () => {
-              await repositorioAssinatura.clear();
-              await repositorioDocumentos.clear();
-              await repositorioUsuarios.clear();
-            }}
-          />
+          <Button label="Limpar dados do app" preset="danger" onPress={confirmarLimpeza} />
         </Section>
       </Stack>
     </Screen>

@@ -637,7 +637,7 @@ exports[`estilo das telas no tema dark login, início e configurações: configu
     "texto": "Dados",
   },
   {
-    "backgroundColor": "#E0E1DD",
+    "backgroundColor": "#9E3B3B",
     "borderRadius": 8,
     "elemento": "controle",
     "minHeight": 48,
@@ -647,7 +647,7 @@ exports[`estilo das telas no tema dark login, início e configurações: configu
     "width": "100%",
   },
   {
-    "color": "#0D1B2A",
+    "color": "#F4F4F1",
     "elemento": "texto",
     "fontSize": 16,
     "fontWeight": "600",
@@ -1780,7 +1780,7 @@ exports[`estilo das telas no tema light login, início e configurações: config
     "texto": "Dados",
   },
   {
-    "backgroundColor": "#0D1B2A",
+    "backgroundColor": "#9E3B3B",
     "borderRadius": 8,
     "elemento": "controle",
     "minHeight": 48,
@@ -1790,7 +1790,7 @@ exports[`estilo das telas no tema light login, início e configurações: config
     "width": "100%",
   },
   {
-    "color": "#E0E1DD",
+    "color": "#F4F4F1",
     "elemento": "texto",
     "fontSize": 16,
     "fontWeight": "600",
