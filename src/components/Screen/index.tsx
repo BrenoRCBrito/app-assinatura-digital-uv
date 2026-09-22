@@ -42,7 +42,14 @@ function ScreenFrame({ preset, footer, children }: ScreenProps) {
   let body: React.ReactNode;
   switch (layout) {
     case 'scroll':
-      body = <ScrollView contentContainerStyle={presetStyles.content}>{children}</ScrollView>;
+      body = (
+        <KeyboardAvoidingView
+          style={[styles.fill]}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView contentContainerStyle={presetStyles.content}>{children}</ScrollView>
+        </KeyboardAvoidingView>
+      );
       break;
     case 'form':
       body = (
