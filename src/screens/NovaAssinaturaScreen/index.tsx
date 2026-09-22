@@ -15,6 +15,7 @@ import {
   Stack,
   Text,
   TextField,
+  KeyboardDismissArea,
 } from '../../components';
 import { criarAssinaturaId, criarNomeAssinatura, type Assinatura } from '../../domain/assinatura';
 import { ValidationError } from '../../domain/brand';
@@ -116,6 +117,7 @@ function montarAssinatura(): Assinatura {
   }
 
   return (
+  <KeyboardDismissArea>
     <Screen
       preset="form"
       footer={
@@ -150,5 +152,6 @@ function montarAssinatura(): Assinatura {
         </Stack>
       </Stack>
     </Screen>
+  </KeyboardDismissArea>
   );
 }

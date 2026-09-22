@@ -16,6 +16,7 @@ import {
   Stack,
   Text,
   TextField,
+  KeyboardDismissArea,
 } from '../../components';
 import type { Assinatura, AssinaturaId } from '../../domain/assinatura';
 import { ValidationError } from '../../domain/brand';
@@ -178,6 +179,7 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura, onAssinado 
   }
 
   return (
+    <KeyboardDismissArea>
     <Screen
       preset="form"
       footer={
@@ -232,5 +234,6 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura, onAssinado 
       </Stack>
       <LoadingOverlay visible={assinando} message="Assinando o documento…" />
     </Screen>
+    </KeyboardDismissArea>
   );
 }
