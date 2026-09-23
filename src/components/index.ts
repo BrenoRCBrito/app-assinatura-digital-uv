@@ -32,3 +32,5 @@ export { SizeStepper } from './SizeStepper';
 export { Text } from './Text';
 export { TextField } from './TextField';
 export { ToggleRow } from './ToggleRow';
+export { FieldEditModal } from './FieldEditModal';
+
