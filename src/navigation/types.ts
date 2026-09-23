@@ -6,6 +6,7 @@ export type RootStackParamList = {
   CriarConta: undefined;
   Home: undefined;
   Settings: undefined;
+  Profile: undefined;
   Assinaturas: undefined;
   NovaAssinatura: undefined;
   DigitalizarDocumento: undefined;
