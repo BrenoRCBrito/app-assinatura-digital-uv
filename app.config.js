@@ -1,9 +1,8 @@
 const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 
-// A chave do Google Maps fica fora do Git: o repositório é público.
+// Os segredos ficam fora do Git: o repositório é público.
 const ARQUIVO_DE_SEGREDOS = join(__dirname, '..', '.env.local');
-const VARIAVEL_DA_CHAVE = 'GOOGLE_MAPS_ANDROID_KEY';
 
 function lerDoArquivo(variavel) {
   try {
@@ -15,15 +14,21 @@ function lerDoArquivo(variavel) {
   }
 }
 
-function chaveDoGoogleMaps() {
-  const doAmbiente = process.env[VARIAVEL_DA_CHAVE];
-  return doAmbiente === undefined || doAmbiente === '' ? lerDoArquivo(VARIAVEL_DA_CHAVE) : doAmbiente;
+function lerVariavel(variavel) {
+  const doAmbiente = process.env[variavel];
+  return doAmbiente === undefined || doAmbiente === '' ? lerDoArquivo(variavel) : doAmbiente;
 }
 
 module.exports = ({ config }) => {
-  const chave = chaveDoGoogleMaps();
-  if (chave === undefined) {
-    return config;
-  }
-  return { ...config, plugins: [...config.plugins, ['react-native-maps', { androidGoogleMapsApiKey: chave }]] };
+  const chaveDoMaps = lerVariavel('GOOGLE_MAPS_ANDROID_KEY');
+  const segredoDoCarimbo = lerVariavel('ASSINAAQUI_HMAC_SECRET');
+
+  return {
+    ...config,
+    plugins:
+      chaveDoMaps === undefined
+        ? config.plugins
+        : [...config.plugins, ['react-native-maps', { androidGoogleMapsApiKey: chaveDoMaps }]],
+    extra: segredoDoCarimbo === undefined ? config.extra : { ...config.extra, hmacSecret: segredoDoCarimbo },
+  };
 };
