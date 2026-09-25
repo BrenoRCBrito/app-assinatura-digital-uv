@@ -7,6 +7,7 @@ type HomeScreenProps = Readonly<{
   onDigitalizarDocumento: () => void;
   onOpenAssinaturas: () => void;
   onOpenHistorico: () => void;
+  onValidarDocumento: () => void;
   onOpenSettings: () => void;
 }>;
 
@@ -14,6 +15,7 @@ export function HomeScreen({
   onDigitalizarDocumento,
   onOpenAssinaturas,
   onOpenHistorico,
+  onValidarDocumento,
   onOpenSettings,
 }: HomeScreenProps) {
   const { lock } = useAuthentication();
@@ -39,6 +41,7 @@ export function HomeScreen({
           items={[
             { label: 'Minhas assinaturas', icon: 'signatures', onPress: onOpenAssinaturas },
             { label: 'Histórico', icon: 'history', onPress: onOpenHistorico },
+            { label: 'Validar documento', icon: 'shieldCheck', onPress: onValidarDocumento },
             { label: 'Configurações', icon: 'settings', onPress: onOpenSettings },
           ]}
         />

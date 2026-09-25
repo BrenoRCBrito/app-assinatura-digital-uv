@@ -8,6 +8,7 @@ import {
 
 import { useAuthentication } from '../hooks/useAuthentication';
 import { AssinaturasScreen } from '../screens/AssinaturasScreen';
+import { CriarContaScreen } from '../screens/CriarContaScreen';
 import { DigitalizarDocumentoScreen } from '../screens/DigitalizarDocumentoScreen';
 import { DocumentoScreen } from '../screens/DocumentoScreen';
 import { HistoricoScreen } from '../screens/HistoricoScreen';
@@ -16,11 +17,10 @@ import { LoginScreen } from '../screens/LoginScreen';
 import { NovaAssinaturaScreen } from '../screens/NovaAssinaturaScreen';
 import { PosicionarAssinaturaScreen } from '../screens/PosicionarAssinaturaScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { ValidarDocumentoScreen } from '../screens/ValidarDocumentoScreen';
 import { createNavigationTheme } from '../theme/createNavigationTheme';
 import { useAppTheme } from '../theme/useAppTheme';
 import type { RootStackParamList } from './types';
-import { CriarContaScreen } from '../screens/CriarContaScreen';
-
 
 type AppNavigation = NativeStackNavigationProp<RootStackParamList, keyof RootStackParamList>;
 
@@ -30,6 +30,14 @@ export function AppNavigator() {
   const { isUnlocked } = useAuthentication();
   const { theme, themeName } = useAppTheme();
   const navigationTheme = useMemo(() => createNavigationTheme(theme, themeName), [theme, themeName]);
+
+  const validarDocumento = (
+    <Stack.Screen name="ValidarDocumento" options={{ headerShown: false }}>
+      {({ navigation }: { navigation: AppNavigation }) => (
+        <ValidarDocumentoScreen onFechar={() => navigation.goBack()} />
+      )}
+    </Stack.Screen>
+  );
 
   return (
     <NavigationContainer theme={navigationTheme}>
@@ -42,6 +50,7 @@ export function AppNavigator() {
                   onDigitalizarDocumento={() => navigation.navigate('DigitalizarDocumento')}
                   onOpenAssinaturas={() => navigation.navigate('Assinaturas')}
                   onOpenHistorico={() => navigation.navigate('Historico')}
+                  onValidarDocumento={() => navigation.navigate('ValidarDocumento')}
                   onOpenSettings={() => navigation.navigate('Settings')}
                 />
               )}
@@ -93,12 +102,16 @@ export function AppNavigator() {
               )}
             </Stack.Screen>
             <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configurações' }} />
+            {validarDocumento}
           </>
         ) : (
           <>
             <Stack.Screen name="Login" options={{ headerShown: false }}>
               {({ navigation }: { navigation: AppNavigation }) => (
-                <LoginScreen onCriarConta={() => navigation.navigate('CriarConta')} />
+                <LoginScreen
+                  onCriarConta={() => navigation.navigate('CriarConta')}
+                  onValidarDocumento={() => navigation.navigate('ValidarDocumento')}
+                />
               )}
             </Stack.Screen>
             <Stack.Screen name="CriarConta" options={{ headerShown: false }}>
@@ -109,9 +122,9 @@ export function AppNavigator() {
                 />
               )}
             </Stack.Screen>
+            {validarDocumento}
           </>
         )}
-
       </Stack.Navigator>
     </NavigationContainer>
   );

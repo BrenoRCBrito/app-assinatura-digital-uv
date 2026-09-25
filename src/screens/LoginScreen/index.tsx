@@ -5,9 +5,10 @@ import { useAuthentication } from '../../hooks/useAuthentication';
 
 type LoginScreenProps = Readonly<{
   onCriarConta: () => void;
+  onValidarDocumento: () => void;
 }>;
 
-export function LoginScreen({ onCriarConta }: LoginScreenProps) {
+export function LoginScreen({ onCriarConta, onValidarDocumento }: LoginScreenProps) {
   const { mostrarEntrarComBiometria, loginComSenha, unlock } = useAuthentication();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -67,6 +68,7 @@ export function LoginScreen({ onCriarConta }: LoginScreenProps) {
           <Stack gap="label" align="center">
             <Button label={entrando ? 'Entrando…' : 'Entrar'} onPress={entrar} disabled={entrando} />
             <Link label="Criar conta" onPress={onCriarConta} />
+            <Link label="Validar um documento" onPress={onValidarDocumento} preset="linkQuiet" />
           </Stack>
         </Stack>
       </Screen>

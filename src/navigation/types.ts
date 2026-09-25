@@ -12,4 +12,5 @@ export type RootStackParamList = {
   PosicionarAssinatura: { foto: CapturedPhoto };
   Historico: undefined;
   Documento: { documentoId: DocumentoId };
+  ValidarDocumento: undefined;
 };

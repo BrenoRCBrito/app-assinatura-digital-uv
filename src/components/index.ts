@@ -25,6 +25,7 @@ export { PalcoDoSelo } from './PalcoDoSelo';
 export { PapelDeAssinatura } from './PapelDeAssinatura';
 export { PhotoPreview } from './PhotoPreview';
 export { PreviaDocumento } from './PreviaDocumento';
+export { QrScanner } from './QrScanner';
 export { Screen } from './Screen';
 export { Section } from './Section';
 export { SegmentedControl, type SegmentOption } from './SegmentedControl';

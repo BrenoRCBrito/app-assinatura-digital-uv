@@ -57,6 +57,10 @@ export const iconShapes = {
     },
   ],
   chevronRight: [{ d: 'M9 6l6 6-6 6', strokeLinecap: 'round', strokeLinejoin: 'round' }],
+  shieldCheck: [
+    { d: 'M12 3l7 3v5c0 4.5-3 8-7 10c-4-2-7-5.5-7-10V6z', strokeLinecap: 'round', strokeLinejoin: 'round' },
+    { d: 'M9 12l2 2l4-4', strokeLinecap: 'round', strokeLinejoin: 'round' },
+  ],
   check: [{ d: 'M5 12.5l4.5 4.5L19 7.5', strokeLinecap: 'round', strokeLinejoin: 'round' }],
   minus: [{ d: 'M5 12h14', strokeLinecap: 'round' }],
   move: [
