@@ -23,5 +23,5 @@ export async function emitirCodigoDoDocumento(
     throw new Error('A conta que assina o documento não foi encontrada.');
   }
   const resumoDaFoto = await dependencias.resumirSha256(fotoBase64);
-  return emitirCodigo(camposDoDocumento(documento, usuario.email, resumoDaFoto), dependencias.carimbar);
+  return emitirCodigo(camposDoDocumento(documento, usuario, resumoDaFoto), dependencias.carimbar);
 }

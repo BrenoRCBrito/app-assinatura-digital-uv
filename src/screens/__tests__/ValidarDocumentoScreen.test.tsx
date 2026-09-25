@@ -6,7 +6,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
 import { camposDoDocumento, emitirCodigo, type Carimbar } from '../../domain/codigoDeAutenticidade';
-import { criarEmail } from '../../domain/usuario';
+import { criarCpf, criarEmail } from '../../domain/usuario';
 import { carimbarComOSegredoDoApp } from '../../services/carimbo';
 import { SettingsProvider } from '../../storage/SettingsProvider';
 import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
@@ -68,7 +68,9 @@ async function lerQr(...textos: string[]) {
 }
 
 function codigoValido() {
-  return emitirCodigo(camposDoDocumento(DOCUMENTO, criarEmail('breno@exemplo.com'), 'a'.repeat(64)), carimbarDeTeste);
+  const titular = { email: criarEmail('breno@exemplo.com'), cpf: criarCpf('123.456.789-09'), telefone: null };
+
+  return emitirCodigo(camposDoDocumento(DOCUMENTO, titular, 'a'.repeat(64)), carimbarDeTeste);
 }
 
 describe('ValidarDocumentoScreen', () => {
@@ -93,6 +95,7 @@ describe('ValidarDocumentoScreen', () => {
 
     expect(await screen.findByText('Documento autêntico')).toBeTruthy();
     expect(screen.getByText('breno@exemplo.com')).toBeTruthy();
+    expect(screen.getByText('***.456.789-**')).toBeTruthy();
     expect(screen.getByText('Contrato de locação')).toBeTruthy();
     expect(screen.getByText('-22.40418, -43.66283')).toBeTruthy();
     expect(screen.queryByText('a'.repeat(64))).toBeNull();
