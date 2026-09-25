@@ -2,12 +2,14 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { createIsoDateTime } from '../domain/dateTime';
 import { criarDocumentoId } from '../domain/documento';
+import { carimbarComOSegredoDoApp } from '../services/carimbo';
 import {
   copiarFotoDocumento,
   excluirArquivosDocumento,
   guardarPdfDocumento,
   lerFotoDocumentoBase64,
 } from '../services/fileSystem';
+import { resumirSha256 } from '../services/hmac';
 import { authenticateDeviceOwner } from '../services/localAuthentication';
 import { obterLocalAssinatura } from '../services/location';
 import { gerarPdf, montarHtmlDocumento } from '../services/print';
@@ -18,6 +20,7 @@ import {
   type PedidoAssinatura,
   type ResultadoAssinatura,
 } from '../useCases/assinarDocumento';
+import { emitirCodigoDoDocumento } from '../useCases/emitirCodigoDoDocumento';
 import { useAuthentication } from './useAuthentication';
 
 export type AssinarDocumento = Readonly<{
@@ -26,7 +29,7 @@ export type AssinarDocumento = Readonly<{
 }>;
 
 export function useAssinarDocumento(): AssinarDocumento {
-  const { documentos } = useRepositories();
+  const { documentos, usuarios } = useRepositories();
   const { usuarioId } = useAuthentication();
   const [assinando, setAssinando] = useState(false);
   // O state só chega à tela no próximo render; a ref barra o segundo toque antes disso.
@@ -41,6 +44,12 @@ export function useAssinarDocumento(): AssinarDocumento {
             obterLocalAssinatura,
             copiarFotoDocumento,
             lerFotoDocumentoBase64,
+            emitirCodigo: (documento, fotoBase64) =>
+              emitirCodigoDoDocumento(
+                { buscarUsuario: (id) => usuarios.findById(id), resumirSha256, carimbar: carimbarComOSegredoDoApp },
+                documento,
+                fotoBase64,
+              ),
             guardarPdfDocumento,
             excluirArquivosDocumento,
             montarHtmlDocumento,
@@ -50,7 +59,7 @@ export function useAssinarDocumento(): AssinarDocumento {
             criarDocumentoId: () => criarDocumentoId(),
             usuarioId,
           },
-    [documentos, usuarioId],
+    [documentos, usuarios, usuarioId],
   );
 
   const assinar = useCallback(

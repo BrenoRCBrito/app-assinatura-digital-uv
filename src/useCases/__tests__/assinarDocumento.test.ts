@@ -1,5 +1,5 @@
+import { emitirCodigo, type CodigoDeAutenticidade } from '../../domain/codigoDeAutenticidade';
 import { createIsoDateTime } from '../../domain/dateTime';
-import { criarUsuarioId } from '../../domain/usuario';
 import {
   createBase64,
   createCity,
@@ -11,6 +11,7 @@ import {
 } from '../../domain/documento';
 import { createFraction } from '../../domain/geometry';
 import { createCapturedPhoto } from '../../domain/photo';
+import { criarUsuarioId } from '../../domain/usuario';
 import { createInMemoryDocumentoAssinadoRepository } from '../../storage/inMemory/inMemoryDocumentoAssinadoRepository';
 import { criarAssinaturaDeTeste } from '../../storage/testing/assinaturaRepositoryContract';
 import { assinarDocumento, type DependenciasAssinatura, type PedidoAssinatura } from '../assinarDocumento';
@@ -28,12 +29,18 @@ const PEDIDO: PedidoAssinatura = {
   foto: createCapturedPhoto('file:///cache/foto.jpg', 3024, 4032),
   selo: { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35) },
 };
+const FOTO_BASE64 = createBase64('/9j/4AAQ');
 const PDF = createBase64('JVBERi0xLjQK');
+let CODIGO: CodigoDeAutenticidade;
+
+beforeAll(async () => {
+  CODIGO = await emitirCodigo([{ chave: 'id', valor: ID }], async () => 'carimbo-de-teste');
+});
 
 function criarDependencias(sobrescrever: Partial<DependenciasAssinatura> = {}) {
   const passos: string[] = [];
   const registro = createInMemoryDocumentoAssinadoRepository();
-    const dependencias: DependenciasAssinatura = {
+  const dependencias: DependenciasAssinatura = {
     authenticateDeviceOwner: jest.fn(async (purpose) => {
       passos.push(`autenticar ${purpose}`);
       return { type: 'authenticated' as const };
@@ -47,7 +54,11 @@ function criarDependencias(sobrescrever: Partial<DependenciasAssinatura> = {}) {
     }),
     lerFotoDocumentoBase64: jest.fn(async (id) => {
       passos.push(`ler foto ${id}`);
-      return createBase64('/9j/4AAQ');
+      return FOTO_BASE64;
+    }),
+    emitirCodigo: jest.fn(async (documento) => {
+      passos.push(`emitir codigo ${documento.id}`);
+      return CODIGO;
     }),
     montarHtmlDocumento: jest.fn(() => {
       passos.push('montar html');
@@ -125,6 +136,23 @@ describe('assinarDocumento', () => {
     expect(passos).toEqual(['autenticar confirmSignature']);
   });
 
+  test('quando emitir o código falha, apaga a pasta do documento e não salva o registro', async () => {
+    const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { dependencias, passos, registro } = criarDependencias({
+      emitirCodigo: jest.fn().mockRejectedValue(new Error('Segredo do carimbo ausente')),
+    });
+
+    await expect(assinarDocumento(dependencias, PEDIDO)).resolves.toEqual({
+      tipo: 'falhou',
+      motivo: 'erroAoGerarDocumento',
+    });
+    expect(passos.at(-1)).toBe(`apagar pasta ${ID}`);
+    expect(dependencias.gerarPdf).not.toHaveBeenCalled();
+    await expect(registro.list(USUARIO_ID)).resolves.toEqual([]);
+    expect(erro).toHaveBeenCalledTimes(1);
+    erro.mockRestore();
+  });
+
   test('quando o PDF falha, apaga a pasta do documento e não salva o registro', async () => {
     const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     const { dependencias, passos, registro } = criarDependencias({
@@ -159,12 +187,12 @@ describe('assinarDocumento', () => {
     erro.mockRestore();
   });
 
-  test('com sucesso, grava a foto e o PDF antes do registro e devolve o documento', async () => {
+  test('com sucesso, emite o código, grava a foto e o PDF antes do registro e devolve o documento', async () => {
     const { dependencias, passos, registro } = criarDependencias();
 
     const resultado = await assinarDocumento(dependencias, PEDIDO);
 
-        const documento = {
+    const documento = {
       id: ID,
       usuarioId: USUARIO_ID,
       titulo: PEDIDO.titulo,
@@ -180,11 +208,14 @@ describe('assinarDocumento', () => {
       'obter local',
       `copiar foto ${ID}`,
       `ler foto ${ID}`,
+      `emitir codigo ${ID}`,
       'montar html',
       'gerar pdf',
       `guardar pdf ${ID} ${PDF}`,
       'salvar registro',
     ]);
+    expect(dependencias.emitirCodigo).toHaveBeenCalledWith(documento, FOTO_BASE64);
+    expect(dependencias.montarHtmlDocumento).toHaveBeenCalledWith(documento, FOTO_BASE64, CODIGO);
     await expect(registro.findById(ID)).resolves.toEqual(documento);
   });
 });

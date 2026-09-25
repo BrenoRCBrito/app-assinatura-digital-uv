@@ -1,12 +1,13 @@
 import type { Assinatura } from '../domain/assinatura';
+import type { CodigoDeAutenticidade } from '../domain/codigoDeAutenticidade';
 import type { IsoDateTime } from '../domain/dateTime';
 import type { Base64, DocumentoAssinado, DocumentoId, Html, TituloDocumento } from '../domain/documento';
-import type { CapturedPhoto, FileUri } from '../domain/photo';
+import type { CapturedPhoto } from '../domain/photo';
 import type { PosicaoSelo } from '../domain/selo';
+import type { UsuarioId } from '../domain/usuario';
 import type { AuthenticationPurpose, AuthenticationResult } from '../services/localAuthentication';
 import type { ResultadoLocalAssinatura } from '../services/location';
 import type { DocumentoAssinadoRepository } from '../storage/repositories';
-import type { UsuarioId } from '../domain/usuario';
 
 export type PedidoAssinatura = Readonly<{
   titulo: TituloDocumento;
@@ -33,16 +34,16 @@ export type DependenciasAssinatura = Readonly<{
   obterLocalAssinatura: () => Promise<ResultadoLocalAssinatura>;
   copiarFotoDocumento: (id: DocumentoId, foto: CapturedPhoto) => Promise<void>;
   lerFotoDocumentoBase64: (id: DocumentoId) => Promise<Base64>;
+  emitirCodigo: (documento: DocumentoAssinado, fotoBase64: Base64) => Promise<CodigoDeAutenticidade>;
   guardarPdfDocumento: (id: DocumentoId, pdf: Base64) => Promise<void>;
   excluirArquivosDocumento: (id: DocumentoId) => void;
-  montarHtmlDocumento: (documento: DocumentoAssinado, fotoBase64: Base64) => Html;
+  montarHtmlDocumento: (documento: DocumentoAssinado, fotoBase64: Base64, codigo: CodigoDeAutenticidade) => Html;
   gerarPdf: (html: Html) => Promise<Base64>;
   documentos: DocumentoAssinadoRepository;
   agora: () => IsoDateTime;
   criarDocumentoId: () => DocumentoId;
   usuarioId: UsuarioId;
 }>;
-
 
 type FalhaDeAutenticacao = Exclude<AuthenticationResult['type'], 'authenticated' | 'cancelled'>;
 
@@ -81,21 +82,21 @@ export async function assinarDocumento(
   }
 
   const documento: DocumentoAssinado = {
-  id: dependencias.criarDocumentoId(),
-  usuarioId: dependencias.usuarioId,
-  titulo: pedido.titulo,
-  assinaturaUsada: { nome: pedido.assinatura.nome, desenho: pedido.assinatura.desenho },
-  tamanhoFoto: pedido.foto.size,
-  selo: pedido.selo,
-  local: local.local,
-  assinadoEm: dependencias.agora(),
+    id: dependencias.criarDocumentoId(),
+    usuarioId: dependencias.usuarioId,
+    titulo: pedido.titulo,
+    assinaturaUsada: { nome: pedido.assinatura.nome, desenho: pedido.assinatura.desenho },
+    tamanhoFoto: pedido.foto.size,
+    selo: pedido.selo,
+    local: local.local,
+    assinadoEm: dependencias.agora(),
   };
-
 
   try {
     await dependencias.copiarFotoDocumento(documento.id, pedido.foto);
     const fotoBase64 = await dependencias.lerFotoDocumentoBase64(documento.id);
-    const pdf = await dependencias.gerarPdf(dependencias.montarHtmlDocumento(documento, fotoBase64));
+    const codigo = await dependencias.emitirCodigo(documento, fotoBase64);
+    const pdf = await dependencias.gerarPdf(dependencias.montarHtmlDocumento(documento, fotoBase64, codigo));
     await dependencias.guardarPdfDocumento(documento.id, pdf);
     await dependencias.documentos.save(documento);
     return { tipo: 'assinado', documento };

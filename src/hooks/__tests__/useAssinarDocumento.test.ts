@@ -65,6 +65,7 @@ describe('useAssinarDocumento', () => {
       excluirArquivosDocumento,
       montarHtmlDocumento,
       gerarPdf,
+      emitirCodigo: expect.any(Function),
       documentos: result.current.repositorios.documentos,
       usuarioId: USUARIO_ID,
     });

@@ -1,24 +1,36 @@
 import { printToFileAsync } from 'expo-print';
 
+import type { CodigoDeAutenticidade } from '../domain/codigoDeAutenticidade';
 import { createBase64, createHtml, type Base64, type DocumentoAssinado, type Html } from '../domain/documento';
 import { formatDateTime, formatLocal } from '../domain/format';
 import { layoutDaPagina, TAMANHO_DA_FOLHA_A4 } from '../domain/pagina';
 import { layoutDoSelo } from '../domain/selo';
 import { FIXED_COLORS } from '../theme/appTheme';
 import { tokens } from '../theme/tokens';
+import { desenharQrSvg, gerarMatrizQr } from './qrCode';
 
 const FONTE_DO_SELO = '-apple-system, Helvetica, Arial, sans-serif';
+
+export const LEGENDA_DO_QR = 'Código de autenticidade. Para conferir, abra o AssinaAqui e toque em Validar documento.';
 
 function escaparHtml(texto: string): string {
   return texto.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-export function montarHtmlDocumento(documento: DocumentoAssinado, fotoBase64: Base64): Html {
-  const { pagina, foto, esquerda, topo } = layoutDaPagina(documento.tamanhoFoto, TAMANHO_DA_FOLHA_A4.width);
+export function montarHtmlDocumento(
+  documento: DocumentoAssinado,
+  fotoBase64: Base64,
+  codigo: CodigoDeAutenticidade,
+): Html {
+  const { pagina, foto, esquerda, topo, rodape, ladoDoQr, tamanhoDaLegenda } = layoutDaPagina(
+    documento.tamanhoFoto,
+    TAMANHO_DA_FOLHA_A4.width,
+  );
   const { desenho } = documento.assinaturaUsada;
   const selo = layoutDoSelo(documento.selo.largura, foto, desenho.quadro);
   const local = formatLocal(documento.local);
   const tracos = desenho.tracos.map((traco) => `<path d="${traco}" />`).join('');
+  const qr = desenharQrSvg(gerarMatrizQr(codigo), { tinta: FIXED_COLORS.ink, fundo: FIXED_COLORS.paper });
 
   return createHtml(`<!DOCTYPE html>
 <html>
@@ -59,6 +71,23 @@ export function montarHtmlDocumento(documento: DocumentoAssinado, fotoBase64: Ba
     white-space: nowrap;
     overflow: hidden;
   }
+  .rodape {
+    position: absolute;
+    left: ${rodape.esquerda}px;
+    top: ${rodape.topo}px;
+    width: ${rodape.largura}px;
+    height: ${rodape.altura}px;
+    display: flex;
+    align-items: center;
+  }
+  .legenda {
+    flex: 1;
+    font-family: ${FONTE_DO_SELO};
+    font-size: ${tamanhoDaLegenda}px;
+    color: ${FIXED_COLORS.ink};
+  }
+  .qr { flex: none; width: ${ladoDoQr}px; height: ${ladoDoQr}px; }
+  .qr svg { display: block; width: 100%; height: 100%; }
 </style>
 </head>
 <body>
@@ -78,6 +107,10 @@ export function montarHtmlDocumento(documento: DocumentoAssinado, fotoBase64: Ba
       </svg>
       <div class="faixa"><div>${formatDateTime(documento.assinadoEm)}</div><div>${escaparHtml(local)}</div></div>
     </div>
+  </div>
+  <div class="rodape">
+    <div class="legenda">${LEGENDA_DO_QR}</div>
+    <div class="qr">${qr}</div>
   </div>
 </div>
 </body>
