@@ -109,7 +109,7 @@ export function paraUsuario(dado: unknown): Usuario {
   const usuario = lerObjeto(dado, USUARIO_INVALIDO);
   const cpfBruto = lerTextoOuNulo('cpf' in usuario ? usuario.cpf : undefined, USUARIO_INVALIDO);
   const telefoneBruto = lerTextoOuNulo('telefone' in usuario ? usuario.telefone : undefined, USUARIO_INVALIDO);
-  const fotoBruta = lerTextoOuNulo('foto' in usuario ? usuario.foto : undefined, USUARIO_INVALIDO); // ADICIONAR
+  const fotoBruta = lerTextoOuNulo('foto' in usuario ? usuario.foto : undefined, USUARIO_INVALIDO);
 
   return {
     id: criarUsuarioId(lerTexto('id' in usuario ? usuario.id : undefined, USUARIO_INVALIDO)),
@@ -117,7 +117,7 @@ export function paraUsuario(dado: unknown): Usuario {
     senhaHash: lerTexto('senhaHash' in usuario ? usuario.senhaHash : undefined, USUARIO_INVALIDO),
     cpf: cpfBruto === null ? null : criarCpf(cpfBruto),
     telefone: telefoneBruto === null ? null : criarTelefone(telefoneBruto),
-    foto: fotoBruta === null ? null : criarFotoPerfil(fotoBruta),  // ADICIONAR
+    foto: fotoBruta === null ? null : criarFotoPerfil(fotoBruta),
     criadoEm: createIsoDateTime(
       lerTexto('criadoEm' in usuario ? usuario.criadoEm : undefined, USUARIO_INVALIDO),
     ),

@@ -10,7 +10,11 @@ export const textPresets = {
   linkPrimary: (theme: Theme) => ({ ...theme.typography.linkPrimary, color: theme.textSecondary }),
   linkQuiet: (theme: Theme) => ({ ...theme.typography.status, color: theme.textSecondary }),
   sectionLabel: (theme: Theme) => ({ ...theme.typography.sectionLabel, color: theme.textSecondary }),
-  sectionLabelCentered: (theme: Theme) => ({...theme.typography.sectionLabel,color: theme.textSecondary,textAlign: 'center',}),
+  sectionLabelCentered: (theme: Theme) => ({
+    ...theme.typography.sectionLabel,
+    color: theme.textSecondary,
+    textAlign: 'center',
+  }),
   requisitoSenhaAtendido: (theme: Theme) => ({ ...theme.typography.supporting, color: theme.success }),
   requisitoSenhaPendente: (theme: Theme) => ({ ...theme.typography.supporting, color: theme.textMuted }),
   itemTitle: (theme: Theme) => ({ ...theme.typography.itemTitle, color: theme.textPrimary }),

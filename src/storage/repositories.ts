@@ -25,7 +25,7 @@ export interface UsuarioRepository {
   updateSenha(id: UsuarioId, senhaHash: string): Promise<Usuario>;
   updateCpf(id: UsuarioId, cpf: Cpf): Promise<Usuario>;
   updateTelefone(id: UsuarioId, telefone: Telefone): Promise<Usuario>;
-  updateFoto(id: UsuarioId, foto: FotoPerfil | null): Promise<Usuario>;   // ADICIONAR
+  updateFoto(id: UsuarioId, foto: FotoPerfil | null): Promise<Usuario>;
   clear(): Promise<void>;
 }
 

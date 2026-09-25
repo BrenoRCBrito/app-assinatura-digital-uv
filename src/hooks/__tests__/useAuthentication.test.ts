@@ -32,7 +32,15 @@ const SENHA_HASH_A = 'hash-a';
 const SENHA_HASH_B = 'hash-b';
 
 function criarUsuarioDeTeste(id: UsuarioId, email: Email, senhaHash: string): Usuario {
-  return { id, email, senhaHash, cpf: null, telefone: null, foto: null, criadoEm: createIsoDateTime('2026-09-12T10:00:00.000Z') };
+  return {
+    id,
+    email,
+    senhaHash,
+    cpf: null,
+    telefone: null,
+    foto: null,
+    criadoEm: createIsoDateTime('2026-09-12T10:00:00.000Z'),
+  };
 }
 
 function mockUsuarios(usuarios: readonly Usuario[]) {

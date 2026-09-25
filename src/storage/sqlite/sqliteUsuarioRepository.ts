@@ -1,6 +1,15 @@
 import { openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
 import { createIsoDateTime } from '../../domain/dateTime';
-import { criarUsuarioId, paraUsuario, type Cpf, type Email, type FotoPerfil, type Telefone, type Usuario, type UsuarioId } from '../../domain/usuario';
+import {
+  criarUsuarioId,
+  paraUsuario,
+  type Cpf,
+  type Email,
+  type FotoPerfil,
+  type Telefone,
+  type Usuario,
+  type UsuarioId,
+} from '../../domain/usuario';
 import type { UsuarioRepository } from '../repositories';
 
 type LinhaUsuario = Readonly<{
@@ -131,11 +140,10 @@ export function createSqliteUsuarioRepository(): UsuarioRepository {
       await db.runAsync('UPDATE usuarios SET foto = ? WHERE id = ?', foto, id);
       const atualizado = await buscarPorId(id);
       if (atualizado === null) {
-      throw new Error(`Usuário não encontrado: ${id}`);
-    }
-  return atualizado;
-},
-
+        throw new Error(`Usuário não encontrado: ${id}`);
+      }
+      return atualizado;
+    },
     async clear() {
       await pronto;
       await db.runAsync('DELETE FROM usuarios');

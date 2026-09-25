@@ -1,7 +1,8 @@
 import type { TextStyle } from 'react-native';
 
 type SpaceStep = 4 | 6 | 8 | 10 | 12 | 14 | 16 | 18 | 20 | 22 | 24 | 28 | 36 | 48 | 50 | 120;
-type SizeStep = 13 | 16 | 18 | 20 | 22 | 28 | 32 | 36 | 44 | 48 | 52 | 56 | 58 | 60 | 72 | 76 | 96 | 116 | 132 | 150 | 200 | 480;
+type SizeStep =
+  13 | 16 | 18 | 20 | 22 | 28 | 32 | 36 | 44 | 48 | 52 | 56 | 58 | 60 | 72 | 76 | 96 | 116 | 132 | 150 | 200 | 480;
 type FontSizeStep = 12 | 13 | 14 | 15 | 16 | 17 | 18 | 20 | 21 | 22 | 32;
 type LineHeightStep = 20 | 23 | 25 | 27;
 type LetterSpacingStep = -0.5 | -0.3 | 0.6;
