@@ -1,4 +1,5 @@
 export { AssinaturaItem } from './AssinaturaItem';
+export { Avatar } from './Avatar';
 export { Button } from './Button';
 export { Card } from './Card';
 export { ChipButton } from './ChipButton';
@@ -33,3 +34,5 @@ export { SizeStepper } from './SizeStepper';
 export { Text } from './Text';
 export { TextField } from './TextField';
 export { ToggleRow } from './ToggleRow';
+export { FieldEditModal } from './FieldEditModal';
+

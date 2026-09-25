@@ -43,9 +43,14 @@ function ScreenFrame({ preset, footer, children }: ScreenProps) {
   switch (layout) {
     case 'scroll':
       body = (
-        <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <ScrollView contentContainerStyle={presetStyles.content}>{children}</ScrollView>
-        </KeyboardAvoidingView>
+        <ScrollView
+          style={styles.fill}
+          contentContainerStyle={presetStyles.content}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+        >
+          {children}
+        </ScrollView>
       );
       break;
     case 'form':

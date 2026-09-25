@@ -40,6 +40,15 @@ export function openDatabaseSync(nomeBanco: string) {
         linhas.length = 0;
         return { lastInsertRowId: 0, changes: apagadas };
       }
+      const atualizar = /UPDATE\s+(\w+)\s+SET\s+(\w+)\s*=\s*\?\s+WHERE\s+(\w+)\s*=\s*\?/i.exec(sql);
+      if (atualizar !== null) {
+        const [, nomeTabela, coluna, colunaDoFiltro] = atualizar;
+        const alvos = linhasDaTabela(tabelas, nomeTabela).filter((linha) => linha[colunaDoFiltro] === params[1]);
+        alvos.forEach((linha) => {
+          linha[coluna] = params[0];
+        });
+        return { lastInsertRowId: 0, changes: alvos.length };
+      }
       const match = /INSERT INTO\s+(\w+)\s*\(([^)]+)\)/i.exec(sql);
       if (match === null) {
         throw new Error(`Mock de expo-sqlite não sabe rodar: ${sql}`);

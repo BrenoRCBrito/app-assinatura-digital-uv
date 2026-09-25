@@ -17,8 +17,9 @@ export function Section({ label, children, preset = 'default' }: SectionProps) {
 
   return (
     <View style={styles.section}>
-      <Text preset="sectionLabel">{label}</Text>
+      <Text preset={styles.labelPreset}>{label}</Text>
       {children}
     </View>
   );
 }
+

@@ -32,7 +32,7 @@ const SENHA_HASH_A = 'hash-a';
 const SENHA_HASH_B = 'hash-b';
 
 function criarUsuarioDeTeste(id: UsuarioId, email: Email, senhaHash: string): Usuario {
-  return { id, email, senhaHash, criadoEm: createIsoDateTime('2026-09-12T10:00:00.000Z') };
+  return { id, email, senhaHash, cpf: null, telefone: null, foto: null, criadoEm: createIsoDateTime('2026-09-12T10:00:00.000Z') };
 }
 
 function mockUsuarios(usuarios: readonly Usuario[]) {
@@ -40,7 +40,17 @@ function mockUsuarios(usuarios: readonly Usuario[]) {
   jest.mocked(useRepositories).mockReturnValue({
     assinaturas: {} as never,
     documentos: {} as never,
-    usuarios: { findByEmail, findById: jest.fn(), create: jest.fn(), clear: jest.fn() },
+    usuarios: {
+      findByEmail,
+      findById: jest.fn(),
+      create: jest.fn(),
+      updateEmail: jest.fn(),
+      updateSenha: jest.fn(),
+      updateCpf: jest.fn(),
+      updateTelefone: jest.fn(),
+      updateFoto: jest.fn(),
+      clear: jest.fn(),
+    },
   } as Repositories);
 }
 

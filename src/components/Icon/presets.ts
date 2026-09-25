@@ -97,6 +97,13 @@ export const iconShapes = {
     },
     { d: 'M14.5 12a2.5 2.5 0 0 1-4.2 1.8M9.7 10.3A2.5 2.5 0 0 1 14 12', strokeLinecap: 'round', strokeLinejoin: 'round' },
   ],
+  profile: [
+    { d: 'M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8z', strokeLinecap: 'round', strokeLinejoin: 'round' },
+    { d: 'M4 20c0-4 3.5-6 8-6s8 2 8 6', strokeLinecap: 'round', strokeLinejoin: 'round' },
+  ],
+  edit: [{ d: 'M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z', strokeLinecap: 'round', strokeLinejoin: 'round' }],
+
+
 
 } satisfies Record<string, readonly IconPath[]>;
 

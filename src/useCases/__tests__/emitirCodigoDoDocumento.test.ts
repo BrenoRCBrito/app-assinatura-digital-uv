@@ -17,6 +17,9 @@ const USUARIO: Usuario = {
   id: DOCUMENTO.usuarioId,
   email: criarEmail('breno@exemplo.com'),
   senhaHash: 'hash',
+  cpf: null,
+  telefone: null,
+  foto: null,
   criadoEm: createIsoDateTime('2026-09-01T10:00:00.000Z'),
 };
 

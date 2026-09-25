@@ -40,6 +40,23 @@ export const iconButtonPresets = {
     iconSize: 'overlay',
     iconColor: theme.textPrimary,
   }),
+  badge: (theme: Theme) => ({
+    button: {
+      width: theme.size.avatarBadge,
+      height: theme.size.avatarBadge,
+      borderRadius: theme.radius.avatarBadge,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.surface,
+      borderWidth: theme.lineWidth.hairline,
+      borderColor: theme.border,
+    },
+    pressed: {
+      opacity: theme.opacity.pressed,
+    },
+    iconSize: 'inline',
+    iconColor: theme.textSecondary,
+  }),
 } satisfies Record<string, (theme: Theme) => IconButtonStyles>;
 
 export type IconButtonPresetName = keyof typeof iconButtonPresets;

@@ -16,6 +16,7 @@ import { HomeScreen } from '../screens/HomeScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { NovaAssinaturaScreen } from '../screens/NovaAssinaturaScreen';
 import { PosicionarAssinaturaScreen } from '../screens/PosicionarAssinaturaScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { ValidarDocumentoScreen } from '../screens/ValidarDocumentoScreen';
 import { createNavigationTheme } from '../theme/createNavigationTheme';
@@ -51,6 +52,7 @@ export function AppNavigator() {
                   onOpenAssinaturas={() => navigation.navigate('Assinaturas')}
                   onOpenHistorico={() => navigation.navigate('Historico')}
                   onValidarDocumento={() => navigation.navigate('ValidarDocumento')}
+                  onOpenProfile={() => navigation.navigate('Profile')}
                   onOpenSettings={() => navigation.navigate('Settings')}
                 />
               )}
@@ -103,6 +105,7 @@ export function AppNavigator() {
             </Stack.Screen>
             <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configurações' }} />
             {validarDocumento}
+            <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Perfil' }} />
           </>
         ) : (
           <>

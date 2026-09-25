@@ -1,9 +1,19 @@
 import { createIsoDateTime } from '../../domain/dateTime';
-import { criarUsuarioId, type Usuario } from '../../domain/usuario';
+import { criarUsuarioId, type Usuario, type UsuarioId } from '../../domain/usuario';
 import type { UsuarioRepository } from '../repositories';
 
 export function createInMemoryUsuarioRepository(): UsuarioRepository {
   let usuarios: readonly Usuario[] = [];
+
+  function atualizar(id: UsuarioId, alteracoes: Partial<Usuario>): Usuario {
+    const atual = usuarios.find((usuario) => usuario.id === id);
+    if (atual === undefined) {
+      throw new Error(`Usuário não encontrado: ${id}`);
+    }
+    const atualizado: Usuario = { ...atual, ...alteracoes };
+    usuarios = usuarios.map((usuario) => (usuario.id === id ? atualizado : usuario));
+    return atualizado;
+  }
 
   return {
     async findByEmail(email) {
@@ -17,11 +27,30 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
         id: criarUsuarioId(`${Date.now()}${usuarios.length}`),
         email,
         senhaHash,
+        cpf: null,
+        telefone: null,
+        foto: null, 
         criadoEm: createIsoDateTime(new Date().toISOString()),
       };
       usuarios = [...usuarios, usuario];
       return usuario;
     },
+    async updateEmail(id, email) {
+      return atualizar(id, { email });
+    },
+    async updateSenha(id, senhaHash) {
+      return atualizar(id, { senhaHash });
+    },
+    async updateCpf(id, cpf) {
+      return atualizar(id, { cpf });
+    },
+    async updateTelefone(id, telefone) {
+      return atualizar(id, { telefone });
+    },
+    async updateFoto(id, foto) {
+      return atualizar(id, { foto });
+    },
+
     async clear() {
       usuarios = [];
     },

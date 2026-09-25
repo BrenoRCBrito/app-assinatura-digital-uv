@@ -27,3 +27,10 @@ export function lerLista(valor: unknown, mensagem: string): readonly unknown[] {
   }
   return valor;
 }
+
+export function lerTextoOuNulo(valor: unknown, mensagem: string): string | null {
+  if (valor === null || valor === undefined) {
+    return null;
+  }
+  return lerTexto(valor, mensagem);
+}
