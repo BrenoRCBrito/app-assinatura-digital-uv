@@ -1,12 +1,14 @@
 import React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
+import { DEFAULT_SETTINGS } from '../../domain/settings';
 import { useAuthentication } from '../../hooks/useAuthentication';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 import type { Repositories } from '../../storage/repositories';
 import { SettingsProvider } from '../../storage/SettingsProvider';
+import { SETTINGS_STORAGE_KEY } from '../../storage/settingsStorage';
 import { SettingsScreen } from '../SettingsScreen';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -79,5 +81,32 @@ describe('SettingsScreen', () => {
     expect(limparDocumentos).toHaveBeenCalledTimes(1);
     expect(limparUsuarios).toHaveBeenCalledTimes(1);
     expect(lock).toHaveBeenCalledTimes(1);
+  });
+
+  test('confirmar também desliga a entrada por biometria da conta apagada e mantém as preferências', async () => {
+    await AsyncStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({
+        ...DEFAULT_SETTINGS,
+        theme: 'dark',
+        loginBiometricoAtivado: true,
+        perguntaBiometriaRespondida: true,
+        ultimoUsuarioIdBiometria: '1',
+      }),
+    );
+    const botao = await abrirConfiguracoes();
+
+    await fireEvent.press(botao);
+    await responderAlerta('Limpar');
+
+    await waitFor(async () => {
+      expect(JSON.parse((await AsyncStorage.getItem(SETTINGS_STORAGE_KEY)) ?? '{}')).toEqual({
+        ...DEFAULT_SETTINGS,
+        theme: 'dark',
+        loginBiometricoAtivado: false,
+        perguntaBiometriaRespondida: false,
+        ultimoUsuarioIdBiometria: null,
+      });
+    });
   });
 });

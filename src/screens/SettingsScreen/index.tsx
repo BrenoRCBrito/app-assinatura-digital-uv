@@ -38,6 +38,11 @@ export function SettingsScreen() {
       await assinaturas.clear();
       await documentos.clear();
       await usuarios.clear();
+      updateSettings({
+        loginBiometricoAtivado: false,
+        perguntaBiometriaRespondida: false,
+        ultimoUsuarioIdBiometria: null,
+      });
       showSuccess('Dados do app apagados.');
       lock();
     } catch (error) {
