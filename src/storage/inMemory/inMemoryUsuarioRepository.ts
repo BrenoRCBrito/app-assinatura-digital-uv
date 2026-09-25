@@ -29,6 +29,7 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
         senhaHash,
         cpf: null,
         telefone: null,
+        foto: null, 
         criadoEm: createIsoDateTime(new Date().toISOString()),
       };
       usuarios = [...usuarios, usuario];
@@ -46,6 +47,10 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
     async updateTelefone(id, telefone) {
       return atualizar(id, { telefone });
     },
+    async updateFoto(id, foto) {
+      return atualizar(id, { foto });
+    },
+
     async clear() {
       usuarios = [];
     },

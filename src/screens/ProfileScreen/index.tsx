@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 
-import { Card, IconButton, LoadingIndicator, Row, Screen, Section, Stack, Text } from '../../components';
+import { Avatar ,Card, IconButton, LoadingIndicator, Row, Screen, Section, Stack, Text } from '../../components';
 import { formatarCpf, formatarTelefone, type Usuario } from '../../domain/usuario';
 import { useAuthentication } from '../../hooks/useAuthentication';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 import { CpfDialog } from './CpfDialog';
 import { EmailDialog } from './EmailDialog';
+import { FotoPerfilDialog } from './FotoPerfilDialog'; 
 import { SenhaDialog } from './SenhaDialog';
 import { TelefoneDialog } from './TelefoneDialog';
 
-type CampoEmEdicao = 'email' | 'senha' | 'cpf' | 'telefone' | null;
+type CampoEmEdicao = 'email' | 'senha' | 'cpf' | 'telefone'| 'foto' | null;
 
 export function ProfileScreen() {
   const { usuarios } = useRepositories();
@@ -59,7 +60,14 @@ export function ProfileScreen() {
 
   return (
     <Screen preset="scroll">
-      <Section label="Dados da conta">
+    <Stack gap="block">
+      <Section label="Foto" preset='centered'>
+        <Stack align="center">
+          <Avatar fotoBase64={usuario.foto} onEditar={() => setCampoEmEdicao('foto')} />
+        </Stack>
+      </Section>
+
+      <Section label="Dados da conta" preset="centered">
         <Card>
           <Stack gap="list">
             {linha('E-mail', usuario.email, () => setCampoEmEdicao('email'))}
@@ -73,7 +81,7 @@ export function ProfileScreen() {
           </Stack>
         </Card>
       </Section>
-
+     </Stack>      
       <EmailDialog
         visible={campoEmEdicao === 'email'}
         usuario={usuario}
@@ -98,6 +106,13 @@ export function ProfileScreen() {
         onClose={() => setCampoEmEdicao(null)}
         onSaved={setUsuario}
       />
+      <FotoPerfilDialog
+        visible={campoEmEdicao === 'foto'}
+        usuario={usuario}
+        onClose={() => setCampoEmEdicao(null)}
+        onSaved={setUsuario}
+      />
+
     </Screen>
   );
 }

@@ -1,11 +1,11 @@
 import type { TextStyle } from 'react-native';
 
 type SpaceStep = 4 | 6 | 8 | 10 | 12 | 14 | 16 | 18 | 20 | 22 | 24 | 28 | 36 | 48 | 50 | 120;
-type SizeStep = 13 | 16 | 18 | 20 | 22 | 28 | 36 | 44 | 48 | 52 | 56 | 58 | 60 | 72 | 76 | 116 | 132 | 150 | 200 | 480;
+type SizeStep = 13 | 16 | 18 | 20 | 22 | 28 | 32 | 36 | 44 | 48 | 52 | 56 | 58 | 60 | 72 | 76 | 96 | 116 | 132 | 150 | 200 | 480;
 type FontSizeStep = 12 | 13 | 14 | 15 | 16 | 17 | 18 | 20 | 21 | 22 | 32;
 type LineHeightStep = 20 | 23 | 25 | 27;
 type LetterSpacingStep = -0.5 | -0.3 | 0.6;
-type RadiusStep = 2 | 4 | 6 | 7 | 8 | 10 | 14 | 16 | 22 | 29 | 38;
+type RadiusStep = 2 | 4 | 6 | 7 | 8 | 10 | 14 | 16 | 22 | 29 | 38 | 48;
 type LineWidthStep = 1 | 1.5 | 1.7 | 1.8 | 2 | 2.4 | 2.5 | 3 | 4;
 type OpacityStep = 0.45 | 0.6;
 
@@ -110,6 +110,8 @@ const size = {
   documentItem: 72,
   map: 200,
   formColumn: 480,
+  avatar: 96,
+  avatarBadge: 32,
 } satisfies Record<string, SizeStep>;
 
 const radius = {
@@ -133,6 +135,8 @@ const radius = {
   documentPreview: 2,
   map: 14,
   mapLabel: 8,
+  avatar: 48,
+  avatarBadge: 16,
 } satisfies Record<string, RadiusStep>;
 
 const lineWidth = {

@@ -1,6 +1,6 @@
 import type { Assinatura, AssinaturaId } from '../domain/assinatura';
 import type { DocumentoAssinado, DocumentoId } from '../domain/documento';
-import type { Email, Usuario, UsuarioId , Cpf , Telefone } from '../domain/usuario';
+import type { Email, Usuario, UsuarioId , Cpf , Telefone , FotoPerfil} from '../domain/usuario';
 
 export interface AssinaturaRepository {
   list(usuarioId: UsuarioId): Promise<readonly Assinatura[]>;
@@ -23,8 +23,9 @@ export interface UsuarioRepository {
   create(dados: Readonly<{ email: Email; senhaHash: string }>): Promise<Usuario>;
   updateEmail(id: UsuarioId, email: Email): Promise<Usuario>;
   updateSenha(id: UsuarioId, senhaHash: string): Promise<Usuario>;
-   updateCpf(id: UsuarioId, cpf: Cpf): Promise<Usuario>;
+  updateCpf(id: UsuarioId, cpf: Cpf): Promise<Usuario>;
   updateTelefone(id: UsuarioId, telefone: Telefone): Promise<Usuario>;
+  updateFoto(id: UsuarioId, foto: FotoPerfil | null): Promise<Usuario>;   // ADICIONAR
   clear(): Promise<void>;
 }
 

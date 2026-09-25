@@ -6,6 +6,7 @@ export type UsuarioId = Brand<string, 'UsuarioId'>;
 export type Email = Brand<string, 'Email'>;
 export type Cpf = Brand<string, 'Cpf'>;
 export type Telefone = Brand<string, 'Telefone'>;
+export type FotoPerfil = Brand<string, 'FotoPerfil'>;
 
 export type Usuario = Readonly<{
   id: UsuarioId;
@@ -13,6 +14,7 @@ export type Usuario = Readonly<{
   senhaHash: string;
   cpf: Cpf | null;
   telefone: Telefone | null;
+  foto: FotoPerfil | null;
   criadoEm: IsoDateTime;
 }>;
 
@@ -94,11 +96,20 @@ export function formatarTelefone(telefone: Telefone): string {
     : telefone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
 }
 
+export function criarFotoPerfil(base64: string): FotoPerfil {
+  if (base64.trim() === '') {
+    throw new ValidationError('Foto de perfil vazia.');
+  }
+  return base64 as FotoPerfil;
+}
+
+
 
 export function paraUsuario(dado: unknown): Usuario {
   const usuario = lerObjeto(dado, USUARIO_INVALIDO);
   const cpfBruto = lerTextoOuNulo('cpf' in usuario ? usuario.cpf : undefined, USUARIO_INVALIDO);
   const telefoneBruto = lerTextoOuNulo('telefone' in usuario ? usuario.telefone : undefined, USUARIO_INVALIDO);
+  const fotoBruta = lerTextoOuNulo('foto' in usuario ? usuario.foto : undefined, USUARIO_INVALIDO); // ADICIONAR
 
   return {
     id: criarUsuarioId(lerTexto('id' in usuario ? usuario.id : undefined, USUARIO_INVALIDO)),
@@ -106,6 +117,7 @@ export function paraUsuario(dado: unknown): Usuario {
     senhaHash: lerTexto('senhaHash' in usuario ? usuario.senhaHash : undefined, USUARIO_INVALIDO),
     cpf: cpfBruto === null ? null : criarCpf(cpfBruto),
     telefone: telefoneBruto === null ? null : criarTelefone(telefoneBruto),
+    foto: fotoBruta === null ? null : criarFotoPerfil(fotoBruta),  // ADICIONAR
     criadoEm: createIsoDateTime(
       lerTexto('criadoEm' in usuario ? usuario.criadoEm : undefined, USUARIO_INVALIDO),
     ),
