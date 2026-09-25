@@ -44,7 +44,9 @@ describe('montarHtmlDocumento', () => {
     const html = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
     const { rodape, ladoDoQr } = layoutDaPagina(DOCUMENTO.tamanhoFoto, createPixels(595));
 
-    expect(html).toContain(desenharQrSvg(gerarMatrizQr(CODIGO), { tinta: FIXED_COLORS.ink, fundo: FIXED_COLORS.paper }));
+    const qr = desenharQrSvg(gerarMatrizQr(CODIGO), { tinta: FIXED_COLORS.ink, fundo: FIXED_COLORS.paper });
+
+    expect(html).toContain(qr);
     expect(html).toContain(`top: ${rodape.topo}px;`);
     expect(html).toContain(`width: ${ladoDoQr}px;`);
     expect(html).toContain(`<div class="legenda">${LEGENDA_DO_QR}</div>`);

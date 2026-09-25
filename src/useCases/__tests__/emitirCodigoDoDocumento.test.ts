@@ -37,8 +37,10 @@ describe('emitirCodigoDoDocumento', () => {
   });
 
   test('sem a conta que assina, recusa emitir', async () => {
-    await expect(
-      emitirCodigoDoDocumento({ buscarUsuario: async () => null, resumirSha256: async () => RESUMO, carimbar }, DOCUMENTO, FOTO),
-    ).rejects.toThrow('A conta que assina o documento não foi encontrada.');
+    const semConta = { buscarUsuario: async () => null, resumirSha256: async () => RESUMO, carimbar };
+
+    await expect(emitirCodigoDoDocumento(semConta, DOCUMENTO, FOTO)).rejects.toThrow(
+      'A conta que assina o documento não foi encontrada.',
+    );
   });
 });

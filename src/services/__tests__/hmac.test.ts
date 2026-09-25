@@ -21,7 +21,12 @@ function hex(dados: Uint8Array): string {
 
 describe('hmacSha256', () => {
   test.each([
-    ['caso 1', repetido(0x0b, 20), texto('Hi There'), 'b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7'],
+    [
+      'caso 1',
+      repetido(0x0b, 20),
+      texto('Hi There'),
+      'b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7',
+    ],
     [
       'caso 2',
       texto('Jefe'),
@@ -71,6 +76,8 @@ describe('carimbar e resumirSha256', () => {
   });
 
   test('o resumo é o SHA-256 em hexadecimal', async () => {
-    await expect(resumirSha256('abc')).resolves.toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+    await expect(resumirSha256('abc')).resolves.toBe(
+      'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+    );
   });
 });

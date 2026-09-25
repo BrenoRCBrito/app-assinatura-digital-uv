@@ -47,7 +47,11 @@ describe('código de autenticidade', () => {
     const campos = camposDoDocumento(DOCUMENTO, EMAIL, RESUMO_DA_FOTO);
     const codigo = await emitirCodigo(campos, carimbar);
 
-    await expect(validarCodigo(codigo, carimbar)).resolves.toEqual({ tipo: 'autentico', campos, versaoMaisNova: false });
+    await expect(validarCodigo(codigo, carimbar)).resolves.toEqual({
+      tipo: 'autentico',
+      campos,
+      versaoMaisNova: false,
+    });
   });
 
   test('título com separadores, percentual, cerquilha e acentos faz a ida e a volta sem perda', async () => {
