@@ -19,6 +19,7 @@ export interface DocumentoAssinadoRepository {
 
 export interface UsuarioRepository {
   findByEmail(email: Email): Promise<Usuario | null>;
+  findById(id: UsuarioId): Promise<Usuario | null>;
   create(dados: Readonly<{ email: Email; senhaHash: string }>): Promise<Usuario>;
   clear(): Promise<void>;
 }

@@ -9,6 +9,9 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
     async findByEmail(email) {
       return usuarios.find((usuario) => usuario.email === email) ?? null;
     },
+    async findById(id) {
+      return usuarios.find((usuario) => usuario.id === id) ?? null;
+    },
     async create({ email, senhaHash }) {
       const usuario: Usuario = {
         id: criarUsuarioId(`${Date.now()}${usuarios.length}`),

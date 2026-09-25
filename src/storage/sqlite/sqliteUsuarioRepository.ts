@@ -1,6 +1,6 @@
 import { openDatabaseSync } from 'expo-sqlite';
 import { createIsoDateTime } from '../../domain/dateTime';
-import { criarUsuarioId, paraUsuario, type Email, type Usuario } from '../../domain/usuario';
+import { criarUsuarioId, paraUsuario, type Email, type Usuario, type UsuarioId } from '../../domain/usuario';
 import type { UsuarioRepository } from '../repositories';
 
 type LinhaUsuario = Readonly<{
@@ -29,6 +29,7 @@ export function createSqliteUsuarioRepository(): UsuarioRepository {
       criado_em TEXT NOT NULL
     );
   `);
+  let sequencia = 0;
 
   return {
     async findByEmail(email: Email) {
@@ -36,14 +37,20 @@ export function createSqliteUsuarioRepository(): UsuarioRepository {
       const linha = await db.getFirstAsync<LinhaUsuario>('SELECT * FROM usuarios WHERE email = ?', email);
       return linha === null ? null : paraUsuarioDaLinha(linha);
     },
+    async findById(id: UsuarioId) {
+      await pronto;
+      const linha = await db.getFirstAsync<LinhaUsuario>('SELECT * FROM usuarios WHERE id = ?', id);
+      return linha === null ? null : paraUsuarioDaLinha(linha);
+    },
     async create({ email, senhaHash }) {
       await pronto;
       const usuario: Usuario = {
-        id: criarUsuarioId(),
+        id: criarUsuarioId(`${Date.now()}${sequencia}`),
         email,
         senhaHash,
         criadoEm: createIsoDateTime(new Date().toISOString()),
       };
+      sequencia += 1;
       await db.runAsync(
         'INSERT INTO usuarios (id, email, senha_hash, criado_em) VALUES (?, ?, ?, ?)',
         usuario.id,
@@ -59,5 +66,3 @@ export function createSqliteUsuarioRepository(): UsuarioRepository {
     },
   };
 }
-
-
