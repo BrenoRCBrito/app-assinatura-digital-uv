@@ -81,14 +81,18 @@ export const screenPresets = {
     background: themeBackground,
     content: (theme: Theme) => ({ paddingHorizontal: theme.inset.immersive, paddingBottom: theme.inset.authLift }),
   },
-  authScroll:{
-    layout:'scroll',
-    tone:'dark',
-    edges:['top', 'right' ,'bottom' ,'left'],
+  authScroll: {
+    layout: 'scroll',
+    tone: 'dark',
+    edges: ['top', 'right', 'bottom', 'left'],
     background: themeBackground,
-    content: (theme: Theme) =>({flexGrow: 1, justifyContent: 'center',paddingHorizontal: theme.inset.immersive, paddingBottom: theme.inset.authLift,})
-  }
-  ,
+    content: (theme: Theme) => ({
+      flexGrow: 1,
+      justifyContent: 'center',
+      paddingHorizontal: theme.inset.immersive,
+      paddingBottom: theme.inset.authLift,
+    }),
+  },
   camera: {
     layout: 'fill',
     tone: 'dark',

@@ -6,6 +6,7 @@ import {
   Button,
   ChoiceChips,
   confirm,
+  KeyboardDismissArea,
   LoadingIndicator,
   LoadingOverlay,
   PalcoDoSelo,
@@ -16,7 +17,6 @@ import {
   Stack,
   Text,
   TextField,
-  KeyboardDismissArea,
 } from '../../components';
 import type { Assinatura, AssinaturaId } from '../../domain/assinatura';
 import { ValidationError } from '../../domain/brand';
@@ -180,60 +180,60 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura, onAssinado 
 
   return (
     <KeyboardDismissArea>
-    <Screen
-      preset="form"
-      footer={
-        selo === null ? undefined : (
-          <Button
-            label={assinando ? 'Assinando…' : 'Assinar'}
-            icon="fingerprint"
-            onPress={() => {
-              void assinarDocumento(selo.assinatura, selo.largura);
-            }}
-            disabled={assinando}
+      <Screen
+        preset="form"
+        footer={
+          selo === null ? undefined : (
+            <Button
+              label={assinando ? 'Assinando…' : 'Assinar'}
+              icon="fingerprint"
+              onPress={() => {
+                void assinarDocumento(selo.assinatura, selo.largura);
+              }}
+              disabled={assinando}
+            />
+          )
+        }
+      >
+        <Stack gap="block" flex={1}>
+          <TextField
+            label="Título do documento"
+            accessibilityLabel="Título do documento"
+            value={titulo}
+            onChangeText={setTitulo}
+            placeholder="Ex.: Contrato de locação"
+            maxLength={60}
           />
-        )
-      }
-    >
-      <Stack gap="block" flex={1}>
-        <TextField
-          label="Título do documento"
-          accessibilityLabel="Título do documento"
-          value={titulo}
-          onChangeText={setTitulo}
-          placeholder="Ex.: Contrato de locação"
-          maxLength={60}
-        />
-        <Stack gap="label">
-          <Text preset="sectionLabel">Assinatura</Text>
-          {escolhaDaAssinatura()}
+          <Stack gap="label">
+            <Text preset="sectionLabel">Assinatura</Text>
+            {escolhaDaAssinatura()}
+          </Stack>
+          {selo === null ? null : (
+            <>
+              <PalcoDoSelo
+                foto={foto}
+                desenho={selo.assinatura.desenho}
+                largura={selo.largura}
+                linhas={[formatDateTime(agora), 'Local ao assinar']}
+                posicao={posicao}
+                onMudarPosicao={setPosicao}
+              />
+              <Text preset="supportingCentered">Arraste o selo até a linha de assinatura.</Text>
+              <SizeStepper
+                label="Tamanho do selo"
+                value={formatPercent(selo.largura)}
+                canDecrease={podeDiminuirSelo(selo.largura)}
+                canIncrease={podeAumentarSelo(selo.largura, selo.larguraMaxima)}
+                decreaseLabel="Diminuir o selo"
+                increaseLabel="Aumentar o selo"
+                onDecrease={() => setLargura(diminuirSelo(selo.largura))}
+                onIncrease={() => setLargura(aumentarSelo(selo.largura, selo.larguraMaxima))}
+              />
+            </>
+          )}
         </Stack>
-        {selo === null ? null : (
-          <>
-            <PalcoDoSelo
-              foto={foto}
-              desenho={selo.assinatura.desenho}
-              largura={selo.largura}
-              linhas={[formatDateTime(agora), 'Local ao assinar']}
-              posicao={posicao}
-              onMudarPosicao={setPosicao}
-            />
-            <Text preset="supportingCentered">Arraste o selo até a linha de assinatura.</Text>
-            <SizeStepper
-              label="Tamanho do selo"
-              value={formatPercent(selo.largura)}
-              canDecrease={podeDiminuirSelo(selo.largura)}
-              canIncrease={podeAumentarSelo(selo.largura, selo.larguraMaxima)}
-              decreaseLabel="Diminuir o selo"
-              increaseLabel="Aumentar o selo"
-              onDecrease={() => setLargura(diminuirSelo(selo.largura))}
-              onIncrease={() => setLargura(aumentarSelo(selo.largura, selo.larguraMaxima))}
-            />
-          </>
-        )}
-      </Stack>
-      <LoadingOverlay visible={assinando} message="Assinando o documento…" />
-    </Screen>
+        <LoadingOverlay visible={assinando} message="Assinando o documento…" />
+      </Screen>
     </KeyboardDismissArea>
   );
 }

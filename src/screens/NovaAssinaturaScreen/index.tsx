@@ -7,6 +7,7 @@ import {
   Button,
   ChipButton,
   confirm,
+  KeyboardDismissArea,
   PapelDeAssinatura,
   Row,
   Screen,
@@ -15,7 +16,6 @@ import {
   Stack,
   Text,
   TextField,
-  KeyboardDismissArea,
 } from '../../components';
 import { criarAssinaturaId, criarNomeAssinatura, type Assinatura } from '../../domain/assinatura';
 import { ValidationError } from '../../domain/brand';
@@ -117,41 +117,41 @@ function montarAssinatura(): Assinatura {
   }
 
   return (
-  <KeyboardDismissArea>
-    <Screen
-      preset="form"
-      footer={
-        <Row gap="actions">
-          <Button label="Limpar" onPress={() => setTracos([])} preset="secondary" disabled={salvando} flex={1} />
-          <Button label={salvando ? 'Salvando…' : 'Salvar'} onPress={salvar} disabled={salvando} flex={2} />
-        </Row>
-      }
-    >
-      <Stack gap="block" flex={1}>
-        {deitado ? null : (
-          <TextField
-            label="Nome"
-            accessibilityLabel="Nome da assinatura"
-            value={nome}
-            onChangeText={setNome}
-            placeholder="Ex.: Rubrica"
-            maxLength={40}
-          />
-        )}
-        <Stack gap="label" flex={1}>
-          <Row align="center" justify="between">
-            <Text preset="sectionLabel">Assinatura</Text>
-            <ChipButton
-              icon="rotate"
-              label={deitado ? 'Voltar ao retrato' : 'Deitar papel'}
-              onPress={confirmarGiro}
-              disabled={salvando}
-            />
+    <KeyboardDismissArea>
+      <Screen
+        preset="form"
+        footer={
+          <Row gap="actions">
+            <Button label="Limpar" onPress={() => setTracos([])} preset="secondary" disabled={salvando} flex={1} />
+            <Button label={salvando ? 'Salvando…' : 'Salvar'} onPress={salvar} disabled={salvando} flex={2} />
           </Row>
-          <PapelDeAssinatura tracos={tracos} aoMudarTracos={setTracos} />
+        }
+      >
+        <Stack gap="block" flex={1}>
+          {deitado ? null : (
+            <TextField
+              label="Nome"
+              accessibilityLabel="Nome da assinatura"
+              value={nome}
+              onChangeText={setNome}
+              placeholder="Ex.: Rubrica"
+              maxLength={40}
+            />
+          )}
+          <Stack gap="label" flex={1}>
+            <Row align="center" justify="between">
+              <Text preset="sectionLabel">Assinatura</Text>
+              <ChipButton
+                icon="rotate"
+                label={deitado ? 'Voltar ao retrato' : 'Deitar papel'}
+                onPress={confirmarGiro}
+                disabled={salvando}
+              />
+            </Row>
+            <PapelDeAssinatura tracos={tracos} aoMudarTracos={setTracos} />
+          </Stack>
         </Stack>
-      </Stack>
-    </Screen>
-  </KeyboardDismissArea>
+      </Screen>
+    </KeyboardDismissArea>
   );
 }
