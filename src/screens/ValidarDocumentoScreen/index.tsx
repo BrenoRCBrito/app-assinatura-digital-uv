@@ -25,8 +25,10 @@ const VEREDICTOS: Readonly<Record<ResultadoDaValidacao['tipo'], Readonly<{ titul
     descricao: 'O código foi emitido pelo AssinaAqui. Confira se os dados abaixo batem com o documento em mãos.',
   },
   adulterado: {
-    titulo: 'Código adulterado',
-    descricao: 'O código não confere com o carimbo do AssinaAqui. Não confie neste documento.',
+    titulo: 'Código não autenticado',
+    descricao:
+      'O código não confere com o carimbo desta instalação do AssinaAqui. Ele pode ter sido alterado ou emitido ' +
+      'com outro segredo.',
   },
   ilegivel: {
     titulo: 'Código não reconhecido',

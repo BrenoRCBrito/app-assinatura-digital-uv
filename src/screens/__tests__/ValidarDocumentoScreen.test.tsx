@@ -98,13 +98,14 @@ describe('ValidarDocumentoScreen', () => {
     expect(screen.queryByText('a'.repeat(64))).toBeNull();
   });
 
-  test('código adulterado mostra só o veredicto, sem os dados', async () => {
+  test('código que não confere com o carimbo mostra só o veredicto, sem os dados', async () => {
     await abrirTela();
     await screen.findByText(DICA);
 
     await lerQr((await codigoValido()).replace('Contrato', 'Contrata'));
 
-    expect(await screen.findByText('Código adulterado')).toBeTruthy();
+    expect(await screen.findByText('Código não autenticado')).toBeTruthy();
+    expect(screen.getByText(/pode ter sido alterado ou emitido com outro segredo/)).toBeTruthy();
     expect(screen.queryByText('breno@exemplo.com')).toBeNull();
   });
 
