@@ -36,9 +36,11 @@ export function Button({
       sizeStyle,
       presetStyle,
       { paddingVertical: sizeStyle.paddingVertical - (presetStyle.borderWidth ?? 0) },
+      // Com flex a largura vem da linha, então o espaço lateral aperta para o rótulo não truncar.
+      flex === undefined ? null : { paddingHorizontal: theme.inset.buttonTight },
       disabled && { opacity: theme.opacity.disabled },
     ];
-  }, [container, disabled, size, theme]);
+  }, [container, disabled, flex, size, theme]);
   const pressedStyle = useMemo(() => ({ opacity: theme.opacity.pressed }), [theme]);
 
   const button = (

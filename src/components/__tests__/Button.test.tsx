@@ -73,6 +73,26 @@ describe('Button', () => {
     expect(StyleSheet.flatten(contornoDoRotulo?.props.style)?.flexShrink).toBe(1);
   });
 
+  test('com flex, aperta o espaço lateral para o rótulo caber em tela pequena', async () => {
+    await render(<Button label="Limpar" onPress={() => undefined} preset="secondary" flex={1} />, {
+      wrapper: SettingsProvider,
+    });
+
+    const botao = await screen.findByRole('button');
+
+    expect(StyleSheet.flatten(botao.props.style).paddingHorizontal).toBe(tokens.inset.buttonTight);
+  });
+
+  test('sem flex, o botão reserva a largura do rótulo com o espaço cheio', async () => {
+    await render(<Button label="Limpar" onPress={() => undefined} preset="secondary" />, {
+      wrapper: SettingsProvider,
+    });
+
+    const botao = await screen.findByRole('button');
+
+    expect(StyleSheet.flatten(botao.props.style).paddingHorizontal).toBe(tokens.inset.buttonX);
+  });
+
   test('o botão invertido tem fundo claro, com texto e ícone na cor principal', async () => {
     await render(<Button label="Digitalizar documento" icon="camera" preset="inverse" onPress={() => undefined} />, {
       wrapper: SettingsProvider,

@@ -56,6 +56,7 @@ const inset = {
   itemRight: 6,
   buttonY: 12,
   buttonX: 28,
+  buttonTight: 12,
   dangerY: 10,
   dangerX: 20,
   chipY: 6,
