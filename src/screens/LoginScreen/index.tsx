@@ -30,7 +30,7 @@ export function LoginScreen({ onCriarConta }: LoginScreenProps) {
   return (
     <KeyboardDismissArea>
       <Screen
-        preset="auth"
+        preset="authScroll"
         footer={
           mostrarEntrarComBiometria ? (
             <Stack align="center">
