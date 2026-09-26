@@ -9,8 +9,10 @@ import { EmailDialog } from './EmailDialog';
 import { FotoPerfilDialog } from './FotoPerfilDialog'; 
 import { SenhaDialog } from './SenhaDialog';
 import { TelefoneDialog } from './TelefoneDialog';
+import { NomeDialog } from './NomeDialog';
 
-type CampoEmEdicao = 'email' | 'senha' | 'cpf' | 'telefone'| 'foto' | null;
+
+type CampoEmEdicao = 'nome' |'email' | 'senha' | 'cpf' | 'telefone'| 'foto' | null;
 
 export function ProfileScreen() {
   const { usuarios } = useRepositories();
@@ -70,6 +72,7 @@ export function ProfileScreen() {
       <Section label="Dados da conta" preset="centered">
         <Card>
           <Stack gap="list">
+            {linha('Nome', usuario.nome ?? 'Não informado', () => setCampoEmEdicao('nome'))}
             {linha('E-mail', usuario.email, () => setCampoEmEdicao('email'))}
             {linha('Senha', '••••••••', () => setCampoEmEdicao('senha'))}
             {linha('CPF', usuario.cpf === null ? 'Não informado' : formatarCpf(usuario.cpf), () =>
@@ -81,7 +84,14 @@ export function ProfileScreen() {
           </Stack>
         </Card>
       </Section>
-     </Stack>      
+     </Stack>
+      <NomeDialog
+        visible={campoEmEdicao === 'nome'}
+        usuario={usuario}
+        onClose={() => setCampoEmEdicao(null)}
+        onSaved={setUsuario}
+      />
+      
       <EmailDialog
         visible={campoEmEdicao === 'email'}
         usuario={usuario}
