@@ -49,7 +49,7 @@ export const screenPresets = {
   scroll: {
     layout: 'scroll',
     tone: 'theme',
-    edges: [],
+    edges: ['bottom'],
     background: themeBackground,
     content: scrollContent,
   },
