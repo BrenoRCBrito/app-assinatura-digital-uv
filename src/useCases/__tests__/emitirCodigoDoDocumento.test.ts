@@ -17,11 +17,13 @@ const USUARIO: Usuario = {
   id: DOCUMENTO.usuarioId,
   email: criarEmail('breno@exemplo.com'),
   senhaHash: 'hash',
+  nome: null,
   cpf: null,
   telefone: null,
   foto: null,
   criadoEm: createIsoDateTime('2026-09-01T10:00:00.000Z'),
 };
+
 
 describe('emitirCodigoDoDocumento', () => {
   test('monta o código com o e-mail da conta, o resumo da foto e o carimbo', async () => {

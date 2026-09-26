@@ -22,19 +22,21 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
     async findById(id) {
       return usuarios.find((usuario) => usuario.id === id) ?? null;
     },
-    async create({ email, senhaHash }) {
+    async create({ email, senhaHash, nome, cpf, telefone }) {
       const usuario: Usuario = {
-        id: criarUsuarioId(`${Date.now()}${usuarios.length}`),
-        email,
-        senhaHash,
-        cpf: null,
-        telefone: null,
-        foto: null, 
-        criadoEm: createIsoDateTime(new Date().toISOString()),
-      };
-      usuarios = [...usuarios, usuario];
-      return usuario;
-    },
+      id: criarUsuarioId(`${Date.now()}${usuarios.length}`),
+      email,
+      senhaHash,
+      nome: nome ?? null,
+      cpf: cpf ?? null,
+      telefone: telefone ?? null,
+      foto: null,
+      criadoEm: createIsoDateTime(new Date().toISOString()),
+    };
+    usuarios = [...usuarios, usuario];
+    return usuario;
+  },
+
     async updateEmail(id, email) {
       return atualizar(id, { email });
     },
@@ -50,6 +52,10 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
     async updateFoto(id, foto) {
       return atualizar(id, { foto });
     },
+    async updateNome(id, nome) {
+      return atualizar(id, { nome });
+    },
+
 
     async clear() {
       usuarios = [];

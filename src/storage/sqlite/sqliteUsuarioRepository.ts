@@ -6,6 +6,7 @@ import {
   type Cpf,
   type Email,
   type FotoPerfil,
+  type Nome,
   type Telefone,
   type Usuario,
   type UsuarioId,
@@ -16,6 +17,7 @@ type LinhaUsuario = Readonly<{
   id: string;
   email: string;
   senha_hash: string;
+  nome: string | null;
   cpf: string | null;
   telefone: string | null;
   foto: string | null;
@@ -27,6 +29,7 @@ function paraUsuarioDaLinha(linha: LinhaUsuario): Usuario {
     id: linha.id,
     email: linha.email,
     senhaHash: linha.senha_hash,
+    nome: linha.nome,
     cpf: linha.cpf,
     telefone: linha.telefone,
     foto: linha.foto,
@@ -58,6 +61,7 @@ export function createSqliteUsuarioRepository(): UsuarioRepository {
     await adicionarColunaSeFaltar(db, 'cpf');
     await adicionarColunaSeFaltar(db, 'telefone');
     await adicionarColunaSeFaltar(db, 'foto');
+    await adicionarColunaSeFaltar(db, 'nome');
   })();
   let sequencia = 0;
 
@@ -74,31 +78,33 @@ export function createSqliteUsuarioRepository(): UsuarioRepository {
       return linha === null ? null : paraUsuarioDaLinha(linha);
     },
     findById: buscarPorId,
-    async create({ email, senhaHash }) {
-      await pronto;
-      const usuario: Usuario = {
-        id: criarUsuarioId(`${Date.now()}${sequencia}`),
-        email,
-        senhaHash,
-        cpf: null,
-        telefone: null,
-        foto: null,
-        criadoEm: createIsoDateTime(new Date().toISOString()),
-      };
-      sequencia += 1;
-      await db.runAsync(
-        'INSERT INTO usuarios (id, email, senha_hash, cpf, telefone, foto, criado_em) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        usuario.id,
-        usuario.email,
-        usuario.senhaHash,
-        usuario.cpf,
-        usuario.telefone,
-        usuario.foto,
-        usuario.criadoEm,
-      );
+    async create({ email, senhaHash, nome, cpf, telefone }) {
+  await pronto;
+  const usuario: Usuario = {
+    id: criarUsuarioId(`${Date.now()}${sequencia}`),
+    email,
+    senhaHash,
+    nome: nome ?? null,
+    cpf: cpf ?? null,
+    telefone: telefone ?? null,
+    foto: null,
+    criadoEm: createIsoDateTime(new Date().toISOString()),
+  };
+  sequencia += 1;
+  await db.runAsync(
+    'INSERT INTO usuarios (id, email, senha_hash, nome, cpf, telefone, foto, criado_em) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    usuario.id,
+    usuario.email,
+    usuario.senhaHash,
+    usuario.nome,
+    usuario.cpf,
+    usuario.telefone,
+    usuario.foto,
+    usuario.criadoEm,
+  );
 
-      return usuario;
-    },
+  return usuario;
+},
     async updateEmail(id: UsuarioId, email: Email) {
       await pronto;
       await db.runAsync('UPDATE usuarios SET email = ? WHERE id = ?', email, id);
@@ -117,6 +123,16 @@ export function createSqliteUsuarioRepository(): UsuarioRepository {
       }
       return atualizado;
     },
+    async updateNome(id: UsuarioId, nome: Nome) {
+      await pronto;
+      await db.runAsync('UPDATE usuarios SET nome = ? WHERE id = ?', nome, id);
+      const atualizado = await buscarPorId(id);
+      if (atualizado === null) {
+        throw new Error(`Usuário não encontrado: ${id}`);
+      }
+      return atualizado;
+    },
+
     async updateCpf(id: UsuarioId, cpf: Cpf) {
       await pronto;
       await db.runAsync('UPDATE usuarios SET cpf = ? WHERE id = ?', cpf, id);

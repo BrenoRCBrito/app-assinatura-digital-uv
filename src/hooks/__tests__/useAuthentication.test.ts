@@ -36,12 +36,14 @@ function criarUsuarioDeTeste(id: UsuarioId, email: Email, senhaHash: string): Us
     id,
     email,
     senhaHash,
+    nome: null,
     cpf: null,
     telefone: null,
     foto: null,
     criadoEm: createIsoDateTime('2026-09-12T10:00:00.000Z'),
   };
 }
+
 
 function mockUsuarios(usuarios: readonly Usuario[]) {
   const findByEmail = jest.fn(async (email: Email) => usuarios.find((usuario) => usuario.email === email) ?? null);
@@ -54,11 +56,13 @@ function mockUsuarios(usuarios: readonly Usuario[]) {
       create: jest.fn(),
       updateEmail: jest.fn(),
       updateSenha: jest.fn(),
+      updateNome: jest.fn(),
       updateCpf: jest.fn(),
       updateTelefone: jest.fn(),
       updateFoto: jest.fn(),
       clear: jest.fn(),
     },
+
   } as Repositories);
 }
 

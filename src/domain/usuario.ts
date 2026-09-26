@@ -7,11 +7,13 @@ export type Email = Brand<string, 'Email'>;
 export type Cpf = Brand<string, 'Cpf'>;
 export type Telefone = Brand<string, 'Telefone'>;
 export type FotoPerfil = Brand<string, 'FotoPerfil'>;
+export type Nome = Brand<string, 'Nome'>;
 
 export type Usuario = Readonly<{
   id: UsuarioId;
   email: Email;
   senhaHash: string;
+  nome: Nome | null;
   cpf: Cpf | null;
   telefone: Telefone | null;
   foto: FotoPerfil | null;
@@ -50,6 +52,15 @@ export function criarEmail(texto: string): Email {
   }
   return email as Email;
 }
+
+export function criarNome(texto: string): Nome {
+  const nome = texto.trim();
+  if (nome.length < 2) {
+    throw new ValidationError('Digite um nome válido.');
+  }
+  return nome as Nome;
+}
+
 
 export function validarSenha(senha: string): readonly string[] {
   return REQUISITOS_SENHA.filter((requisito) => !requisito.atendido(senha)).map((requisito) => requisito.label);
@@ -107,6 +118,7 @@ export function criarFotoPerfil(base64: string): FotoPerfil {
 
 export function paraUsuario(dado: unknown): Usuario {
   const usuario = lerObjeto(dado, USUARIO_INVALIDO);
+  const nomeBruto = lerTextoOuNulo('nome' in usuario ? usuario.nome : undefined, USUARIO_INVALIDO);
   const cpfBruto = lerTextoOuNulo('cpf' in usuario ? usuario.cpf : undefined, USUARIO_INVALIDO);
   const telefoneBruto = lerTextoOuNulo('telefone' in usuario ? usuario.telefone : undefined, USUARIO_INVALIDO);
   const fotoBruta = lerTextoOuNulo('foto' in usuario ? usuario.foto : undefined, USUARIO_INVALIDO);
@@ -115,6 +127,7 @@ export function paraUsuario(dado: unknown): Usuario {
     id: criarUsuarioId(lerTexto('id' in usuario ? usuario.id : undefined, USUARIO_INVALIDO)),
     email: criarEmail(lerTexto('email' in usuario ? usuario.email : undefined, USUARIO_INVALIDO)),
     senhaHash: lerTexto('senhaHash' in usuario ? usuario.senhaHash : undefined, USUARIO_INVALIDO),
+    nome: nomeBruto === null ? null : criarNome(nomeBruto),
     cpf: cpfBruto === null ? null : criarCpf(cpfBruto),
     telefone: telefoneBruto === null ? null : criarTelefone(telefoneBruto),
     foto: fotoBruta === null ? null : criarFotoPerfil(fotoBruta),
@@ -123,4 +136,5 @@ export function paraUsuario(dado: unknown): Usuario {
     ),
   };
 }
+
 
