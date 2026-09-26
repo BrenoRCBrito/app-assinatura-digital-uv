@@ -1,5 +1,4 @@
 import React from 'react';
-
 import { Button, FeatureCard, MenuList, Row, Screen, Stack } from '../../components';
 import { useAuthentication } from '../../hooks/useAuthentication';
 
@@ -20,9 +19,10 @@ export function HomeScreen({
   onOpenProfile,
   onOpenSettings,
 }: HomeScreenProps) {
-  const { lock } = useAuthentication();
 
-  return (
+const { lock } = useAuthentication();
+
+return (
     <Screen
       preset="menu"
       footer={

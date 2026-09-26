@@ -146,6 +146,11 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
   const lock = useCallback(() => {
     setIsUnlocked(false);
     setUsuarioId(null);
+    updateSettings({
+        loginBiometricoAtivado: false,
+        perguntaBiometriaRespondida: false,
+        ultimoUsuarioIdBiometria: null,
+      });
   }, []);
 
   const mostrarEntrarComBiometria = settings.loginBiometricoAtivado && biometricStatus === 'enrolled';

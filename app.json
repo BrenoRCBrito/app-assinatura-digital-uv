@@ -51,10 +51,8 @@
         {
           "photosPermission": "Permitir que o $(PRODUCT_NAME) acesse suas fotos.",
           "savePhotosPermission": "Permitir que o $(PRODUCT_NAME) salve uma cópia do documento nas suas fotos.",
-          "isAccessMediaLocationEnabled": false,
-          "granularPermissions": [
-            "photo"
-          ]
+          "isAccessMediaLocationEnabled": true,
+          "granularPermissions": ["audio", "photo"]
         }
       ],
       [

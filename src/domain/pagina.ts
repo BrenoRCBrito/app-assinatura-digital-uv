@@ -22,9 +22,9 @@ const ALTURA_DA_FOLHA = 842;
 // A página fica 1 px abaixo da folha: com a altura exata, o expo-print do Android conta uma página a mais
 // (PrintPDFRenderTask.kt:95), e na sonda de 2026-09-14 a página menor saiu com uma página só no iPhone.
 const ALTURA_DA_PAGINA = 841;
-const MARGEM = 24;
-const ALTURA_DO_RODAPE = 128;
+const MARGEM = 12;
 const LADO_DO_QR = 104;
+const ALTURA_DO_RODAPE = LADO_DO_QR;
 const TAMANHO_DA_LEGENDA = 9;
 
 export const TAMANHO_DA_FOLHA_A4: Size = createSize(LARGURA_DA_FOLHA, ALTURA_DA_FOLHA);
