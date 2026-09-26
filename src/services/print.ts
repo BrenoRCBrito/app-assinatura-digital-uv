@@ -3,7 +3,8 @@ import { printToFileAsync } from 'expo-print';
 import type { CodigoDeAutenticidade } from '../domain/codigoDeAutenticidade';
 import { createBase64, createHtml, type Base64, type DocumentoAssinado, type Html } from '../domain/documento';
 import { formatDateTime, formatLocal } from '../domain/format';
-import { layoutDaPagina, TAMANHO_DA_FOLHA_A4 } from '../domain/pagina';
+import { createPixels, type Size } from '../domain/geometry';
+import { LARGURA_DA_FOLHA_A4, layoutDaPagina } from '../domain/pagina';
 import { layoutDoSelo } from '../domain/selo';
 import { FIXED_COLORS } from '../theme/appTheme';
 import { tokens } from '../theme/tokens';
@@ -13,6 +14,8 @@ const FONTE_DO_SELO = '-apple-system, Helvetica, Arial, sans-serif';
 
 export const LEGENDA_DO_QR = 'Código de autenticidade. Para conferir, abra o AssinaAqui e toque em Validar documento.';
 
+export type DocumentoHtml = Readonly<{ html: Html; tamanhoDaPagina: Size }>;
+
 function escaparHtml(texto: string): string {
   return texto.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -21,10 +24,10 @@ export function montarHtmlDocumento(
   documento: DocumentoAssinado,
   fotoBase64: Base64,
   codigo: CodigoDeAutenticidade,
-): Html {
+): DocumentoHtml {
   const { pagina, foto, esquerda, topo, rodape, ladoDoQr, tamanhoDaLegenda } = layoutDaPagina(
     documento.tamanhoFoto,
-    TAMANHO_DA_FOLHA_A4.width,
+    LARGURA_DA_FOLHA_A4,
   );
   const { desenho } = documento.assinaturaUsada;
   const selo = layoutDoSelo(documento.selo.largura, foto, desenho.quadro);
@@ -32,7 +35,7 @@ export function montarHtmlDocumento(
   const tracos = desenho.tracos.map((traco) => `<path d="${traco}" />`).join('');
   const qr = desenharQrSvg(gerarMatrizQr(codigo), { tinta: FIXED_COLORS.ink, fundo: FIXED_COLORS.paper });
 
-  return createHtml(`<!DOCTYPE html>
+  const html = createHtml(`<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8" />
@@ -115,13 +118,17 @@ export function montarHtmlDocumento(
 </div>
 </body>
 </html>`);
+
+  return { html, tamanhoDaPagina: pagina };
 }
 
-export async function gerarPdf(html: Html): Promise<Base64> {
+export async function gerarPdf(html: Html, tamanhoDaPagina: Size): Promise<Base64> {
   const { base64 } = await printToFileAsync({
     html,
-    width: TAMANHO_DA_FOLHA_A4.width,
-    height: TAMANHO_DA_FOLHA_A4.height,
+    width: createPixels(Math.round(tamanhoDaPagina.width)),
+    // +1 e arredondado: evita o bug do Android que conta uma página a mais quando a altura bate
+    // exatamente com a do conteúdo, e evita o Android tratar diferente um valor com casas decimais.
+    height: createPixels(Math.round(tamanhoDaPagina.height) + 1),
     base64: true,
   });
   if (base64 === undefined) {
@@ -129,3 +136,4 @@ export async function gerarPdf(html: Html): Promise<Base64> {
   }
   return createBase64(base64);
 }
+

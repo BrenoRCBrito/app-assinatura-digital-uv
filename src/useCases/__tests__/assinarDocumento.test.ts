@@ -9,7 +9,7 @@ import {
   criarDocumentoId,
   criarTituloDocumento,
 } from '../../domain/documento';
-import { createFraction } from '../../domain/geometry';
+import { createFraction, createSize } from '../../domain/geometry';
 import { createCapturedPhoto } from '../../domain/photo';
 import { criarUsuarioId } from '../../domain/usuario';
 import { createInMemoryDocumentoAssinadoRepository } from '../../storage/inMemory/inMemoryDocumentoAssinadoRepository';
@@ -62,7 +62,7 @@ function criarDependencias(sobrescrever: Partial<DependenciasAssinatura> = {}) {
     }),
     montarHtmlDocumento: jest.fn(() => {
       passos.push('montar html');
-      return createHtml('<!DOCTYPE html><html></html>');
+      return { html: createHtml('<!DOCTYPE html><html></html>'), tamanhoDaPagina: createSize(595, 841) };
     }),
     gerarPdf: jest.fn(async () => {
       passos.push('gerar pdf');

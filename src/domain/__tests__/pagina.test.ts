@@ -1,34 +1,41 @@
 import { createPixels, createSize } from '../geometry';
-import { layoutDaPagina, TAMANHO_DA_FOLHA_A4 } from '../pagina';
+import { layoutDaPagina, LARGURA_DA_FOLHA_A4 } from '../pagina';
 
 describe('layoutDaPagina', () => {
-  test('na largura do PDF, a foto em pé encaixa acima do rodapé e fica centralizada na largura', () => {
+  test('a foto sempre preenche toda a largura útil', () => {
     const layout = layoutDaPagina(createSize(3024, 4032), createPixels(595));
 
-    expect(layout.pagina).toEqual({ width: 595, height: 841 });
-    expect(layout.foto.width).toBeCloseTo(498.75, 3);
-    expect(layout.foto.height).toBeCloseTo(665, 3);
-    expect(layout.esquerda).toBeCloseTo(48.125, 3);
-    expect(layout.topo).toBeCloseTo(24, 3);
+    expect(layout.esquerda).toBeCloseTo(12, 3);
+    expect(layout.topo).toBeCloseTo(12, 3);
+    expect(layout.foto.width).toBeCloseTo(571, 3);
   });
 
-  test('a foto deitada ocupa a largura útil e fica no meio da área acima do rodapé', () => {
+  test('a altura da foto acompanha a proporção real, em pé', () => {
+    const layout = layoutDaPagina(createSize(3024, 4032), createPixels(595));
+
+    expect(layout.foto.height).toBeCloseTo(761.333, 2);
+    expect(layout.pagina.height).toBeCloseTo(901.333, 2);
+  });
+
+  test('a altura da foto acompanha a proporção real, deitada', () => {
     const layout = layoutDaPagina(createSize(4032, 3024), createPixels(595));
 
-    expect(layout.foto.width).toBeCloseTo(547);
-    expect(layout.foto.height).toBeCloseTo(410.25, 3);
-    expect(layout.topo).toBeCloseTo(151.375, 3);
+    expect(layout.foto.height).toBeCloseTo(428.25, 2);
+    expect(layout.pagina.height).toBeCloseTo(568.25, 2);
   });
 
-  test('o rodapé de 128 fica dentro da margem de baixo, com o QR de 104 e a legenda de 9', () => {
+  test('o rodapé fica logo abaixo da foto, do tamanho exato do QR', () => {
     const layout = layoutDaPagina(createSize(3024, 4032), createPixels(595));
 
-    expect(layout.rodape).toEqual({ esquerda: 24, topo: 689, largura: 547, altura: 128 });
+    expect(layout.rodape.topo).toBeCloseTo(785.333, 2);
+    expect(layout.rodape.altura).toBe(104);
+    expect(layout.rodape.esquerda).toBe(12);
+    expect(layout.rodape.largura).toBeCloseTo(571, 3);
     expect(layout.ladoDoQr).toBe(104);
     expect(layout.tamanhoDaLegenda).toBe(9);
   });
 
-  test('a foto nunca invade o rodapé', () => {
+  test('a foto nunca invade o rodapé, pra qualquer proporção', () => {
     for (const tamanho of [createSize(3024, 4032), createSize(4032, 3024), createSize(1000, 5000)]) {
       const layout = layoutDaPagina(tamanho, createPixels(595));
 
@@ -50,7 +57,7 @@ describe('layoutDaPagina', () => {
     expect(naMiniatura.ladoDoQr).toBeCloseTo(noPdf.ladoDoQr / 5);
   });
 
-  test('a folha que o PDF recebe tem 595 × 842', () => {
-    expect(TAMANHO_DA_FOLHA_A4).toEqual({ width: 595, height: 842 });
+  test('a largura da folha A4 usada pro PDF é 595', () => {
+    expect(LARGURA_DA_FOLHA_A4).toBe(595);
   });
 });

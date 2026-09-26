@@ -3,7 +3,7 @@ import { printToFileAsync } from 'expo-print';
 import { emitirCodigo, type CodigoDeAutenticidade } from '../../domain/codigoDeAutenticidade';
 import { createBase64, createCity, createHtml } from '../../domain/documento';
 import { formatDateTime } from '../../domain/format';
-import { createPixels } from '../../domain/geometry';
+import { createPixels, createSize } from '../../domain/geometry';
 import { layoutDaPagina } from '../../domain/pagina';
 import { layoutDoSelo } from '../../domain/selo';
 import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
@@ -22,14 +22,13 @@ beforeAll(async () => {
 });
 
 describe('montarHtmlDocumento', () => {
-  test('monta a página A4 com a foto, o desenho em SVG e o selo em porcentagem', () => {
-    const html = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
+  test('monta a página com a foto preenchendo a largura, o desenho em SVG e o selo em porcentagem', () => {
+    const { html } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
     const { foto } = layoutDaPagina(DOCUMENTO.tamanhoFoto, createPixels(595));
     const selo = layoutDoSelo(DOCUMENTO.selo.largura, foto, DOCUMENTO.assinaturaUsada.desenho.quadro);
 
     expect(html.startsWith('<!DOCTYPE html>')).toBe(true);
     expect(html).toContain('width: 595px;');
-    expect(html).toContain('height: 841px;');
     expect(html).toContain('src="data:image/jpeg;base64,/9j/4AAQ"');
     expect(html).toContain('<svg viewBox="0 0 300 150"');
     expect(html).toContain('<path d="M10,20 L30,40" />');
@@ -41,7 +40,7 @@ describe('montarHtmlDocumento', () => {
   });
 
   test('põe o QR do código e a legenda no rodapé, abaixo da foto', () => {
-    const html = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
+    const { html } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
     const { rodape, ladoDoQr } = layoutDaPagina(DOCUMENTO.tamanhoFoto, createPixels(595));
 
     const qr = desenharQrSvg(gerarMatrizQr(CODIGO), { tinta: FIXED_COLORS.ink, fundo: FIXED_COLORS.paper });
@@ -55,12 +54,12 @@ describe('montarHtmlDocumento', () => {
   test('sem cidade, mostra as coordenadas na faixa', () => {
     const semCidade = { ...DOCUMENTO, local: { ...DOCUMENTO.local, cidade: null } };
 
-    expect(montarHtmlDocumento(semCidade, FOTO, CODIGO)).toContain('<div>-22.40418, -43.66283</div>');
+    expect(montarHtmlDocumento(semCidade, FOTO, CODIGO).html).toContain('<div>-22.40418, -43.66283</div>');
   });
 
   test('escapa a cidade antes de pôr no HTML', () => {
     const cidadeComSimbolos = { ...DOCUMENTO, local: { ...DOCUMENTO.local, cidade: createCity('A & B <C>') } };
-    const html = montarHtmlDocumento(cidadeComSimbolos, FOTO, CODIGO);
+    const { html } = montarHtmlDocumento(cidadeComSimbolos, FOTO, CODIGO);
 
     expect(html).toContain('<div>A &amp; B &lt;C&gt;</div>');
     expect(html).not.toContain('<C>');
@@ -68,7 +67,7 @@ describe('montarHtmlDocumento', () => {
 });
 
 describe('gerarPdf', () => {
-  test('imprime o HTML na folha A4 e devolve o PDF em base64', async () => {
+  test('imprime o HTML no tamanho da página e devolve o PDF em base64', async () => {
     const html = createHtml('<!DOCTYPE html><html></html>');
     jest.mocked(printToFileAsync).mockResolvedValue({
       uri: 'file:///cache/Print/documento.pdf',
@@ -76,13 +75,15 @@ describe('gerarPdf', () => {
       base64: 'JVBERi0xLjQK',
     });
 
-    await expect(gerarPdf(html)).resolves.toBe('JVBERi0xLjQK');
+    await expect(gerarPdf(html, createSize(595, 841))).resolves.toBe('JVBERi0xLjQK');
     expect(printToFileAsync).toHaveBeenCalledWith({ html, width: 595, height: 842, base64: true });
   });
 
   test('sem o base64 no resultado, falha em vez de guardar um PDF vazio', async () => {
     jest.mocked(printToFileAsync).mockResolvedValue({ uri: 'file:///cache/Print/documento.pdf', numberOfPages: 1 });
 
-    await expect(gerarPdf(createHtml('<!DOCTYPE html><html></html>'))).rejects.toThrow('O PDF não voltou em base64.');
+    await expect(
+      gerarPdf(createHtml('<!DOCTYPE html><html></html>'), createSize(595, 841)),
+    ).rejects.toThrow('O PDF não voltou em base64.');
   });
 });

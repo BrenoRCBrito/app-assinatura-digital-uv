@@ -2,11 +2,13 @@ import type { Assinatura } from '../domain/assinatura';
 import type { CodigoDeAutenticidade } from '../domain/codigoDeAutenticidade';
 import type { IsoDateTime } from '../domain/dateTime';
 import type { Base64, DocumentoAssinado, DocumentoId, Html, TituloDocumento } from '../domain/documento';
+import type { Size } from '../domain/geometry';
 import type { CapturedPhoto } from '../domain/photo';
 import type { PosicaoSelo } from '../domain/selo';
 import type { UsuarioId } from '../domain/usuario';
 import type { AuthenticationPurpose, AuthenticationResult } from '../services/localAuthentication';
 import type { ResultadoLocalAssinatura } from '../services/location';
+import type { DocumentoHtml } from '../services/print';
 import type { DocumentoAssinadoRepository } from '../storage/repositories';
 
 export type PedidoAssinatura = Readonly<{
@@ -37,8 +39,12 @@ export type DependenciasAssinatura = Readonly<{
   emitirCodigo: (documento: DocumentoAssinado, fotoBase64: Base64) => Promise<CodigoDeAutenticidade>;
   guardarPdfDocumento: (id: DocumentoId, pdf: Base64) => Promise<void>;
   excluirArquivosDocumento: (id: DocumentoId) => void;
-  montarHtmlDocumento: (documento: DocumentoAssinado, fotoBase64: Base64, codigo: CodigoDeAutenticidade) => Html;
-  gerarPdf: (html: Html) => Promise<Base64>;
+  montarHtmlDocumento: (
+    documento: DocumentoAssinado,
+    fotoBase64: Base64,
+    codigo: CodigoDeAutenticidade,
+  ) => DocumentoHtml;
+  gerarPdf: (html: Html, tamanhoDaPagina: Size) => Promise<Base64>;
   documentos: DocumentoAssinadoRepository;
   agora: () => IsoDateTime;
   criarDocumentoId: () => DocumentoId;
@@ -96,7 +102,8 @@ export async function assinarDocumento(
     await dependencias.copiarFotoDocumento(documento.id, pedido.foto);
     const fotoBase64 = await dependencias.lerFotoDocumentoBase64(documento.id);
     const codigo = await dependencias.emitirCodigo(documento, fotoBase64);
-    const pdf = await dependencias.gerarPdf(dependencias.montarHtmlDocumento(documento, fotoBase64, codigo));
+    const { html, tamanhoDaPagina } = dependencias.montarHtmlDocumento(documento, fotoBase64, codigo);
+    const pdf = await dependencias.gerarPdf(html, tamanhoDaPagina);
     await dependencias.guardarPdfDocumento(documento.id, pdf);
     await dependencias.documentos.save(documento);
     return { tipo: 'assinado', documento };
