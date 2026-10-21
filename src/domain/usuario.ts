@@ -91,6 +91,10 @@ export function formatarCpf(cpf: Cpf): string {
   return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 }
 
+export function mascararCpfParcial(cpf: Cpf): string {
+  return `${cpf.slice(0, 3)}.***.***-${cpf.slice(-2)}`;
+}
+
 const TELEFONE_DIGITOS = /^\d{10,11}$/;
 
 export function criarTelefone(texto: string): Telefone {
