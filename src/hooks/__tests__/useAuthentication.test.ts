@@ -47,12 +47,13 @@ function criarUsuarioDeTeste(id: UsuarioId, email: Email, senhaHash: string): Us
 
 function mockUsuarios(usuarios: readonly Usuario[]) {
   const findByEmail = jest.fn(async (email: Email) => usuarios.find((usuario) => usuario.email === email) ?? null);
+  const findById = jest.fn(async (id: UsuarioId) => usuarios.find((usuario) => usuario.id === id) ?? null);
   jest.mocked(useRepositories).mockReturnValue({
     assinaturas: {} as never,
     documentos: {} as never,
     usuarios: {
       findByEmail,
-      findById: jest.fn(),
+      findById,
       create: jest.fn(),
       updateEmail: jest.fn(),
       updateSenha: jest.fn(),
@@ -62,7 +63,6 @@ function mockUsuarios(usuarios: readonly Usuario[]) {
       updateFoto: jest.fn(),
       clear: jest.fn(),
     },
-
   } as Repositories);
 }
 
@@ -357,5 +357,28 @@ describe('AuthenticationProvider', () => {
 
       expect(alerta).not.toHaveBeenCalled();
     });
+
   });
+  
+  describe('usuarioBiometria', () => {
+  test('carrega o usuário salvo quando a biometria está ativada', async () => {
+    mockSettings({
+      loginBiometricoAtivado: true,
+      perguntaBiometriaRespondida: true,
+      ultimoUsuarioIdBiometria: USUARIO_A,
+    });
+    mockUsuarios([criarUsuarioDeTeste(USUARIO_A, EMAIL_A, SENHA_HASH_A)]);
+    const { result } = await renderAuthentication();
+
+    await waitFor(() => expect(result.current.usuarioBiometria?.id).toBe(USUARIO_A));
+  });
+
+  test('fica null quando a biometria não está ativada', async () => {
+    mockUsuarios([criarUsuarioDeTeste(USUARIO_A, EMAIL_A, SENHA_HASH_A)]);
+    const { result } = await renderAuthentication();
+
+    expect(result.current.usuarioBiometria).toBeNull();
+  });
+});
+
 });

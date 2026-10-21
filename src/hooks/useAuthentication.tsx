@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { Alert } from 'react-native';
 
 import { ValidationError } from '../domain/brand';
-import { criarEmail, type UsuarioId } from '../domain/usuario';
+import { criarEmail,type Usuario , type UsuarioId } from '../domain/usuario';
 import {
   authenticateDeviceOwner,
   getBiometricStatus,
@@ -21,6 +21,7 @@ type AuthenticationContextValue = Readonly<{
   biometricStatus: BiometricStatus | null;
   usuarioId: UsuarioId | null;
   mostrarEntrarComBiometria: boolean;
+  usuarioBiometria: Usuario | null;
   loginComSenha: (email: string, senha: string) => Promise<ResultadoLoginComSenha>;
   unlock: () => Promise<void>;
   lock: () => void;
@@ -43,6 +44,7 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
   const [authenticating, setAuthenticating] = useState(false);
   const [biometricStatus, setBiometricStatus] = useState<BiometricStatus | null>(null);
   const [usuarioId, setUsuarioId] = useState<UsuarioId | null>(null);
+  const [usuarioBiometria, setUsuarioBiometria] = useState<Usuario | null>(null);
   // O state só chega à tela no próximo render; a ref barra o segundo toque antes disso.
   const authenticatingRef = useRef(false);
   const settingsRef = useRef(settings);
@@ -50,17 +52,22 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
 
   useEffect(() => {
     let active = true;
-
-    getBiometricStatus().then((status) => {
+    const podeMostrar = settings.loginBiometricoAtivado && biometricStatus === 'enrolled';
+    const id = settings.ultimoUsuarioIdBiometria as UsuarioId | null;
+    if (!podeMostrar || id === null) {
+      setUsuarioBiometria(null);
+      return;
+    }
+    usuarios.findById(id).then((encontrado) => {
       if (active) {
-        setBiometricStatus(status);
+        setUsuarioBiometria(encontrado);
       }
     });
-
     return () => {
       active = false;
     };
-  }, []);
+  }, [settings.loginBiometricoAtivado, settings.ultimoUsuarioIdBiometria, biometricStatus, usuarios]);
+
 
   const perguntarSobreBiometria = useCallback(
   (usuarioLogadoId: UsuarioId) => {
@@ -151,18 +158,29 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
   const mostrarEntrarComBiometria = settings.loginBiometricoAtivado && biometricStatus === 'enrolled';
 
   const value = useMemo(
-    () => ({
-      isUnlocked,
-      authenticating,
-      biometricStatus,
-      usuarioId,
-      mostrarEntrarComBiometria,
-      loginComSenha,
-      unlock,
-      lock,
-    }),
-    [isUnlocked, authenticating, biometricStatus, usuarioId, mostrarEntrarComBiometria, loginComSenha, unlock, lock],
-  );
+  () => ({
+    isUnlocked,
+    authenticating,
+    biometricStatus,
+    usuarioId,
+    mostrarEntrarComBiometria,
+    usuarioBiometria,
+    loginComSenha,
+    unlock,
+    lock,
+  }),
+  [
+    isUnlocked,
+    authenticating,
+    biometricStatus,
+    usuarioId,
+    mostrarEntrarComBiometria,
+    usuarioBiometria,
+    loginComSenha,
+    unlock,
+    lock,
+  ],
+);
 
   return <AuthenticationContext.Provider value={value}>{children}</AuthenticationContext.Provider>;
 }
