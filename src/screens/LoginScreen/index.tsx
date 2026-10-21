@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
-import { Button, KeyboardDismissArea, Link, Logo, Screen, Stack, Text, TextField } from '../../components';
+import { Avatar, Button, KeyboardDismissArea, Link, Logo, Screen, Stack, Text, TextField } from '../../components';
+import { mascararCpfParcial } from '../../domain/usuario';
 import { useAuthentication } from '../../hooks/useAuthentication';
 
 type LoginScreenProps = Readonly<{
@@ -9,11 +10,12 @@ type LoginScreenProps = Readonly<{
 }>;
 
 export function LoginScreen({ onCriarConta, onValidarDocumento }: LoginScreenProps) {
-  const { mostrarEntrarComBiometria, loginComSenha, unlock } = useAuthentication();
+  const { mostrarEntrarComBiometria, usuarioBiometria, authenticating, loginComSenha, unlock } = useAuthentication();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [entrando, setEntrando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [usarSenha, setUsarSenha] = useState(false);
 
   async function entrar() {
     setErro(null);
@@ -28,18 +30,35 @@ export function LoginScreen({ onCriarConta, onValidarDocumento }: LoginScreenPro
     }
   }
 
+  const mostrarAcessoRapido = mostrarEntrarComBiometria && usuarioBiometria !== null && !usarSenha;
+
+  if (mostrarAcessoRapido) {
+    const nomeExibido = usuarioBiometria.nome ?? usuarioBiometria.email;
+
+    return (
+      <KeyboardDismissArea>
+        <Screen preset="authScroll">
+          <Stack gap="hero" align="center">
+            <Avatar fotoBase64={usuarioBiometria.foto} />
+            <Stack gap="text" align="center">
+              <Text preset="screenTitle">{nomeExibido}</Text>
+              {usuarioBiometria.cpf === null ? null : (
+                <Text preset="supporting">{mascararCpfParcial(usuarioBiometria.cpf)}</Text>
+              )}
+            </Stack>
+            <Stack gap="label" align="center">
+              <Button label={authenticating ? 'Verificando…' : 'Acessar'} onPress={unlock} disabled={authenticating} />
+              <Link label="Entrar com outra conta" onPress={() => setUsarSenha(true)} preset="linkQuiet" />
+            </Stack>
+          </Stack>
+        </Screen>
+      </KeyboardDismissArea>
+    );
+  }
+
   return (
     <KeyboardDismissArea>
-      <Screen
-        preset="authScroll"
-        footer={
-          mostrarEntrarComBiometria ? (
-            <Stack align="center">
-              <Link label="Entrar com biometria" onPress={unlock} preset="linkPrimary" />
-            </Stack>
-          ) : undefined
-        }
-      >
+      <Screen preset="authScroll">
         <Stack gap="hero" align="center">
           <Logo />
           <Text preset="brand">Assina Aqui</Text>
@@ -69,6 +88,9 @@ export function LoginScreen({ onCriarConta, onValidarDocumento }: LoginScreenPro
             <Button label={entrando ? 'Entrando…' : 'Entrar'} onPress={entrar} disabled={entrando} />
             <Link label="Criar conta" onPress={onCriarConta} />
             <Link label="Validar um documento" onPress={onValidarDocumento} preset="linkQuiet" />
+            {mostrarEntrarComBiometria && usuarioBiometria !== null ? (
+              <Link label="Usar biometria" onPress={() => setUsarSenha(false)} preset="linkQuiet" />
+            ) : null}
           </Stack>
         </Stack>
       </Screen>
