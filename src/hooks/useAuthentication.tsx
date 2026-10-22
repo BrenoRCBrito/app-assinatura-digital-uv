@@ -52,6 +52,21 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
 
   useEffect(() => {
     let active = true;
+
+    getBiometricStatus().then((status) => {
+        if (active) {
+          setBiometricStatus(status);
+        }
+    });
+
+    return () => {
+        active = false;
+    };
+  }, []);
+
+
+  useEffect(() => {
+    let active = true;
     const podeMostrar = settings.loginBiometricoAtivado && biometricStatus === 'enrolled';
     const id = settings.ultimoUsuarioIdBiometria as UsuarioId | null;
     if (!podeMostrar || id === null) {

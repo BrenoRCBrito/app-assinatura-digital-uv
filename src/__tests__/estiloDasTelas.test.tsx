@@ -6,10 +6,12 @@ import type { TestInstance } from 'test-renderer';
 
 import App from '../../App';
 import { DEFAULT_SETTINGS, type ThemeName } from '../domain/settings';
+import { criarEmail, type UsuarioId } from '../domain/usuario';
 import { authenticateDeviceOwner, getBiometricStatus } from '../services/localAuthentication';
 import { createAsyncStorageAssinaturaRepository } from '../storage/asyncStorage/asyncStorageAssinaturaRepository';
+import { createRepositories } from '../storage/createRepositories';
 import { SETTINGS_STORAGE_KEY } from '../storage/settingsStorage';
-import { criarAssinaturaDeTeste, USUARIO_DE_TESTE } from '../storage/testing/assinaturaRepositoryContract';
+import { criarAssinaturaDeTeste } from '../storage/testing/assinaturaRepositoryContract';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -54,6 +56,7 @@ const CHAVES_DE_SUPERFICIE = ['backgroundColor', 'borderColor', 'borderRadius', 
 const CHAVES_DE_TRACO = ['stroke', 'strokeLinecap', 'strokeLinejoin', 'strokeWidth'];
 const CORES_DO_INTERRUPTOR = ['onTintColor', 'thumbTintColor', 'tintColor'];
 const PAPEIS_DE_CONTROLE = ['button', 'radio', 'switch'];
+let usuarioIdReal: UsuarioId;
 
 function escolher(origem: Readonly<Record<string, unknown>>, chaves: readonly string[]): Amostra {
   return Object.fromEntries(chaves.filter((chave) => origem[chave] !== undefined).map((chave) => [chave, origem[chave]]));
@@ -111,13 +114,17 @@ function capturarTelaEmFoco(): readonly Amostra[] {
 
 async function entrar() {
   await render(<App />);
-  await fireEvent.press(await screen.findByText('Entrar com biometria'));
+  await fireEvent.press(await screen.findByText('Acessar'));
   await screen.findByText('Assinar documento');
 }
 
 describe.each(['light', 'dark'] as const)('estilo das telas no tema %s', (themeName: ThemeName) => {
   beforeEach(async () => {
     await AsyncStorage.clear();
+    const usuariosRepo = createRepositories('asyncStorage').usuarios;
+    await usuariosRepo.clear();
+    const usuario = await usuariosRepo.create({ email: criarEmail('teste@exemplo.com'), senhaHash: 'hash' });
+    usuarioIdReal = usuario.id;
     await AsyncStorage.setItem(
       SETTINGS_STORAGE_KEY,
       JSON.stringify({
@@ -125,7 +132,7 @@ describe.each(['light', 'dark'] as const)('estilo das telas no tema %s', (themeN
         theme: themeName,
         loginBiometricoAtivado: true,
         perguntaBiometriaRespondida: true,
-        ultimoUsuarioIdBiometria: USUARIO_DE_TESTE,
+        ultimoUsuarioIdBiometria: usuarioIdReal,
       }),
     );
     jest.mocked(getBiometricStatus).mockResolvedValue('enrolled');
@@ -133,12 +140,13 @@ describe.each(['light', 'dark'] as const)('estilo das telas no tema %s', (themeN
   });
 
 
+
   test('login, início e configurações', async () => {
     await render(<App />);
-    await screen.findByText('Entrar com biometria');
+    await screen.findByText('Acessar');
     expect(capturarTelaEmFoco()).toMatchSnapshot('login');
 
-    await fireEvent.press(screen.getByText('Entrar com biometria'));
+    await fireEvent.press(screen.getByText('Acessar'));
     await screen.findByText('Assinar documento');
     expect(capturarTelaEmFoco()).toMatchSnapshot('início');
 
@@ -146,6 +154,7 @@ describe.each(['light', 'dark'] as const)('estilo das telas no tema %s', (themeN
     await screen.findByText('Motor de gestos');
     expect(capturarTelaEmFoco()).toMatchSnapshot('configurações');
   });
+
 
 
   test('lista vazia e nova assinatura em pé e deitada', async () => {
@@ -164,9 +173,10 @@ describe.each(['light', 'dark'] as const)('estilo das telas no tema %s', (themeN
   });
 
   test('lista com assinatura', async () => {
-    await createAsyncStorageAssinaturaRepository().save(
-      criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T12:00:00.000Z'),
-    );
+  await createAsyncStorageAssinaturaRepository().save(
+    criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T12:00:00.000Z' , usuarioIdReal),
+  );
+
     await entrar();
     await fireEvent.press(screen.getByText('Minhas assinaturas'));
     await screen.findByText('Rubrica');

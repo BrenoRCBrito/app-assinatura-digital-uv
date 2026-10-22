@@ -4,9 +4,11 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 
 import App from '../../../App';
 import { DEFAULT_SETTINGS } from '../../domain/settings';
+import { criarEmail } from '../../domain/usuario';
 import { authenticateDeviceOwner, getBiometricStatus } from '../../services/localAuthentication';
+import { createRepositories } from '../../storage/createRepositories';
 import { SETTINGS_STORAGE_KEY } from '../../storage/settingsStorage';
-import { USUARIO_DE_TESTE } from '../../storage/testing/assinaturaRepositoryContract';
+
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -36,9 +38,11 @@ const DICA = 'Aponte para o QR do documento';
 describe('validação de documento na navegação', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
+    await createRepositories('asyncStorage').usuarios.clear();
     jest.mocked(getBiometricStatus).mockResolvedValue('enrolled');
     jest.mocked(authenticateDeviceOwner).mockResolvedValue({ type: 'authenticated' });
   });
+
 
   test('do Login, abre o leitor sem entrar na conta e volta', async () => {
     await render(<App />);
@@ -51,18 +55,22 @@ describe('validação de documento na navegação', () => {
   });
 
   test('do Início, abre o leitor pela linha Validar documento', async () => {
+    const usuario = await createRepositories('asyncStorage').usuarios.create({
+      email: criarEmail('teste@exemplo.com'),
+      senhaHash: 'hash',
+    });
     await AsyncStorage.setItem(
       SETTINGS_STORAGE_KEY,
       JSON.stringify({
         ...DEFAULT_SETTINGS,
         loginBiometricoAtivado: true,
         perguntaBiometriaRespondida: true,
-        ultimoUsuarioIdBiometria: USUARIO_DE_TESTE,
+        ultimoUsuarioIdBiometria: usuario.id,
       }),
     );
     await render(<App />);
 
-    await fireEvent.press(await screen.findByText('Entrar com biometria'));
+    await fireEvent.press(await screen.findByText('Acessar'));
     await fireEvent.press(await screen.findByText('Validar documento'));
 
     expect(await screen.findByText(DICA)).toBeTruthy();

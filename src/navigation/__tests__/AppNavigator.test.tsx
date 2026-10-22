@@ -5,16 +5,20 @@ import { Alert } from 'react-native';
 import type { TestInstance } from 'test-renderer';
 
 import App from '../../../App';
+import type { DocumentoAssinado } from '../../domain/documento';
+import { DEFAULT_SETTINGS } from '../../domain/settings';
+import { criarEmail, type UsuarioId } from '../../domain/usuario';
 import { useAssinarDocumento } from '../../hooks/useAssinarDocumento';
 import { authenticateDeviceOwner, getBiometricStatus } from '../../services/localAuthentication';
 import { createAsyncStorageAssinaturaRepository } from '../../storage/asyncStorage/asyncStorageAssinaturaRepository';
 import {
   createAsyncStorageDocumentoAssinadoRepository,
 } from '../../storage/asyncStorage/asyncStorageDocumentoAssinadoRepository';
-import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
-import { DEFAULT_SETTINGS } from '../../domain/settings';
+import { createRepositories } from '../../storage/createRepositories';
 import { SETTINGS_STORAGE_KEY } from '../../storage/settingsStorage';
-import { criarAssinaturaDeTeste, USUARIO_DE_TESTE } from '../../storage/testing/assinaturaRepositoryContract';
+import { criarAssinaturaDeTeste } from '../../storage/testing/assinaturaRepositoryContract';
+import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
+
 
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -53,8 +57,11 @@ jest.mock('expo-camera', () => {
   };
 });
 
-const DOCUMENTO = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z');
 const HISTORICO_VAZIO = 'Nenhum documento assinado. Toque em Digitalizar documento no Início para assinar o primeiro.';
+
+let usuarioIdReal: UsuarioId;
+let DOCUMENTO: DocumentoAssinado;
+
 
 function descendentes(no: TestInstance): TestInstance[] {
   return no.children.flatMap((filho) => (typeof filho === 'string' ? [] : [filho, ...descendentes(filho)]));
@@ -66,10 +73,10 @@ function telasDaPilha(): TestInstance[] {
 
 async function abrirPosicionar() {
   await createAsyncStorageAssinaturaRepository().save(
-    criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T12:00:00.000Z'),
+    criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T12:00:00.000Z', usuarioIdReal),
   );
   await render(<App />);
-  await fireEvent.press(await screen.findByText('Entrar com biometria'));
+  await fireEvent.press(await screen.findByText('Acessar'));
   await fireEvent.press(await screen.findByText('Digitalizar documento'));
   await fireEvent.press(await screen.findByLabelText('Tirar foto'));
   await fireEvent.press(await screen.findByText('Usar foto'));
@@ -79,31 +86,39 @@ async function abrirPosicionar() {
 async function abrirDocumentoPeloHistorico() {
   await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
   await render(<App />);
-  await fireEvent.press(await screen.findByText('Entrar com biometria'));
+  await fireEvent.press(await screen.findByText('Acessar'));
   await fireEvent.press(await screen.findByText('Histórico'));
   await fireEvent.press(await screen.findByText('Contrato de locação'));
   await screen.findByText('PDF A4, 1 página');
 }
 
+
 describe('AppNavigator', () => {
   beforeEach(async () => {
-    await AsyncStorage.clear();
-    await AsyncStorage.setItem(
-      SETTINGS_STORAGE_KEY,
-      JSON.stringify({
-        ...DEFAULT_SETTINGS,
-        loginBiometricoAtivado: true,
-        perguntaBiometriaRespondida: true,
-        ultimoUsuarioIdBiometria: USUARIO_DE_TESTE,
-      }),
-    );
-    jest.mocked(getBiometricStatus).mockResolvedValue('enrolled');
-    jest.mocked(authenticateDeviceOwner).mockResolvedValue({ type: 'authenticated' });
-    jest.mocked(useAssinarDocumento).mockReturnValue({
-      assinando: false,
-      assinar: jest.fn().mockResolvedValue({ tipo: 'assinado', documento: DOCUMENTO }),
-    });
+  await AsyncStorage.clear();
+  const usuariosRepo = createRepositories('asyncStorage').usuarios;
+  await usuariosRepo.clear();
+  const usuario = await usuariosRepo.create({ email: criarEmail('teste@exemplo.com'), senhaHash: 'hash' });
+  usuarioIdReal = usuario.id;
+  DOCUMENTO = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z', usuarioIdReal);
+  await AsyncStorage.setItem(
+    SETTINGS_STORAGE_KEY,
+    JSON.stringify({
+      ...DEFAULT_SETTINGS,
+      loginBiometricoAtivado: true,
+      perguntaBiometriaRespondida: true,
+      ultimoUsuarioIdBiometria: usuarioIdReal,
+    }),
+  );
+  jest.mocked(getBiometricStatus).mockResolvedValue('enrolled');
+  jest.mocked(authenticateDeviceOwner).mockResolvedValue({ type: 'authenticated' });
+  jest.mocked(useAssinarDocumento).mockReturnValue({
+    assinando: false,
+    assinar: jest.fn().mockResolvedValue({ tipo: 'assinado', documento: DOCUMENTO }),
+  });
 });
+
+
 
   test('Usar foto troca a câmera pelo Posicionar, sem o gesto de voltar do iOS', async () => {
     await abrirPosicionar();
@@ -144,3 +159,4 @@ describe('AppNavigator', () => {
     alerta.mockRestore();
   });
 });
+
