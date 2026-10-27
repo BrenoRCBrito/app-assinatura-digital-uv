@@ -16,20 +16,22 @@ type PreviaDocumentoProps = Readonly<{
   desenho: Desenho;
   selo: PosicaoSelo;
   linhas: readonly [string, string];
+  largura?: number;
 }>;
 
-export function PreviaDocumento({ foto, tamanhoFoto, desenho, selo, linhas }: PreviaDocumentoProps) {
+export function PreviaDocumento({ foto, tamanhoFoto, desenho, selo, linhas, largura }: PreviaDocumentoProps) {
   const { theme } = useAppTheme();
   const styles = useMemo(() => previaDocumentoPresets.default(theme), [theme]);
+  const larguraDaPagina = largura ?? theme.size.documentPreview;
   const medidas = useMemo(() => {
-    const pagina = layoutDaPagina(tamanhoFoto, createPixels(theme.size.documentPreview));
+    const pagina = layoutDaPagina(tamanhoFoto, createPixels(larguraDaPagina));
     return {
       pagina: { width: pagina.pagina.width, height: pagina.pagina.height },
       foto: { left: pagina.esquerda, top: pagina.topo, width: pagina.foto.width, height: pagina.foto.height },
       selo: { left: selo.x * pagina.foto.width, top: selo.y * pagina.foto.height },
       layout: layoutDoSelo(selo.largura, pagina.foto, desenho.quadro),
     };
-  }, [desenho.quadro, selo, tamanhoFoto, theme.size.documentPreview]);
+  }, [desenho.quadro, selo, tamanhoFoto, larguraDaPagina]);
 
   return (
     <View accessibilityLabel="Prévia do documento" style={[styles.pagina, medidas.pagina]}>

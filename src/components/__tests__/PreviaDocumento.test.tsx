@@ -36,6 +36,27 @@ describe('PreviaDocumento', () => {
       />,
       { wrapper: SettingsProvider },
     );
+  test('com a prop largura, redimensiona a página mantendo as proporções do PDF', async () => {
+    await render(
+      <PreviaDocumento
+        foto={createFileUri('file:///app/documentos/1/foto.jpg')}
+        tamanhoFoto={TAMANHO_FOTO}
+        desenho={DESENHO}
+        selo={SELO}
+        linhas={['12/09/2026 14:32', 'Vassouras']}
+        largura={300}
+      />,
+      { wrapper: SettingsProvider },
+    );
+
+    const previa = await screen.findByLabelText('Prévia do documento');
+    const pagina = layoutDaPagina(TAMANHO_FOTO, createPixels(300));
+
+    expect(StyleSheet.flatten(previa.props.style)).toMatchObject({
+      width: 300,
+      height: pagina.pagina.height,
+    });
+  });
 
     const previa = await screen.findByLabelText('Prévia do documento');
     const foto = screen.getByLabelText('Foto do documento');

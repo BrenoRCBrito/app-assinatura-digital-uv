@@ -1,5 +1,5 @@
 import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
-
+import { Pressable } from 'react-native';
 import {
   Button,
   confirmDestructive,
@@ -13,6 +13,7 @@ import {
   showSuccess,
   Stack,
   Text,
+  VisualizadorDocumento,
 } from '../../components';
 import type { DocumentoAssinado, DocumentoId } from '../../domain/documento';
 import { formatCoordinates, formatDateTime, formatLocal } from '../../domain/format';
@@ -32,6 +33,8 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
   const [documento, setDocumento] = useState<DocumentoAssinado | null>(null);
   const compartilhandoRef = useRef(false);
   const excluindoRef = useRef(false);
+  const [ampliado, setAmpliado] = useState(false);
+
 
   const sairComErro = useEffectEvent((mensagem: string) => {
     showError('Erro', mensagem);
@@ -145,13 +148,19 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
           <Text preset="supporting">PDF A4, 1 página</Text>
         </Stack>
         <Row gap="documentSummary" align="start">
-          <PreviaDocumento
-            foto={uriFotoDocumento(documento.id)}
-            tamanhoFoto={documento.tamanhoFoto}
-            desenho={documento.assinaturaUsada.desenho}
-            selo={documento.selo}
-            linhas={[assinadoEm, formatLocal(documento.local)]}
-          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ampliar documento"
+            onPress={() => setAmpliado(true)}
+          >
+            <PreviaDocumento
+              foto={uriFotoDocumento(documento.id)}
+              tamanhoFoto={documento.tamanhoFoto}
+              desenho={documento.assinaturaUsada.desenho}
+              selo={documento.selo}
+              linhas={[assinadoEm, formatLocal(documento.local)]}
+            />
+          </Pressable>
           <Stack gap="documentData" flex={1}>
             <DadoDoDocumento rotulo="Assinado em" valor={assinadoEm} />
             {documento.local.cidade === null ? null : (
@@ -167,6 +176,20 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
         </Row>
         <MapaDoLocal coordenadas={documento.local.coordenadas} rotulo={documento.local.cidade} />
       </Stack>
+      <VisualizadorDocumento
+        visible={ampliado}
+        titulo={documento.titulo}
+        foto={uriFotoDocumento(documento.id)}
+        tamanhoFoto={documento.tamanhoFoto}
+        desenho={documento.assinaturaUsada.desenho}
+        selo={documento.selo}
+        linhas={[assinadoEm, formatLocal(documento.local)]}
+        onClose={() => setAmpliado(false)}
+        onCompartilhar={() => {
+          void compartilhar(documento);
+        }}
+      />
+
     </Screen>
   );
 }

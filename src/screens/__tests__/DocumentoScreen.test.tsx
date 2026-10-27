@@ -104,6 +104,32 @@ describe('DocumentoScreen', () => {
     });
   });
 
+  test('tocar na prévia amplia o documento e Fechar volta para a tela', async () => {
+    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await abrirDocumento();
+
+    expect(await screen.findAllByLabelText('Prévia do documento')).toHaveLength(1);
+
+    await fireEvent.press(screen.getByLabelText('Ampliar documento'));
+    expect(screen.getAllByLabelText('Prévia do documento')).toHaveLength(2);
+
+    await fireEvent.press(screen.getByText('Fechar'));
+    await waitFor(() => expect(screen.getAllByLabelText('Prévia do documento')).toHaveLength(1));
+  });
+
+  test('Compartilhar dentro do documento ampliado manda o PDF para o compartilhamento', async () => {
+    jest.mocked(compartilharPdf).mockResolvedValue('compartilhado');
+    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await abrirDocumento();
+
+    await fireEvent.press(await screen.findByLabelText('Ampliar documento'));
+    await fireEvent.press(screen.getByText('Compartilhar'));
+
+    await waitFor(() => expect(compartilharPdf).toHaveBeenCalledWith(DOCUMENTO));
+  });
+
+
+
   test('documento que não existe mostra a mensagem e volta', async () => {
     const { onNaoEncontrado } = await abrirDocumento(criarDocumentoId('999'));
 
