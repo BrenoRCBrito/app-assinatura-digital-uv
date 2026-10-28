@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Image, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 
 import type { Desenho } from '../../domain/desenho';
 import { createPixels, type Size } from '../../domain/geometry';
@@ -17,9 +17,9 @@ type PreviaDocumentoProps = Readonly<{
   selo: PosicaoSelo;
   linhas: readonly [string, string];
   largura?: number;
+  onAmpliar?: () => void;
 }>;
-
-export function PreviaDocumento({ foto, tamanhoFoto, desenho, selo, linhas, largura }: PreviaDocumentoProps) {
+export function PreviaDocumento({foto,tamanhoFoto,desenho,selo,linhas,largura,onAmpliar,}: PreviaDocumentoProps) {
   const { theme } = useAppTheme();
   const styles = useMemo(() => previaDocumentoPresets.default(theme), [theme]);
   const larguraDaPagina = largura ?? theme.size.documentPreview;
@@ -33,7 +33,7 @@ export function PreviaDocumento({ foto, tamanhoFoto, desenho, selo, linhas, larg
     };
   }, [desenho.quadro, selo, tamanhoFoto, larguraDaPagina]);
 
-  return (
+  const previa = (
     <View accessibilityLabel="Prévia do documento" style={[styles.pagina, medidas.pagina]}>
       <View style={[styles.foto, medidas.foto]}>
         <Image
@@ -48,4 +48,15 @@ export function PreviaDocumento({ foto, tamanhoFoto, desenho, selo, linhas, larg
       </View>
     </View>
   );
+
+  if (onAmpliar === undefined) {
+    return previa;
+  }
+
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel="Ampliar documento" onPress={onAmpliar}>
+      {previa}
+    </Pressable>
+  );
 }
+
