@@ -34,6 +34,8 @@ export function TextField({
   const { theme } = useAppTheme();
   const styles = useMemo(() => textFieldPresets[preset](theme), [preset, theme]);
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const multiline = preset === 'multiline';
+
 
   return (
     <View style={styles.field}>
@@ -51,6 +53,8 @@ export function TextField({
           secureTextEntry={secureTextEntry && !mostrarSenha}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
+          {...(multiline ? { multiline: true, autoCorrect: false } : {})}
+
         />
         {secureTextEntry ? (
           <Pressable
