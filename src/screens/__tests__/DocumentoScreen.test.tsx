@@ -4,10 +4,13 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { Alert } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-import { criarDocumentoId, type DocumentoId } from '../../domain/documento';
+import { createBase64, criarDocumentoId, type DocumentoId } from '../../domain/documento';
 import { formatDateTime } from '../../domain/format';
-import { excluirArquivosDocumento } from '../../services/fileSystem';
+import { excluirArquivosDocumento, lerFotoDocumentoBase64 } from '../../services/fileSystem';
 import { compartilharPdf } from '../../services/sharing';
+import { setStringAsync } from 'expo-clipboard';
+import { emitirCodigoDoDocumento } from '../../useCases/emitirCodigoDoDocumento';
+
 import {
   createAsyncStorageDocumentoAssinadoRepository,
   DOCUMENTOS_STORAGE_KEY,
@@ -17,6 +20,7 @@ import { SettingsProvider } from '../../storage/SettingsProvider';
 import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
 import { DocumentoScreen } from '../DocumentoScreen';
 
+
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
@@ -25,7 +29,13 @@ jest.mock('../../services/sharing', () => ({ compartilharPdf: jest.fn() }));
 jest.mock('../../services/fileSystem', () => ({
   uriFotoDocumento: (id: string) => `file:///app/documentos/${id}/foto.jpg`,
   excluirArquivosDocumento: jest.fn(),
+  lerFotoDocumentoBase64: jest.fn(),
 }));
+jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn() }));
+jest.mock('../../services/carimbo', () => ({ carimbarComOSegredoDoApp: jest.fn() }));
+jest.mock('../../services/hmac', () => ({ resumirSha256: jest.fn() }));
+jest.mock('../../useCases/emitirCodigoDoDocumento', () => ({ emitirCodigoDoDocumento: jest.fn() }));
+
 
 const DOCUMENTO = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z');
 
@@ -55,6 +65,9 @@ describe('DocumentoScreen', () => {
     jest.mocked(compartilharPdf).mockReset();
     jest.mocked(excluirArquivosDocumento).mockReset();
     alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    jest.mocked(setStringAsync).mockReset();
+    jest.mocked(emitirCodigoDoDocumento).mockReset();
+    jest.mocked(lerFotoDocumentoBase64).mockReset();
   });
 
   afterEach(() => {
@@ -219,4 +232,35 @@ describe('DocumentoScreen', () => {
     expect(erro).toHaveBeenCalledTimes(1);
     erro.mockRestore();
   });
+
+  test('Copiar código gera o código do documento e copia para a área de transferência', async () => {
+    const toast = jest.spyOn(Toast, 'show').mockImplementation(() => undefined);
+    jest.mocked(lerFotoDocumentoBase64).mockResolvedValue(createBase64('Zm90bw=='));
+    jest.mocked(emitirCodigoDoDocumento).mockResolvedValue('AA1;id=1757680000000#carimbo' as never);
+    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await abrirDocumento();
+
+    await fireEvent.press(await screen.findByText('Copiar código'));
+
+    await waitFor(() => expect(setStringAsync).toHaveBeenCalledWith('AA1;id=1757680000000#carimbo'));
+    expect(emitirCodigoDoDocumento).toHaveBeenCalledWith(expect.anything(), DOCUMENTO, 'Zm90bw==');
+    expect(toast).toHaveBeenCalledWith({ type: 'success', text1: 'Código copiado' });
+    toast.mockRestore();
+  });
+
+  test('quando copiar o código falha, avisa', async () => {
+    const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    jest.mocked(lerFotoDocumentoBase64).mockResolvedValue(createBase64('Zm90bw=='));
+    jest.mocked(emitirCodigoDoDocumento).mockRejectedValue(new Error('Sem usuário'));
+    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await abrirDocumento();
+
+    await fireEvent.press(await screen.findByText('Copiar código'));
+
+    await waitFor(() => expect(alerta).toHaveBeenCalledWith('Erro', 'Não foi possível copiar o código.'));
+    expect(setStringAsync).not.toHaveBeenCalled();
+    expect(erro).toHaveBeenCalledTimes(1);
+    erro.mockRestore();
+  });
+
 });

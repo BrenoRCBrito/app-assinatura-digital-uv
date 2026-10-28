@@ -16,10 +16,14 @@ import {
 } from '../../components';
 import type { DocumentoAssinado, DocumentoId } from '../../domain/documento';
 import { formatCoordinates, formatDateTime, formatLocal } from '../../domain/format';
-import { excluirArquivosDocumento, uriFotoDocumento } from '../../services/fileSystem';
+import { excluirArquivosDocumento, lerFotoDocumentoBase64, uriFotoDocumento } from '../../services/fileSystem';
 import { compartilharPdf } from '../../services/sharing';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 import { excluirDocumento } from '../../useCases/excluirDocumento';
+import { carimbarComOSegredoDoApp } from '../../services/carimbo';
+import { copiarTexto } from '../../services/clipboard';
+import { resumirSha256 } from '../../services/hmac';
+import { emitirCodigoDoDocumento } from '../../useCases/emitirCodigoDoDocumento';
 
 type DocumentoScreenProps = Readonly<{
   documentoId: DocumentoId;
@@ -28,10 +32,11 @@ type DocumentoScreenProps = Readonly<{
 }>;
 
 export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: DocumentoScreenProps) {
-  const { documentos } = useRepositories();
+  const { documentos, usuarios } = useRepositories();
   const [documento, setDocumento] = useState<DocumentoAssinado | null>(null);
   const compartilhandoRef = useRef(false);
   const excluindoRef = useRef(false);
+  const copiandoRef = useRef(false);
   const [ampliado, setAmpliado] = useState(false);
 
 
@@ -79,6 +84,26 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
       showError('Erro', 'Não foi possível compartilhar o PDF.');
     } finally {
       compartilhandoRef.current = false;
+    }
+  }
+  async function copiarCodigo(documentoAberto: DocumentoAssinado) {
+    if (copiandoRef.current) {
+      return;
+    }
+    copiandoRef.current = true;
+    try {
+      const codigo = await emitirCodigoDoDocumento(
+        { buscarUsuario: (id) => usuarios.findById(id), resumirSha256, carimbar: carimbarComOSegredoDoApp },
+        documentoAberto,
+        await lerFotoDocumentoBase64(documentoAberto.id),
+      );
+      await copiarTexto(codigo);
+      showSuccess('Código copiado');
+    } catch (error) {
+      console.error('Falha ao copiar o código:', error);
+      showError('Erro', 'Não foi possível copiar o código.');
+    } finally {
+      copiandoRef.current = false;
     }
   }
 
@@ -129,6 +154,15 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
               void compartilhar(documento);
             }}
           />
+          <Button
+            label="Copiar código"
+            icon="share"
+            preset="secondary"
+            onPress={() => {
+              void copiarCodigo(documento);
+            }}
+          />
+
           <Row justify="center">
             <Button
               label="Excluir documento"
