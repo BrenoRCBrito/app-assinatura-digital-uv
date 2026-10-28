@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, type FlexStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useAppTheme, type Theme } from '../../theme';
 
@@ -14,21 +14,21 @@ type LayoutProps = Readonly<{
   flex?: number;
 }>;
 
-const ALIGN_ITEMS: Readonly<Record<Align, FlexStyle['alignItems']>> = {
+const ALIGN_ITEMS: Readonly<Record<Align, ViewStyle['alignItems']>> = {
   start: 'flex-start',
   center: 'center',
   end: 'flex-end',
   stretch: 'stretch',
 };
 
-const JUSTIFY_CONTENT: Readonly<Record<Justify, FlexStyle['justifyContent']>> = {
+const JUSTIFY_CONTENT: Readonly<Record<Justify, ViewStyle['justifyContent']>> = {
   start: 'flex-start',
   center: 'center',
   end: 'flex-end',
   between: 'space-between',
 };
 
-function useLayoutStyle({ gap, align = 'stretch', justify = 'start', flex }: LayoutProps): FlexStyle {
+function useLayoutStyle({ gap, align = 'stretch', justify = 'start', flex }: LayoutProps): ViewStyle {
   const { theme } = useAppTheme();
 
   return {
