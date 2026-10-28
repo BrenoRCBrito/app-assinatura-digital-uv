@@ -11,7 +11,7 @@ import { tokens } from '../theme/tokens';
 import { desenharQrSvg, gerarMatrizQr } from './qrCode';
 
 const FONTE_DO_SELO = '-apple-system, Helvetica, Arial, sans-serif';
-
+const PROPORCAO_DO_CODIGO = 0.7;
 export const LEGENDA_DO_QR = 'Código de autenticidade. Para conferir, abra o AssinaAqui e toque em Validar documento.';
 
 export type DocumentoHtml = Readonly<{ html: Html; tamanhoDaPagina: Size }>;
@@ -29,6 +29,7 @@ export function montarHtmlDocumento(
     documento.tamanhoFoto,
     LARGURA_DA_FOLHA_A4,
   );
+  const tamanhoDoCodigo = tamanhoDaLegenda * PROPORCAO_DO_CODIGO;
   const { desenho } = documento.assinaturaUsada;
   const selo = layoutDoSelo(documento.selo.largura, foto, desenho.quadro);
   const local = formatLocal(documento.local);
@@ -83,11 +84,23 @@ export function montarHtmlDocumento(
     display: flex;
     align-items: center;
   }
-  .legenda {
+    .textos {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: ${tamanhoDaLegenda / 2}px;
+    padding-right: ${tamanhoDaLegenda}px;
+  }
+  .legenda {
     font-family: ${FONTE_DO_SELO};
     font-size: ${tamanhoDaLegenda}px;
     color: ${FIXED_COLORS.ink};
+  }
+  .codigo {
+    font-family: monospace;
+    font-size: ${tamanhoDoCodigo}px;
+    color: ${FIXED_COLORS.ink};
+    word-break: break-all;
   }
   .qr { flex: none; width: ${ladoDoQr}px; height: ${ladoDoQr}px; }
   .qr svg { display: block; width: 100%; height: 100%; }
@@ -112,7 +125,10 @@ export function montarHtmlDocumento(
     </div>
   </div>
   <div class="rodape">
-    <div class="legenda">${LEGENDA_DO_QR}</div>
+    <div class="textos">
+      <div class="legenda">${LEGENDA_DO_QR}</div>
+      <div class="codigo">${escaparHtml(codigo)}</div>
+    </div>
     <div class="qr">${qr}</div>
   </div>
 </div>

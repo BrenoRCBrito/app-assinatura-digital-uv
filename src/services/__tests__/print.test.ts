@@ -1,6 +1,6 @@
 import { printToFileAsync } from 'expo-print';
 
-import { emitirCodigo, type CodigoDeAutenticidade } from '../../domain/codigoDeAutenticidade';
+import { emitirCodigo, validarCodigo, type CodigoDeAutenticidade } from '../../domain/codigoDeAutenticidade';
 import { createBase64, createCity, createHtml } from '../../domain/documento';
 import { formatDateTime } from '../../domain/format';
 import { createPixels, createSize } from '../../domain/geometry';
@@ -64,6 +64,22 @@ describe('montarHtmlDocumento', () => {
     expect(html).toContain('<div>A &amp; B &lt;C&gt;</div>');
     expect(html).not.toContain('<C>');
   });
+  test('escreve o código em texto no rodapé, ao lado do QR, para poder ser copiado do PDF', () => {
+    const { html } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
+
+    expect(html).toContain(`<div class="codigo">${CODIGO}</div>`);
+  });
+
+  test('o código escrito no PDF, depois de copiado, volta autêntico na validação', async () => {
+    const { html } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
+    const escrito = /<div class="codigo">([^<]*)<\/div>/.exec(html)?.[1] ?? '';
+
+    expect(escrito).toBe(CODIGO);
+    await expect(validarCodigo(escrito, async () => 'carimbo-de-teste')).resolves.toMatchObject({
+      tipo: 'autentico',
+    });
+  });
+
 });
 
 describe('gerarPdf', () => {
