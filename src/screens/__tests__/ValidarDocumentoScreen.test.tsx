@@ -173,4 +173,100 @@ describe('ValidarDocumentoScreen', () => {
 
     expect(onFechar).toHaveBeenCalledTimes(1);
   });
+  test('Digitar código confere o texto colado e mostra o veredicto', async () => {
+    await abrirTela();
+    await screen.findByText(DICA);
+
+    await fireEvent.press(screen.getByText('Digitar código'));
+    await fireEvent.changeText(await screen.findByLabelText('Código de autenticidade'), await codigoValido());
+    await fireEvent.press(screen.getByText('Conferir'));
+
+    expect(await screen.findByText('Documento autêntico')).toBeTruthy();
+    expect(screen.getByText('breno@exemplo.com')).toBeTruthy();
+  });
+
+  test('ignora espaços e quebras de linha no código digitado', async () => {
+    await abrirTela();
+    await fireEvent.press(await screen.findByText('Digitar código'));
+    const codigo = await codigoValido();
+
+    await fireEvent.changeText(
+      screen.getByLabelText('Código de autenticidade'),
+      `  ${codigo.slice(0, 40)}\n${codigo.slice(40)}  `,
+    );
+    await fireEvent.press(screen.getByText('Conferir'));
+
+    expect(await screen.findByText('Documento autêntico')).toBeTruthy();
+  });
+
+  test('código digitado alterado mostra não autenticado', async () => {
+    await abrirTela();
+    await fireEvent.press(await screen.findByText('Digitar código'));
+
+    await fireEvent.changeText(
+      screen.getByLabelText('Código de autenticidade'),
+      (await codigoValido()).replace('Contrato', 'Contrata'),
+    );
+    await fireEvent.press(screen.getByText('Conferir'));
+
+    expect(await screen.findByText('Código não autenticado')).toBeTruthy();
+  });
+
+  test('Conferir fica desabilitado com o campo vazio', async () => {
+    await abrirTela();
+    await fireEvent.press(await screen.findByText('Digitar código'));
+
+    await fireEvent.press(screen.getByText('Conferir'));
+
+    expect(carimbarComOSegredoDoApp).not.toHaveBeenCalled();
+  });
+
+  test('Conferir outro volta para o campo de texto vazio', async () => {
+    await abrirTela();
+    await fireEvent.press(await screen.findByText('Digitar código'));
+    await fireEvent.changeText(screen.getByLabelText('Código de autenticidade'), await codigoValido());
+    await fireEvent.press(screen.getByText('Conferir'));
+    await screen.findByText('Documento autêntico');
+
+    await fireEvent.press(screen.getByText('Conferir outro'));
+
+    expect((await screen.findByLabelText('Código de autenticidade')).props.value).toBe('');
+  });
+
+  test('sem permissão da câmera ainda dá para digitar o código', async () => {
+    await abrirTela({ granted: false, canAskAgain: true });
+
+    await fireEvent.press(await screen.findByText('Digitar código'));
+
+    expect(await screen.findByLabelText('Código de autenticidade')).toBeTruthy();
+  });
+
+  test('código autêntico permite ver e esconder a localização no mapa', async () => {
+    await abrirTela();
+    await screen.findByText(DICA);
+    await lerQr(await codigoValido());
+    await screen.findByText('Documento autêntico');
+
+    expect(screen.queryByLabelText('Local da assinatura')).toBeNull();
+
+    await fireEvent.press(screen.getByText('Ver localização'));
+    expect(screen.getByLabelText('Local da assinatura').props.coordinate).toEqual({
+      latitude: -22.40418,
+      longitude: -43.66283,
+    });
+
+    await fireEvent.press(screen.getByText('Esconder localização'));
+    expect(screen.queryByLabelText('Local da assinatura')).toBeNull();
+  });
+
+  test('código não autenticado não oferece a localização', async () => {
+    await abrirTela();
+    await screen.findByText(DICA);
+
+    await lerQr((await codigoValido()).replace('Contrato', 'Contrata'));
+    await screen.findByText('Código não autenticado');
+
+    expect(screen.queryByText('Ver localização')).toBeNull();
+  });
+
 });
