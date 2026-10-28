@@ -41,7 +41,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Permitir que o $(PRODUCT_NAME) use a câmera para fotografar documentos.",
+          "cameraPermission": "Permitir que o $(PRODUCT_NAME) use a câmera dentro do aplicativo.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }

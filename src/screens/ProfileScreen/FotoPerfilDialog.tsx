@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
-import { Avatar, Button, FieldEditModal, Stack, showError, showSuccess } from '../../components';
+import { Avatar, Button, FieldEditModal, Stack, showError, showErrorWithSettings, showSuccess } from '../../components';
 import type { Usuario } from '../../domain/usuario';
-import { escolherFotoDePerfil } from '../../services/fotoPerfil';
+import { escolherFotoDaGaleria, tirarFotoDePerfil, type ResultadoFotoPerfil } from '../../services/fotoPerfil';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 
 type FotoPerfilDialogProps = Readonly<{
@@ -12,18 +12,31 @@ type FotoPerfilDialogProps = Readonly<{
   onSaved: (usuario: Usuario) => void;
 }>;
 
+const SEM_PERMISSAO = {
+  camera: 'Permita o acesso à câmera para tirar a foto.',
+  galeria: 'Permita o acesso às fotos para escolher a imagem.',
+} as const;
+
 export function FotoPerfilDialog({ visible, usuario, onClose, onSaved }: FotoPerfilDialogProps) {
   const { usuarios } = useRepositories();
   const [processando, setProcessando] = useState(false);
 
-  async function escolher() {
+  async function atualizar(origem: keyof typeof SEM_PERMISSAO, obter: () => Promise<ResultadoFotoPerfil>) {
     setProcessando(true);
     try {
-      const foto = await escolherFotoDePerfil();
-      if (foto === null) {
+      const resultado = await obter();
+      if (resultado.tipo === 'cancelada') {
         return;
       }
-      const atualizado = await usuarios.updateFoto(usuario.id, foto);
+      if (resultado.tipo === 'semPermissao') {
+        if (resultado.podePedirDeNovo) {
+          showError('Erro', SEM_PERMISSAO[origem]);
+        } else {
+          showErrorWithSettings('Erro', SEM_PERMISSAO[origem]);
+        }
+        return;
+      }
+      const atualizado = await usuarios.updateFoto(usuario.id, resultado.foto);
       showSuccess('Foto de perfil atualizada.');
       onSaved(atualizado);
       onClose();
@@ -54,9 +67,24 @@ export function FotoPerfilDialog({ visible, usuario, onClose, onSaved }: FotoPer
     <FieldEditModal visible={visible} title="Foto de perfil" onClose={onClose}>
       <Stack gap="label" align="center">
         <Avatar fotoBase64={usuario.foto} />
-        <Button label={processando ? 'Escolhendo…' : 'Escolher da galeria'} onPress={escolher} disabled={processando} />
+        <Button
+          label="Tirar foto agora"
+          icon="camera"
+          onPress={() => {
+            void atualizar('camera', tirarFotoDePerfil);
+          }}
+          disabled={processando}
+        />
+        <Button
+          label="Escolher da galeria"
+          onPress={() => {
+            void atualizar('galeria', escolherFotoDaGaleria);
+          }}
+          preset="secondary"
+          disabled={processando}
+        />
         {usuario.foto === null ? null : (
-          <Button label="Remover foto" onPress={remover} preset="secondary" disabled={processando} />
+          <Button label="Remover foto" onPress={remover} preset="danger" size="sm" disabled={processando} />
         )}
       </Stack>
     </FieldEditModal>
