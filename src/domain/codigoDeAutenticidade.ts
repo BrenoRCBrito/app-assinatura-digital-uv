@@ -1,6 +1,6 @@
 import { ValidationError, type Brand } from './brand';
 import { createIsoDateTime } from './dateTime';
-import type { DocumentoAssinado } from './documento';
+import { createLatitude, createLongitude, type Coordinates, type DocumentoAssinado } from './documento';
 import { formatDateTime } from './format';
 import type { Cpf, Telefone, Usuario } from './usuario';
 
@@ -155,3 +155,19 @@ export function camposParaExibir(campos: readonly CampoDoCodigo[]): readonly Cam
     valor: valorExibido(campo),
   }));
 }
+
+const COORDENADAS = /^(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/;
+
+export function coordenadasDoCodigo(campos: readonly CampoDoCodigo[]): Coordinates | null {
+  const local = campos.find(({ chave }) => chave === 'local');
+  const partes = local === undefined ? null : COORDENADAS.exec(local.valor);
+  if (partes === null) {
+    return null;
+  }
+  try {
+    return { latitude: createLatitude(Number(partes[1])), longitude: createLongitude(Number(partes[2])) };
+  } catch {
+    return null;
+  }
+}
+

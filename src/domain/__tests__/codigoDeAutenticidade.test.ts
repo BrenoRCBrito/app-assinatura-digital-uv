@@ -5,6 +5,7 @@ import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRe
 import {
   camposDoDocumento,
   camposParaExibir,
+  coordenadasDoCodigo,
   emitirCodigo,
   serializarCampos,
   validarCodigo,
@@ -185,4 +186,22 @@ describe('código de autenticidade', () => {
       { rotulo: 'nome', valor: 'Breno' },
     ]);
   });
+  
 });
+describe('coordenadasDoCodigo', () => {
+  test('lê latitude e longitude do campo local', () => {
+    expect(coordenadasDoCodigo([{ chave: 'local', valor: '-22.40418,-43.66283' }])).toEqual({
+      latitude: -22.40418,
+      longitude: -43.66283,
+    });
+  });
+
+  test('sem o campo local, não há coordenadas', () => {
+    expect(coordenadasDoCodigo([{ chave: 'titulo', valor: 'Contrato' }])).toBeNull();
+  });
+
+  test.each(['abc', '-22.4', '-22.4,', '91,10', '10,181', '1,2,3'])('local inválido "%s" não vira coordenadas', (valor) => {
+    expect(coordenadasDoCodigo([{ chave: 'local', valor }])).toBeNull();
+  });
+});
+
