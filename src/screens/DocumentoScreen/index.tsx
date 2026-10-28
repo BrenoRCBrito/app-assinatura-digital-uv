@@ -1,5 +1,4 @@
 import React, { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { Pressable } from 'react-native';
 import {
   Button,
   confirmDestructive,
@@ -148,19 +147,14 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
           <Text preset="supporting">PDF A4, 1 página</Text>
         </Stack>
         <Row gap="documentSummary" align="start">
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Ampliar documento"
-            onPress={() => setAmpliado(true)}
-          >
-            <PreviaDocumento
-              foto={uriFotoDocumento(documento.id)}
-              tamanhoFoto={documento.tamanhoFoto}
-              desenho={documento.assinaturaUsada.desenho}
-              selo={documento.selo}
-              linhas={[assinadoEm, formatLocal(documento.local)]}
-            />
-          </Pressable>
+          <PreviaDocumento
+            foto={uriFotoDocumento(documento.id)}
+            tamanhoFoto={documento.tamanhoFoto}
+            desenho={documento.assinaturaUsada.desenho}
+            selo={documento.selo}
+            linhas={[assinadoEm, formatLocal(documento.local)]}
+            onAmpliar={() => setAmpliado(true)}
+          />
           <Stack gap="documentData" flex={1}>
             <DadoDoDocumento rotulo="Assinado em" valor={assinadoEm} />
             {documento.local.cidade === null ? null : (
