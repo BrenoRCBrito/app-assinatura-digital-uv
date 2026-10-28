@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { Avatar, Button, KeyboardDismissArea, Link, Logo, Screen, Stack, Text, TextField } from '../../components';
+import { Avatar,CartaoDeAcessoRapido, Button, KeyboardDismissArea, Link, Logo, Screen, Stack, Text, TextField } from '../../components';
 import { mascararCpfParcial } from '../../domain/usuario';
 import { useAuthentication } from '../../hooks/useAuthentication';
 
@@ -37,15 +37,20 @@ export function LoginScreen({ onCriarConta, onValidarDocumento }: LoginScreenPro
 
     return (
       <KeyboardDismissArea>
-        <Screen preset="authScroll">
-          <Stack gap="hero" align="center">
-            <Avatar fotoBase64={usuarioBiometria.foto} />
-            <Stack gap="text" align="center">
-              <Text preset="screenTitle">{nomeExibido}</Text>
-              {usuarioBiometria.cpf === null ? null : (
-                <Text preset="supporting">{mascararCpfParcial(usuarioBiometria.cpf)}</Text>
-              )}
+        <Screen
+          preset="authScroll"
+          footer={
+            <Stack gap="label" align="center">
+              <Link label="Validar um documento" onPress={onValidarDocumento} preset="linkQuiet" />
             </Stack>
+          }
+        >
+          <Stack gap="hero" align="center">
+            <CartaoDeAcessoRapido
+              fotoBase64={usuarioBiometria.foto}
+              titulo={nomeExibido}
+              subtitulo={usuarioBiometria.cpf === null ? null : mascararCpfParcial(usuarioBiometria.cpf)}
+            />
             <Stack gap="label" align="center">
               <Button label={authenticating ? 'Verificando…' : 'Acessar'} onPress={unlock} disabled={authenticating} />
               <Link label="Entrar com outra conta" onPress={() => setUsarSenha(true)} preset="linkQuiet" />
@@ -55,6 +60,7 @@ export function LoginScreen({ onCriarConta, onValidarDocumento }: LoginScreenPro
       </KeyboardDismissArea>
     );
   }
+
 
   return (
     <KeyboardDismissArea>

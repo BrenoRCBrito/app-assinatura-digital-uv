@@ -101,4 +101,16 @@ describe('LoginScreen', () => {
     expect(await screen.findByText('Ana Souza')).toBeTruthy();
     });
 
+    test('no cartão de acesso rápido, "Validar um documento" abre a validação sem entrar', async () => {
+    mockAuth({ mostrarEntrarComBiometria: true, usuarioBiometria: USUARIO });
+    await render(<LoginScreen onCriarConta={onCriarConta} onValidarDocumento={onValidarDocumento} />, {
+        wrapper: SettingsProvider,
+    });
+
+    fireEvent.press(await screen.findByText('Validar um documento'));
+
+    expect(onValidarDocumento).toHaveBeenCalledTimes(1);
+    expect(unlock).not.toHaveBeenCalled();
+    });
+
 });
