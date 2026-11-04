@@ -6,3 +6,12 @@ export class ValidationError extends Error {
     this.name = 'ValidationError';
   }
 }
+
+const ID_SEGURO = /^[A-Za-z0-9_-]{1,64}$/;
+
+export function validarId(texto: string, mensagem: string): string {
+  if (!ID_SEGURO.test(texto)) {
+    throw new ValidationError(`${mensagem}: ${texto}`);
+  }
+  return texto;
+}

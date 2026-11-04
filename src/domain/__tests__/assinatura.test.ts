@@ -23,15 +23,16 @@ function assinaturaValida(id: string, criadaEm: string): Assinatura {
 
 
 describe('criarAssinaturaId', () => {
-  test('gera um id numérico a partir do relógio', () => {
-    expect(criarAssinaturaId()).toMatch(/^\d+$/);
+  test('aceita o id numérico antigo e um UUID', () => {
+    expect(criarAssinaturaId('1757680000000')).toBe('1757680000000');
+    expect(criarAssinaturaId('3f2b8c1e-9a4d-4e7b-b1c2-5d6e7f8a9b0c')).toBe('3f2b8c1e-9a4d-4e7b-b1c2-5d6e7f8a9b0c');
   });
 
-  test('aceita um id numérico salvo e recusa outro formato', () => {
-    expect(criarAssinaturaId('1757680000000')).toBe('1757680000000');
-    expect(() => criarAssinaturaId('abc')).toThrow('Id de assinatura inválido: abc');
+  test.each(['', '../abc', 'a/b', 'a;b', 'a#b', 'a b', 'a'.repeat(65)])('recusa o id inseguro "%s"', (texto) => {
+    expect(() => criarAssinaturaId(texto)).toThrow(`Id de assinatura inválido: ${texto}`);
   });
 });
+
 
 describe('criarNomeAssinatura', () => {
   test('remove espaços das pontas', () => {

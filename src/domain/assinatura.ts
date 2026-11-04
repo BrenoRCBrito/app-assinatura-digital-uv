@@ -1,4 +1,4 @@
-import { ValidationError, type Brand } from './brand';
+import { ValidationError,validarId  , type Brand } from './brand';
 import { createIsoDateTime, type IsoDateTime } from './dateTime';
 import { paraDesenho, type Desenho } from './desenho';
 import { lerObjeto, lerTexto } from './leitura';
@@ -15,16 +15,14 @@ export type Assinatura = Readonly<{
   criadaEm: IsoDateTime;
 }>;
 
-const ASSINATURA_ID = /^\d+$/;
+const ASSINATURA_ID = validarId;
 const TAMANHO_MAXIMO_DO_NOME = 40;
 const ASSINATURA_INVALIDA = 'Assinatura salva inválida.';
 
-export function criarAssinaturaId(texto: string = Date.now().toString()): AssinaturaId {
-  if (!ASSINATURA_ID.test(texto)) {
-    throw new ValidationError(`Id de assinatura inválido: ${texto}`);
-  }
-  return texto as AssinaturaId;
+export function criarAssinaturaId(texto: string): AssinaturaId {
+  return validarId(texto, 'Id de assinatura inválido') as AssinaturaId;
 }
+
 
 export function criarNomeAssinatura(texto: string): NomeAssinatura {
   const nome = texto.trim();

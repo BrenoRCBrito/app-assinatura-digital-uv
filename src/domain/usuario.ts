@@ -1,4 +1,4 @@
-import { ValidationError, type Brand } from './brand';
+import { ValidationError, validarId, type Brand } from './brand';
 import { createIsoDateTime, type IsoDateTime } from './dateTime';
 import { lerObjeto, lerTexto, lerTextoOuNulo } from './leitura';
 
@@ -33,17 +33,15 @@ export const REQUISITOS_SENHA: readonly RequisitoSenha[] = [
   { chave: 'especial', label: 'Pelo menos 1 caractere especial', atendido: (senha) => /[^A-Za-z0-9]/.test(senha) },
 ];
 
-const USUARIO_ID = /^\d+$/;
+const USUARIO_ID = validarId;
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USUARIO_INVALIDO = 'Usuário salvo inválido.';
 const CPF_DIGITOS = /^\d{11}$/;
 
-export function criarUsuarioId(texto: string = Date.now().toString()): UsuarioId {
-  if (!USUARIO_ID.test(texto)) {
-    throw new ValidationError(`Id de usuário inválido: ${texto}`);
-  }
-  return texto as UsuarioId;
+export function criarUsuarioId(texto: string): UsuarioId {
+  return validarId(texto, 'Id de usuário inválido') as UsuarioId;
 }
+
 
 export function criarEmail(texto: string): Email {
   const email = texto.trim().toLowerCase();

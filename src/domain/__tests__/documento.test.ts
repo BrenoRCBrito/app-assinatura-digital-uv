@@ -36,17 +36,17 @@ function documentoValido(id: string, assinadoEm: string, cidade: string | null =
   };
 }
 
-
 describe('criarDocumentoId', () => {
-  test('gera um id numérico a partir do relógio', () => {
-    expect(criarDocumentoId()).toMatch(/^\d+$/);
+  test('aceita o id numérico antigo e um UUID', () => {
+    expect(criarDocumentoId('1757680000000')).toBe('1757680000000');
+    expect(criarDocumentoId('3f2b8c1e-9a4d-4e7b-b1c2-5d6e7f8a9b0c')).toBe('3f2b8c1e-9a4d-4e7b-b1c2-5d6e7f8a9b0c');
   });
 
-  test('aceita um id numérico salvo e recusa outro formato', () => {
-    expect(criarDocumentoId('1757680000000')).toBe('1757680000000');
-    expect(() => criarDocumentoId('abc')).toThrow('Id de documento inválido: abc');
+  test.each(['', '../abc', 'a/b', 'a;b', 'a#b', 'a b', 'a'.repeat(65)])('recusa o id inseguro "%s"', (texto) => {
+    expect(() => criarDocumentoId(texto)).toThrow(`Id de documento inválido: ${texto}`);
   });
 });
+
 
 describe('criarTituloDocumento', () => {
   test('remove espaços das pontas', () => {

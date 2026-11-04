@@ -1,5 +1,5 @@
 import { criarNomeAssinatura, type NomeAssinatura } from './assinatura';
-import { ValidationError, type Brand } from './brand';
+import { ValidationError, validarId, type Brand } from './brand';
 import { createIsoDateTime, type IsoDateTime } from './dateTime';
 import { paraDesenho, type Desenho } from './desenho';
 import { createFraction, paraSize, type Size } from './geometry';
@@ -33,17 +33,15 @@ export type DocumentoAssinado = Readonly<{
   assinadoEm: IsoDateTime;
 }>;
 
-const DOCUMENTO_ID = /^\d+$/;
+const DOCUMENTO_ID = validarId;
 const TAMANHO_MAXIMO_DO_TITULO = 60;
 const DOCTYPE = '<!DOCTYPE html>';
 const DOCUMENTO_INVALIDO = 'Documento salvo inválido.';
 
-export function criarDocumentoId(texto: string = Date.now().toString()): DocumentoId {
-  if (!DOCUMENTO_ID.test(texto)) {
-    throw new ValidationError(`Id de documento inválido: ${texto}`);
-  }
-  return texto as DocumentoId;
+export function criarDocumentoId(texto: string): DocumentoId {
+  return validarId(texto, 'Id de documento inválido') as DocumentoId;
 }
+
 
 export function criarTituloDocumento(texto: string): TituloDocumento {
   const titulo = texto.trim();
