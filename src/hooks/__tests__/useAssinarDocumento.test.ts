@@ -69,9 +69,10 @@ describe('useAssinarDocumento', () => {
       documentos: result.current.repositorios.documentos,
       usuarioId: USUARIO_ID,
     });
-    expect(dependencias.criarDocumentoId()).toMatch(/^\d+$/);
-    const agora = dependencias.agora();
-    expect(new Date(agora).toISOString()).toBe(agora);
+        expect(dependencias.criarDocumentoId()).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+    expect(dependencias.criarDocumentoId()).not.toBe(dependencias.criarDocumentoId());
   });
 
   test('sem usuário logado, não chama o caso de uso', async () => {

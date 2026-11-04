@@ -22,6 +22,8 @@ import {
 } from '../useCases/assinarDocumento';
 import { emitirCodigoDoDocumento } from '../useCases/emitirCodigoDoDocumento';
 import { useAuthentication } from './useAuthentication';
+import { gerarId } from '../services/id';
+
 
 export type AssinarDocumento = Readonly<{
   assinando: boolean;
@@ -56,7 +58,7 @@ export function useAssinarDocumento(): AssinarDocumento {
             gerarPdf,
             documentos,
             agora: () => createIsoDateTime(new Date().toISOString()),
-            criarDocumentoId: () => criarDocumentoId(),
+            criarDocumentoId: () => criarDocumentoId(gerarId()),
             usuarioId,
           },
     [documentos, usuarios, usuarioId],

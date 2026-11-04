@@ -12,6 +12,7 @@ import {
   type UsuarioId,
 } from '../../domain/usuario';
 import type { UsuarioRepository } from '../repositories';
+import { gerarId } from '../../services/id';
 
 type LinhaUsuario = Readonly<{
   id: string;
@@ -63,7 +64,6 @@ export function createSqliteUsuarioRepository(): UsuarioRepository {
     await adicionarColunaSeFaltar(db, 'foto');
     await adicionarColunaSeFaltar(db, 'nome');
   })();
-  let sequencia = 0;
 
   async function buscarPorId(id: UsuarioId): Promise<Usuario | null> {
     await pronto;
@@ -81,7 +81,7 @@ export function createSqliteUsuarioRepository(): UsuarioRepository {
     async create({ email, senhaHash, nome, cpf, telefone }) {
   await pronto;
   const usuario: Usuario = {
-    id: criarUsuarioId(`${Date.now()}${sequencia}`),
+    id: criarUsuarioId(gerarId()),
     email,
     senhaHash,
     nome: nome ?? null,
@@ -90,7 +90,7 @@ export function createSqliteUsuarioRepository(): UsuarioRepository {
     foto: null,
     criadoEm: createIsoDateTime(new Date().toISOString()),
   };
-  sequencia += 1;
+  
   await db.runAsync(
     'INSERT INTO usuarios (id, email, senha_hash, nome, cpf, telefone, foto, criado_em) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     usuario.id,

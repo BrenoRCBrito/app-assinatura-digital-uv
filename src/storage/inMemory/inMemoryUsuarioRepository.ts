@@ -1,6 +1,7 @@
 import { createIsoDateTime } from '../../domain/dateTime';
 import { criarUsuarioId, type Usuario, type UsuarioId } from '../../domain/usuario';
 import type { UsuarioRepository } from '../repositories';
+import { gerarId } from '../../services/id';
 
 export function createInMemoryUsuarioRepository(): UsuarioRepository {
   let usuarios: readonly Usuario[] = [];
@@ -24,7 +25,7 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
     },
     async create({ email, senhaHash, nome, cpf, telefone }) {
       const usuario: Usuario = {
-      id: criarUsuarioId(`${Date.now()}${usuarios.length}`),
+      id: criarUsuarioId(gerarId()),
       email,
       senhaHash,
       nome: nome ?? null,

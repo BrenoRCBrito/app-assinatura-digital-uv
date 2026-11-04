@@ -23,6 +23,7 @@ import { createIsoDateTime } from '../../domain/dateTime';
 import { recortarDesenho, type Traco } from '../../domain/desenho';
 import { lockToLandscape, lockToPortrait } from '../../services/screenOrientation';
 import { useRepositories } from '../../storage/RepositoriesProvider';
+import { gerarId } from '../../services/id';
 
 type NovaAssinaturaScreenProps = Readonly<{
   onSalva: () => void;
@@ -53,7 +54,7 @@ function montarAssinatura(): Assinatura {
     throw new ValidationError('Você precisa estar logado para salvar uma assinatura.');
   }
   return {
-    id: criarAssinaturaId(),
+    id: criarAssinaturaId(gerarId()),
     usuarioId,
     nome: criarNomeAssinatura(nome),
     desenho: recortarDesenho(tracos),
