@@ -1,6 +1,8 @@
 type Linha = Record<string, unknown>;
+type Condicao = Readonly<{ coluna: string; nulo: boolean }>;
 
 const bancos = new Map<string, Map<string, Linha[]>>();
+let falharProximaEscrita = false;
 
 function tabelasDoBanco(nomeBanco: string): Map<string, Linha[]> {
   const existente = bancos.get(nomeBanco);
@@ -22,6 +24,43 @@ function linhasDaTabela(tabelas: Map<string, Linha[]>, nomeTabela: string): Linh
   return linhas;
 }
 
+function naoSabeRodar(sql: string): Error {
+  return new Error(`Mock de expo-sqlite não sabe rodar: ${sql}`);
+}
+
+function lerCondicoes(sql: string, texto: string | undefined): readonly Condicao[] {
+  if (texto === undefined) {
+    return [];
+  }
+  return texto.split(/\s+AND\s+/i).map((parte) => {
+    const encontrado = /^(\w+)\s*(=\s*\?|IS\s+NULL)$/i.exec(parte.trim());
+    if (encontrado === null) {
+      throw naoSabeRodar(sql);
+    }
+    return { coluna: encontrado[1], nulo: /IS\s+NULL/i.test(encontrado[2]) };
+  });
+}
+
+function filtrar(linhas: readonly Linha[], condicoes: readonly Condicao[], parametros: readonly unknown[]): Linha[] {
+  let proximo = 0;
+  const esperados = condicoes.map((condicao) => (condicao.nulo ? null : parametros[proximo++]));
+  return linhas.filter((linha) =>
+    condicoes.every((condicao, indice) => (linha[condicao.coluna] ?? null) === esperados[indice]),
+  );
+}
+
+function condicoesDoWhere(sql: string): readonly Condicao[] {
+  return lerCondicoes(sql, /\bWHERE\s+(.+?)(?:\s+ORDER\s+BY\b.*)?$/is.exec(sql)?.[1]);
+}
+
+function consultar(tabelas: Map<string, Linha[]>, sql: string, parametros: readonly unknown[]): Linha[] {
+  const tabela = /SELECT \* FROM\s+(\w+)/i.exec(sql);
+  if (tabela === null) {
+    throw naoSabeRodar(sql);
+  }
+  return filtrar(linhasDaTabela(tabelas, tabela[1]), condicoesDoWhere(sql), parametros);
+}
+
 export function openDatabaseSync(nomeBanco: string) {
   const tabelas = tabelasDoBanco(nomeBanco);
 
@@ -33,25 +72,44 @@ export function openDatabaseSync(nomeBanco: string) {
       }
     }),
     runAsync: jest.fn(async (sql: string, ...params: unknown[]) => {
+      if (falharProximaEscrita) {
+        falharProximaEscrita = false;
+        throw new Error('Falha simulada ao gravar no banco.');
+      }
       const apagar = /DELETE FROM\s+(\w+)/i.exec(sql);
       if (apagar !== null) {
         const linhas = linhasDaTabela(tabelas, apagar[1]);
-        const apagadas = linhas.length;
-        linhas.length = 0;
-        return { lastInsertRowId: 0, changes: apagadas };
+        const alvos = filtrar(linhas, condicoesDoWhere(sql), params);
+        tabelas.set(
+          apagar[1],
+          linhas.filter((linha) => !alvos.includes(linha)),
+        );
+        return { lastInsertRowId: 0, changes: alvos.length };
       }
-      const atualizar = /UPDATE\s+(\w+)\s+SET\s+(\w+)\s*=\s*\?\s+WHERE\s+(\w+)\s*=\s*\?/i.exec(sql);
+      const atualizar = /UPDATE\s+(\w+)\s+SET\s+(.+?)\s+WHERE\s+(.+)$/is.exec(sql);
       if (atualizar !== null) {
-        const [, nomeTabela, coluna, colunaDoFiltro] = atualizar;
-        const alvos = linhasDaTabela(tabelas, nomeTabela).filter((linha) => linha[colunaDoFiltro] === params[1]);
+        const colunas = atualizar[2].split(',').map((atribuicao) => {
+          const encontrada = /^\s*(\w+)\s*=\s*\?\s*$/.exec(atribuicao);
+          if (encontrada === null) {
+            throw naoSabeRodar(sql);
+          }
+          return encontrada[1];
+        });
+        const alvos = filtrar(
+          linhasDaTabela(tabelas, atualizar[1]),
+          lerCondicoes(sql, atualizar[3]),
+          params.slice(colunas.length),
+        );
         alvos.forEach((linha) => {
-          linha[coluna] = params[0];
+          colunas.forEach((coluna, indice) => {
+            linha[coluna] = params[indice];
+          });
         });
         return { lastInsertRowId: 0, changes: alvos.length };
       }
       const match = /INSERT INTO\s+(\w+)\s*\(([^)]+)\)/i.exec(sql);
       if (match === null) {
-        throw new Error(`Mock de expo-sqlite não sabe rodar: ${sql}`);
+        throw naoSabeRodar(sql);
       }
       const [, nomeTabela, colunasTexto] = match;
       const colunas = colunasTexto.split(',').map((coluna) => coluna.trim());
@@ -63,25 +121,18 @@ export function openDatabaseSync(nomeBanco: string) {
       linhas.push(linha);
       return { lastInsertRowId: linhas.length, changes: 1 };
     }),
-    getFirstAsync: jest.fn(async (sql: string, ...params: unknown[]) => {
-      const match = /SELECT \* FROM\s+(\w+)\s+WHERE\s+(\w+)\s*=\s*\?/i.exec(sql);
-      if (match === null) {
-        throw new Error(`Mock de expo-sqlite não sabe rodar: ${sql}`);
-      }
-      const [, nomeTabela, coluna] = match;
-      const linhas = linhasDaTabela(tabelas, nomeTabela);
-      return linhas.find((linha) => linha[coluna] === params[0]) ?? null;
-    }),
-    getAllAsync: jest.fn(async (sql: string) => {
-      const match = /SELECT \* FROM\s+(\w+)/i.exec(sql);
-      if (match === null) {
-        throw new Error(`Mock de expo-sqlite não sabe rodar: ${sql}`);
-      }
-      return [...linhasDaTabela(tabelas, match[1])];
-    }),
+    getFirstAsync: jest.fn(async (sql: string, ...params: unknown[]) => consultar(tabelas, sql, params)[0] ?? null),
+    getAllAsync: jest.fn(async (sql: string, ...params: unknown[]) =>
+      consultar(tabelas, sql, params).map((linha) => ({ ...linha })),
+    ),
   };
 }
 
 export function __resetTodosOsBancosDeTeste(): void {
   bancos.clear();
+  falharProximaEscrita = false;
+}
+
+export function __falharProximaEscrita(): void {
+  falharProximaEscrita = true;
 }

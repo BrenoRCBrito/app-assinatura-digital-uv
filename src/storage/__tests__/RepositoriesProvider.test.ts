@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { renderHook } from '@testing-library/react-native';
 
-import { ASSINATURAS_STORAGE_KEY } from '../asyncStorage/asyncStorageAssinaturaRepository';
+import { createRepositories } from '../createRepositories';
 import { RepositoriesProvider, useRepositories } from '../RepositoriesProvider';
-import { criarAssinaturaDeTeste } from '../testing/assinaturaRepositoryContract';
+import { criarAssinaturaDeTeste, USUARIO_DE_TESTE } from '../testing/assinaturaRepositoryContract';
+import { reiniciarBancoDeTeste } from '../testing/bancoDeTeste';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -12,6 +13,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 describe('RepositoriesProvider', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
+    reiniciarBancoDeTeste();
   });
 
   test('entrega a mesma instância em todos os renders', async () => {
@@ -23,11 +25,12 @@ describe('RepositoriesProvider', () => {
     expect(result.current).toBe(primeira);
   });
 
-  test('entrega os repositórios do AsyncStorage', async () => {
+  test('entrega os repositórios do SQLite', async () => {
     const { result } = await renderHook(() => useRepositories(), { wrapper: RepositoriesProvider });
+    const assinatura = criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T10:00:00.000Z');
 
-    await result.current.assinaturas.save(criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T10:00:00.000Z'));
+    await result.current.assinaturas.save(assinatura);
 
-    await expect(AsyncStorage.getItem(ASSINATURAS_STORAGE_KEY)).resolves.not.toBeNull();
+    await expect(createRepositories('sqlite').assinaturas.list(USUARIO_DE_TESTE)).resolves.toEqual([assinatura]);
   });
 });

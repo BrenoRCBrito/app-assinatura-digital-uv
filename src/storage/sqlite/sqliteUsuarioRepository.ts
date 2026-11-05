@@ -1,4 +1,4 @@
-import { openDatabaseSync, type SQLiteDatabase } from 'expo-sqlite';
+import type { SQLiteDatabase } from 'expo-sqlite';
 import { createIsoDateTime } from '../../domain/dateTime';
 import {
   criarUsuarioId,
@@ -11,8 +11,9 @@ import {
   type Usuario,
   type UsuarioId,
 } from '../../domain/usuario';
-import type { UsuarioRepository } from '../repositories';
 import { gerarId } from '../../services/id';
+import { abrirBanco, type Banco } from './banco';
+import type { UsuarioRepository } from '../repositories';
 
 type LinhaUsuario = Readonly<{
   id: string;
@@ -46,9 +47,10 @@ async function adicionarColunaSeFaltar(db: SQLiteDatabase, coluna: string): Prom
   }
 }
 
-export function createSqliteUsuarioRepository(): UsuarioRepository {
-  const db = openDatabaseSync('assinaaqui.db');
-  const pronto = (async () => {
+export function createSqliteUsuarioRepository(banco: Banco = abrirBanco()): UsuarioRepository {
+  const { db } = banco;
+    const pronto = (async () => {
+    await banco.pronto;
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS usuarios (
         id TEXT PRIMARY KEY NOT NULL,
@@ -63,7 +65,8 @@ export function createSqliteUsuarioRepository(): UsuarioRepository {
     await adicionarColunaSeFaltar(db, 'telefone');
     await adicionarColunaSeFaltar(db, 'foto');
     await adicionarColunaSeFaltar(db, 'nome');
-  })();
+})();
+
 
   async function buscarPorId(id: UsuarioId): Promise<Usuario | null> {
     await pronto;

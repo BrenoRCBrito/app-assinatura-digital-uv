@@ -1,23 +1,26 @@
-import { createAsyncStorageAssinaturaRepository } from './asyncStorage/asyncStorageAssinaturaRepository';
-import { createAsyncStorageDocumentoAssinadoRepository } from './asyncStorage/asyncStorageDocumentoAssinadoRepository';
 import { createInMemoryAssinaturaRepository } from './inMemory/inMemoryAssinaturaRepository';
 import { createInMemoryDocumentoAssinadoRepository } from './inMemory/inMemoryDocumentoAssinadoRepository';
 import { createInMemoryUsuarioRepository } from './inMemory/inMemoryUsuarioRepository';
 import type { Repositories } from './repositories';
+import { abrirBanco } from './sqlite/banco';
+import { createSqliteAssinaturaRepository } from './sqlite/sqliteAssinaturaRepository';
+import { createSqliteDocumentoAssinadoRepository } from './sqlite/sqliteDocumentoAssinadoRepository';
 import { createSqliteUsuarioRepository } from './sqlite/sqliteUsuarioRepository';
 
-export type StorageType = 'asyncStorage' | 'inMemory';
+export type StorageType = 'sqlite' | 'inMemory';
 
-export const STORAGE_TYPE: StorageType = 'asyncStorage';
+export const STORAGE_TYPE: StorageType = 'sqlite';
 
 export function createRepositories(storageType: StorageType): Repositories {
   switch (storageType) {
-    case 'asyncStorage':
+    case 'sqlite': {
+      const banco = abrirBanco();
       return {
-        assinaturas: createAsyncStorageAssinaturaRepository(),
-        documentos: createAsyncStorageDocumentoAssinadoRepository(),
-        usuarios: createSqliteUsuarioRepository(),
+        assinaturas: createSqliteAssinaturaRepository(banco),
+        documentos: createSqliteDocumentoAssinadoRepository(banco),
+        usuarios: createSqliteUsuarioRepository(banco),
       };
+    }
     case 'inMemory':
       return {
         assinaturas: createInMemoryAssinaturaRepository(),

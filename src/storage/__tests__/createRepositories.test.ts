@@ -1,7 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import { createRepositories } from '../createRepositories';
 import { criarAssinaturaDeTeste, USUARIO_DE_TESTE } from '../testing/assinaturaRepositoryContract';
+import { reiniciarBancoDeTeste } from '../testing/bancoDeTeste';
 import { criarDocumentoDeTeste } from '../testing/documentoAssinadoRepositoryContract';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -9,26 +8,24 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 describe('createRepositories', () => {
-  beforeEach(async () => {
-    await AsyncStorage.clear();
+  beforeEach(() => {
+    reiniciarBancoDeTeste();
   });
 
-  test('com AsyncStorage, repositórios criados em momentos diferentes veem os mesmos dados', async () => {
+  test('com SQLite, repositórios criados em momentos diferentes veem os mesmos dados', async () => {
     const assinatura = criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T10:00:00.000Z');
 
-    await createRepositories('asyncStorage').assinaturas.save(assinatura);
+    await createRepositories('sqlite').assinaturas.save(assinatura);
 
-    await expect(createRepositories('asyncStorage').assinaturas.list(USUARIO_DE_TESTE)).resolves.toEqual([
-      assinatura,
-    ]);
+    await expect(createRepositories('sqlite').assinaturas.list(USUARIO_DE_TESTE)).resolves.toEqual([assinatura]);
   });
 
-  test('com AsyncStorage, os documentos também continuam de uma instância para a outra', async () => {
+  test('com SQLite, os documentos também continuam de uma instância para a outra', async () => {
     const documento = criarDocumentoDeTeste('1', 'Contrato de locação', '2026-09-12T10:00:00.000Z');
 
-    await createRepositories('asyncStorage').documentos.save(documento);
+    await createRepositories('sqlite').documentos.save(documento);
 
-    await expect(createRepositories('asyncStorage').documentos.findById(documento.id)).resolves.toEqual(documento);
+    await expect(createRepositories('sqlite').documentos.findById(documento.id)).resolves.toEqual(documento);
   });
 
   test('em memória, cada chamada começa vazia', async () => {
