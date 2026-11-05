@@ -11,12 +11,14 @@ import { compartilharPdf } from '../../services/sharing';
 import { setStringAsync } from 'expo-clipboard';
 import { emitirCodigoDoDocumento } from '../../useCases/emitirCodigoDoDocumento';
 
-import {
-  createAsyncStorageDocumentoAssinadoRepository,
-  DOCUMENTOS_STORAGE_KEY,
-} from '../../storage/asyncStorage/asyncStorageDocumentoAssinadoRepository';
+import { createRepositories } from '../../storage/createRepositories';
 import { RepositoriesProvider } from '../../storage/RepositoriesProvider';
 import { SettingsProvider } from '../../storage/SettingsProvider';
+import {
+  corromperDocumentoNoBanco,
+  falharProximaEscritaNoBanco,
+  reiniciarBancoDeTeste,
+} from '../../storage/testing/bancoDeTeste';
 import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
 import { DocumentoScreen } from '../DocumentoScreen';
 
@@ -62,6 +64,7 @@ describe('DocumentoScreen', () => {
 
   beforeEach(async () => {
     await AsyncStorage.clear();
+    reiniciarBancoDeTeste();
     jest.mocked(compartilharPdf).mockReset();
     jest.mocked(excluirArquivosDocumento).mockReset();
     alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
@@ -75,7 +78,7 @@ describe('DocumentoScreen', () => {
   });
 
   test('mostra o título, a prévia e os dados do documento salvo', async () => {
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
     await abrirDocumento();
 
     await screen.findByText('Contrato de locação');
@@ -95,7 +98,7 @@ describe('DocumentoScreen', () => {
   });
 
   test('sem cidade, esconde a linha Local e leva as coordenadas para o selo', async () => {
-    await createAsyncStorageDocumentoAssinadoRepository().save({
+    await createRepositories('sqlite').documentos.save({
       ...DOCUMENTO,
       local: { ...DOCUMENTO.local, cidade: null },
     });
@@ -108,7 +111,7 @@ describe('DocumentoScreen', () => {
   });
 
   test('mostra o mapa com o marcador no local da assinatura', async () => {
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
     await abrirDocumento();
 
     expect((await screen.findByLabelText('Local da assinatura')).props.coordinate).toEqual({
@@ -118,7 +121,7 @@ describe('DocumentoScreen', () => {
   });
 
   test('tocar na prévia amplia o documento e Fechar volta para a tela', async () => {
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
     await abrirDocumento();
 
     expect(await screen.findAllByLabelText('Prévia do documento')).toHaveLength(1);
@@ -132,7 +135,7 @@ describe('DocumentoScreen', () => {
 
   test('Compartilhar dentro do documento ampliado manda o PDF para o compartilhamento', async () => {
     jest.mocked(compartilharPdf).mockResolvedValue('compartilhado');
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
     await abrirDocumento();
 
     await fireEvent.press(await screen.findByLabelText('Ampliar documento'));
@@ -152,7 +155,7 @@ describe('DocumentoScreen', () => {
 
   test('falha ao carregar mostra a mensagem e volta', async () => {
     const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    await AsyncStorage.setItem(DOCUMENTOS_STORAGE_KEY, '[{"id":');
+    await corromperDocumentoNoBanco(DOCUMENTO.id);
     const { onNaoEncontrado } = await abrirDocumento();
 
     await waitFor(() => expect(onNaoEncontrado).toHaveBeenCalledTimes(1));
@@ -163,7 +166,7 @@ describe('DocumentoScreen', () => {
 
   test('Compartilhar PDF manda o documento para o compartilhamento', async () => {
     jest.mocked(compartilharPdf).mockResolvedValue('compartilhado');
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
     await abrirDocumento();
 
     await fireEvent.press(await screen.findByText('Compartilhar PDF'));
@@ -174,7 +177,7 @@ describe('DocumentoScreen', () => {
 
   test('sem compartilhamento no aparelho, avisa', async () => {
     jest.mocked(compartilharPdf).mockResolvedValue('indisponivel');
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
     await abrirDocumento();
 
     await fireEvent.press(await screen.findByText('Compartilhar PDF'));
@@ -185,7 +188,7 @@ describe('DocumentoScreen', () => {
   test('quando o compartilhamento falha, avisa', async () => {
     const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     jest.mocked(compartilharPdf).mockRejectedValue(new Error('Falha no compartilhamento'));
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
     await abrirDocumento();
 
     await fireEvent.press(await screen.findByText('Compartilhar PDF'));
@@ -197,7 +200,7 @@ describe('DocumentoScreen', () => {
 
   test('Excluir documento pede confirmação, apaga o documento e sai uma vez só', async () => {
     const toast = jest.spyOn(Toast, 'show').mockImplementation(() => undefined);
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
     const { onExcluido } = await abrirDocumento();
 
     await fireEvent.press(await screen.findByText('Excluir documento'));
@@ -210,7 +213,7 @@ describe('DocumentoScreen', () => {
       'Excluir documento',
       'Excluir "Contrato de locação"? O PDF e a foto também são apagados.',
     ]);
-    await expect(createAsyncStorageDocumentoAssinadoRepository().findById(DOCUMENTO.id)).resolves.toBeNull();
+    await expect(createRepositories('sqlite').documentos.findById(DOCUMENTO.id)).resolves.toBeNull();
     expect(excluirArquivosDocumento).toHaveBeenCalledWith(DOCUMENTO.id);
     expect(toast).toHaveBeenCalledWith({ type: 'success', text1: 'Documento excluído' });
     toast.mockRestore();
@@ -218,11 +221,11 @@ describe('DocumentoScreen', () => {
 
   test('quando excluir falha, avisa e continua no documento', async () => {
     const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
     const { onExcluido } = await abrirDocumento();
 
     await fireEvent.press(await screen.findByText('Excluir documento'));
-    await AsyncStorage.setItem(DOCUMENTOS_STORAGE_KEY, '[{"id":');
+    falharProximaEscritaNoBanco();
     const [, , botoes] = alerta.mock.calls[0];
     botoes[1].onPress();
 
@@ -237,7 +240,7 @@ describe('DocumentoScreen', () => {
     const toast = jest.spyOn(Toast, 'show').mockImplementation(() => undefined);
     jest.mocked(lerFotoDocumentoBase64).mockResolvedValue(createBase64('Zm90bw=='));
     jest.mocked(emitirCodigoDoDocumento).mockResolvedValue('AA1;id=1757680000000#carimbo' as never);
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
     await abrirDocumento();
 
     await fireEvent.press(await screen.findByText('Copiar código'));
@@ -252,7 +255,7 @@ describe('DocumentoScreen', () => {
     const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     jest.mocked(lerFotoDocumentoBase64).mockResolvedValue(createBase64('Zm90bw=='));
     jest.mocked(emitirCodigoDoDocumento).mockRejectedValue(new Error('Sem usuário'));
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
     await abrirDocumento();
 
     await fireEvent.press(await screen.findByText('Copiar código'));

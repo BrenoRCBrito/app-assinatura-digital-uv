@@ -4,13 +4,12 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
 import { useAuthentication } from '../../hooks/useAuthentication';
-import {
-  createAsyncStorageDocumentoAssinadoRepository,
-  DOCUMENTOS_STORAGE_KEY,
-} from '../../storage/asyncStorage/asyncStorageDocumentoAssinadoRepository';
+import { createRepositories } from '../../storage/createRepositories';
+
 import { RepositoriesProvider } from '../../storage/RepositoriesProvider';
 import { SettingsProvider } from '../../storage/SettingsProvider';
 import { criarDocumentoDeTeste, USUARIO_DE_TESTE } from '../../storage/testing/documentoAssinadoRepositoryContract';
+import { corromperDocumentoNoBanco, reiniciarBancoDeTeste } from '../../storage/testing/bancoDeTeste';
 import { HistoricoScreen } from '../HistoricoScreen';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -49,6 +48,7 @@ describe('HistoricoScreen', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
     jest.mocked(useAuthentication).mockReturnValue(USUARIO_LOGADO);
+    reiniciarBancoDeTeste();
   });
 
   test('sem documentos, mostra a mensagem de vazio', async () => {
@@ -58,7 +58,7 @@ describe('HistoricoScreen', () => {
   });
 
   test('lista do mais novo para o mais antigo e abre o documento tocado', async () => {
-    const repositorio = createAsyncStorageDocumentoAssinadoRepository();
+    const repositorio = createRepositories('sqlite').documentos;
     await repositorio.save(ANTIGO);
     await repositorio.save(NOVO);
     const { onAbrirDocumento } = await abrirHistorico();
@@ -74,7 +74,7 @@ describe('HistoricoScreen', () => {
   test('falha ao carregar mostra o erro e a lista vazia', async () => {
     const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-    await AsyncStorage.setItem(DOCUMENTOS_STORAGE_KEY, '[{"id":');
+    await corromperDocumentoNoBanco();    
     await abrirHistorico();
 
     expect(await screen.findByText(MENSAGEM_VAZIA)).toBeTruthy();

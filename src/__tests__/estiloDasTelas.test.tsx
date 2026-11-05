@@ -8,10 +8,10 @@ import App from '../../App';
 import { DEFAULT_SETTINGS, type ThemeName } from '../domain/settings';
 import { criarEmail, type UsuarioId } from '../domain/usuario';
 import { authenticateDeviceOwner, getBiometricStatus } from '../services/localAuthentication';
-import { createAsyncStorageAssinaturaRepository } from '../storage/asyncStorage/asyncStorageAssinaturaRepository';
 import { createRepositories } from '../storage/createRepositories';
 import { SETTINGS_STORAGE_KEY } from '../storage/settingsStorage';
 import { criarAssinaturaDeTeste } from '../storage/testing/assinaturaRepositoryContract';
+import { reiniciarBancoDeTeste } from '../storage/testing/bancoDeTeste';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -121,7 +121,8 @@ async function entrar() {
 describe.each(['light', 'dark'] as const)('estilo das telas no tema %s', (themeName: ThemeName) => {
   beforeEach(async () => {
     await AsyncStorage.clear();
-    const usuariosRepo = createRepositories('asyncStorage').usuarios;
+    reiniciarBancoDeTeste();
+    const usuariosRepo = createRepositories('sqlite').usuarios;
     await usuariosRepo.clear();
     const usuario = await usuariosRepo.create({ email: criarEmail('teste@exemplo.com'), senhaHash: 'hash' });
     usuarioIdReal = usuario.id;
@@ -173,7 +174,7 @@ describe.each(['light', 'dark'] as const)('estilo das telas no tema %s', (themeN
   });
 
   test('lista com assinatura', async () => {
-  await createAsyncStorageAssinaturaRepository().save(
+  await createRepositories('sqlite').assinaturas.save(
     criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T12:00:00.000Z' , usuarioIdReal),
   );
 

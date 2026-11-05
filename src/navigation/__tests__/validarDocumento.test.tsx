@@ -38,7 +38,7 @@ const DICA = 'Aponte para o QR do documento';
 describe('validação de documento na navegação', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
-    await createRepositories('asyncStorage').usuarios.clear();
+    await createRepositories('sqlite').usuarios.clear();
     jest.mocked(getBiometricStatus).mockResolvedValue('enrolled');
     jest.mocked(authenticateDeviceOwner).mockResolvedValue({ type: 'authenticated' });
   });
@@ -55,7 +55,7 @@ describe('validação de documento na navegação', () => {
   });
 
   test('do Início, abre o leitor pela linha Validar documento', async () => {
-    const usuario = await createRepositories('asyncStorage').usuarios.create({
+    const usuario = await createRepositories('sqlite').usuarios.create({
       email: criarEmail('teste@exemplo.com'),
       senhaHash: 'hash',
     });

@@ -10,13 +10,10 @@ import { DEFAULT_SETTINGS } from '../../domain/settings';
 import { criarEmail, type UsuarioId } from '../../domain/usuario';
 import { useAssinarDocumento } from '../../hooks/useAssinarDocumento';
 import { authenticateDeviceOwner, getBiometricStatus } from '../../services/localAuthentication';
-import { createAsyncStorageAssinaturaRepository } from '../../storage/asyncStorage/asyncStorageAssinaturaRepository';
-import {
-  createAsyncStorageDocumentoAssinadoRepository,
-} from '../../storage/asyncStorage/asyncStorageDocumentoAssinadoRepository';
 import { createRepositories } from '../../storage/createRepositories';
 import { SETTINGS_STORAGE_KEY } from '../../storage/settingsStorage';
 import { criarAssinaturaDeTeste } from '../../storage/testing/assinaturaRepositoryContract';
+import { reiniciarBancoDeTeste } from '../../storage/testing/bancoDeTeste';
 import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
 
 
@@ -72,7 +69,7 @@ function telasDaPilha(): TestInstance[] {
 }
 
 async function abrirPosicionar() {
-  await createAsyncStorageAssinaturaRepository().save(
+  await createRepositories('sqlite').assinaturas.save(
     criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T12:00:00.000Z', usuarioIdReal),
   );
   await render(<App />);
@@ -84,7 +81,7 @@ async function abrirPosicionar() {
 }
 
 async function abrirDocumentoPeloHistorico() {
-  await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+  await createRepositories('sqlite').documentos.save(DOCUMENTO);
   await render(<App />);
   await fireEvent.press(await screen.findByText('Acessar'));
   await fireEvent.press(await screen.findByText('Histórico'));
@@ -96,7 +93,8 @@ async function abrirDocumentoPeloHistorico() {
 describe('AppNavigator', () => {
   beforeEach(async () => {
   await AsyncStorage.clear();
-  const usuariosRepo = createRepositories('asyncStorage').usuarios;
+  reiniciarBancoDeTeste();
+  const usuariosRepo = createRepositories('sqlite').usuarios;
   await usuariosRepo.clear();
   const usuario = await usuariosRepo.create({ email: criarEmail('teste@exemplo.com'), senhaHash: 'hash' });
   usuarioIdReal = usuario.id;
@@ -130,7 +128,7 @@ describe('AppNavigator', () => {
   });
 
   test('Assinar troca o Posicionar pelo documento assinado', async () => {
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
     await abrirPosicionar();
 
     await fireEvent.changeText(screen.getByLabelText('Título do documento'), 'Contrato de locação');
@@ -159,4 +157,3 @@ describe('AppNavigator', () => {
     alerta.mockRestore();
   });
 });
-

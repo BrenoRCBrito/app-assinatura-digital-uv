@@ -9,13 +9,11 @@ import { createCapturedPhoto, type CapturedPhoto } from '../../domain/photo';
 import { layoutDoSelo, seloNaFoto } from '../../domain/selo';
 import { useAssinarDocumento } from '../../hooks/useAssinarDocumento';
 import { useAuthentication } from '../../hooks/useAuthentication';
-import {
-  ASSINATURAS_STORAGE_KEY,
-  createAsyncStorageAssinaturaRepository,
-} from '../../storage/asyncStorage/asyncStorageAssinaturaRepository';
+import { createRepositories } from '../../storage/createRepositories';
 import { RepositoriesProvider } from '../../storage/RepositoriesProvider';
 import { SettingsProvider } from '../../storage/SettingsProvider';
 import { criarAssinaturaDeTeste, USUARIO_DE_TESTE } from '../../storage/testing/assinaturaRepositoryContract';
+import { corromperAssinaturaNoBanco, reiniciarBancoDeTeste } from '../../storage/testing/bancoDeTeste';
 import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
 import { PosicionarAssinaturaScreen } from '../PosicionarAssinaturaScreen';
 
@@ -47,7 +45,7 @@ function Provedores({ children }: Readonly<{ children: React.ReactNode }>) {
 }
 
 async function salvarAssinaturas() {
-  const repositorio = createAsyncStorageAssinaturaRepository();
+  const repositorio = createRepositories('sqlite').assinaturas;
   await repositorio.save(criarAssinaturaDeTeste('1', 'Assinatura completa', '2026-09-10T10:00:00.000Z'));
   await repositorio.save(RUBRICA);
 }
@@ -72,6 +70,7 @@ describe('PosicionarAssinaturaScreen', () => {
 
   beforeEach(async () => {
     await AsyncStorage.clear();
+    reiniciarBancoDeTeste();
     assinar.mockReset();
     jest.mocked(useAssinarDocumento).mockReturnValue({ assinando: false, assinar });
     jest.mocked(useAuthentication).mockReturnValue(USUARIO_LOGADO);
@@ -123,7 +122,7 @@ describe('PosicionarAssinaturaScreen', () => {
 
   test('com foto deitada e assinatura alta, o passo para quando o selo chega à altura da foto', async () => {
     const fotoDeitada = createCapturedPhoto('file:///cache/foto.jpg', 4032, 3024);
-    await createAsyncStorageAssinaturaRepository().save({
+    await createRepositories('sqlite').assinaturas.save({
       ...criarAssinaturaDeTeste('1', 'Rubrica alta', '2026-09-12T10:00:00.000Z'),
       desenho: criarDesenho([criarTraco('M10,20 L30,40')], createSize(300, 400)),
     });
@@ -166,7 +165,7 @@ describe('PosicionarAssinaturaScreen', () => {
   test('se a lista não carrega, mostra o erro e não pergunta', async () => {
     const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    await AsyncStorage.setItem(ASSINATURAS_STORAGE_KEY, '{corrompido');
+    await corromperAssinaturaNoBanco();
     await abrirTela();
 
     await screen.findByText('Nenhuma assinatura salva.');
