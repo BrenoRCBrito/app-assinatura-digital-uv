@@ -30,6 +30,7 @@ const PEDIDO: PedidoAssinatura = {
   selo: { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35) },
 };
 const FOTO_BASE64 = createBase64('/9j/4AAQ');
+const RESUMO_DA_FOTO = 'a'.repeat(64);
 const PDF = createBase64('JVBERi0xLjQK');
 let CODIGO: CodigoDeAutenticidade;
 
@@ -49,16 +50,16 @@ function criarDependencias(sobrescrever: Partial<DependenciasAssinatura> = {}) {
       passos.push('obter local');
       return { tipo: 'obtido' as const, local: LOCAL };
     }),
-    copiarFotoDocumento: jest.fn(async (id) => {
-      passos.push(`copiar foto ${id}`);
+    copiarFotoDocumento: jest.fn(async (documento) => {
+      passos.push(`copiar foto ${documento.id}`);
     }),
-    lerFotoDocumentoBase64: jest.fn(async (id) => {
-      passos.push(`ler foto ${id}`);
+    lerFotoDocumentoBase64: jest.fn(async (documento) => {
+      passos.push(`ler foto ${documento.id}`);
       return FOTO_BASE64;
     }),
     emitirCodigo: jest.fn(async (documento) => {
       passos.push(`emitir codigo ${documento.id}`);
-      return CODIGO;
+      return { codigo: CODIGO, fotoSha256: RESUMO_DA_FOTO };
     }),
     montarHtmlDocumento: jest.fn(() => {
       passos.push('montar html');
@@ -68,11 +69,11 @@ function criarDependencias(sobrescrever: Partial<DependenciasAssinatura> = {}) {
       passos.push('gerar pdf');
       return PDF;
     }),
-    guardarPdfDocumento: jest.fn(async (id, pdf) => {
-      passos.push(`guardar pdf ${id} ${pdf}`);
+    guardarPdfDocumento: jest.fn(async (documento, pdf) => {
+      passos.push(`guardar pdf ${documento.id} ${pdf}`);
     }),
-    excluirArquivosDocumento: jest.fn((id) => {
-      passos.push(`apagar pasta ${id}`);
+    excluirArquivosDocumento: jest.fn((documento) => {
+      passos.push(`apagar pasta ${documento.id}`);
     }),
     documentos: {
       ...registro,
@@ -187,6 +188,17 @@ describe('assinarDocumento', () => {
     erro.mockRestore();
   });
 
+  test('os arquivos são pedidos com o dono do documento, para cada conta ter a própria pasta', async () => {
+    const { dependencias } = criarDependencias();
+
+    await assinarDocumento(dependencias, PEDIDO);
+
+    const dono = expect.objectContaining({ id: ID, usuarioId: USUARIO_ID });
+    expect(dependencias.copiarFotoDocumento).toHaveBeenCalledWith(dono, PEDIDO.foto);
+    expect(dependencias.lerFotoDocumentoBase64).toHaveBeenCalledWith(dono);
+    expect(dependencias.guardarPdfDocumento).toHaveBeenCalledWith(dono, PDF);
+  });
+
   test('com sucesso, emite o código, grava a foto e o PDF antes do registro e devolve o documento', async () => {
     const { dependencias, passos, registro } = criarDependencias();
 
@@ -201,6 +213,8 @@ describe('assinarDocumento', () => {
       selo: PEDIDO.selo,
       local: LOCAL,
       assinadoEm: '2026-09-12T14:32:00.000Z',
+      codigo: CODIGO,
+      fotoSha256: RESUMO_DA_FOTO,
     };
     expect(resultado).toEqual({ tipo: 'assinado', documento });
     expect(passos).toEqual([
@@ -214,7 +228,7 @@ describe('assinarDocumento', () => {
       `guardar pdf ${ID} ${PDF}`,
       'salvar registro',
     ]);
-    expect(dependencias.emitirCodigo).toHaveBeenCalledWith(documento, FOTO_BASE64);
+    expect(dependencias.emitirCodigo).toHaveBeenCalledWith({ ...documento, codigo: null, fotoSha256: null }, FOTO_BASE64);
     expect(dependencias.montarHtmlDocumento).toHaveBeenCalledWith(documento, FOTO_BASE64, CODIGO);
     await expect(registro.findById(ID)).resolves.toEqual(documento);
   });

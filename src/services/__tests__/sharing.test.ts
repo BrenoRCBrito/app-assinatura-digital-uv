@@ -5,7 +5,8 @@ import { compartilharPdf } from '../sharing';
 
 jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn(), shareAsync: jest.fn() }));
 jest.mock('../fileSystem', () => ({
-  uriPdfDocumento: (id: string) => `file:///app/documentos/${id}/documento.pdf`,
+  uriPdfDocumento: ({ id, usuarioId }: { id: string; usuarioId: string }) =>
+    `file:///app/usuarios/${usuarioId}/documentos/${id}/documento.pdf`,
 }));
 
 const DOCUMENTO = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z');
@@ -20,7 +21,7 @@ describe('compartilharPdf', () => {
     jest.mocked(shareAsync).mockResolvedValue(undefined);
 
     await expect(compartilharPdf(DOCUMENTO)).resolves.toBe('compartilhado');
-    expect(shareAsync).toHaveBeenCalledWith('file:///app/documentos/1757680000000/documento.pdf', {
+    expect(shareAsync).toHaveBeenCalledWith('file:///app/usuarios/1/documentos/1757680000000/documento.pdf', {
       mimeType: 'application/pdf',
       UTI: 'com.adobe.pdf',
       dialogTitle: 'Contrato de locação',

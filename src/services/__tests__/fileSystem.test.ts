@@ -1,4 +1,5 @@
 import { createBase64, criarDocumentoId } from '../../domain/documento';
+import { criarUsuarioId } from '../../domain/usuario';
 import { createCapturedPhoto, createFileUri } from '../../domain/photo';
 import {
   copiarFotoDocumento,
@@ -68,8 +69,10 @@ const mockOperacoes: unknown[][] = [];
 const mockExistentes = new Set<string>();
 let mockBase64 = '';
 
-const ID = criarDocumentoId('1757680000000');
-const PASTA = 'file:///app/documentos/1757680000000';
+const DOCUMENTO = { id: criarDocumentoId('1757680000000'), usuarioId: criarUsuarioId('42') };
+const OUTRA_CONTA = { id: DOCUMENTO.id, usuarioId: criarUsuarioId('43') };
+const PASTA = 'file:///app/usuarios/42/documentos/1757680000000';
+const PASTA_ANTIGA = 'file:///app/documentos/1757680000000';
 
 describe('arquivos do documento', () => {
   beforeEach(() => {
@@ -78,12 +81,19 @@ describe('arquivos do documento', () => {
     mockBase64 = '';
   });
 
-  test('monta os endereços da foto e do PDF dentro da pasta do documento', () => {
-    expect([uriFotoDocumento(ID), uriPdfDocumento(ID)]).toEqual([`${PASTA}/foto.jpg`, `${PASTA}/documento.pdf`]);
+  test('monta os endereços da foto e do PDF dentro da pasta da conta e do documento', () => {
+    expect([uriFotoDocumento(DOCUMENTO), uriPdfDocumento(DOCUMENTO)]).toEqual([
+      `${PASTA}/foto.jpg`,
+      `${PASTA}/documento.pdf`,
+    ]);
+  });
+
+  test('cada conta tem a própria pasta, mesmo para o mesmo id de documento', () => {
+    expect(uriFotoDocumento(OUTRA_CONTA)).toBe('file:///app/usuarios/43/documentos/1757680000000/foto.jpg');
   });
 
   test('cria a pasta e copia a foto da câmera para ela', async () => {
-    await copiarFotoDocumento(ID, createCapturedPhoto('file:///cache/foto.jpg', 3024, 4032));
+    await copiarFotoDocumento(DOCUMENTO, createCapturedPhoto('file:///cache/foto.jpg', 3024, 4032));
 
     expect(mockOperacoes).toEqual([
       ['criar pasta', PASTA, { intermediates: true, idempotent: true }],
@@ -94,12 +104,12 @@ describe('arquivos do documento', () => {
   test('lê a foto guardada em base64', async () => {
     mockBase64 = '/9j/4AAQ';
 
-    await expect(lerFotoDocumentoBase64(ID)).resolves.toBe('/9j/4AAQ');
+    await expect(lerFotoDocumentoBase64(DOCUMENTO)).resolves.toBe('/9j/4AAQ');
     expect(mockOperacoes).toEqual([['ler base64', `${PASTA}/foto.jpg`]]);
   });
 
   test('grava o PDF recebido em base64 na pasta do documento', async () => {
-    await guardarPdfDocumento(ID, createBase64('JVBERi0xLjQK'));
+    await guardarPdfDocumento(DOCUMENTO, createBase64('JVBERi0xLjQK'));
 
     expect(mockOperacoes).toEqual([
       ['criar pasta', PASTA, { intermediates: true, idempotent: true }],
@@ -108,10 +118,43 @@ describe('arquivos do documento', () => {
   });
 
   test('apaga a pasta do documento só quando ela existe', () => {
-    excluirArquivosDocumento(ID);
+    excluirArquivosDocumento(DOCUMENTO);
     mockExistentes.add(PASTA);
-    excluirArquivosDocumento(ID);
+    excluirArquivosDocumento(DOCUMENTO);
 
     expect(mockOperacoes).toEqual([['apagar pasta', PASTA]]);
+  });
+
+  describe('documentos assinados antes de cada conta ter a própria pasta', () => {
+    test('enquanto só existe a pasta antiga, os arquivos continuam sendo achados nela', async () => {
+      mockExistentes.add(PASTA_ANTIGA);
+      mockBase64 = '/9j/4AAQ';
+
+      expect(uriFotoDocumento(DOCUMENTO)).toBe(`${PASTA_ANTIGA}/foto.jpg`);
+      expect(uriPdfDocumento(DOCUMENTO)).toBe(`${PASTA_ANTIGA}/documento.pdf`);
+      await expect(lerFotoDocumentoBase64(DOCUMENTO)).resolves.toBe('/9j/4AAQ');
+      expect(mockOperacoes).toEqual([['ler base64', `${PASTA_ANTIGA}/foto.jpg`]]);
+    });
+
+    test('excluir apaga a pasta antiga', () => {
+      mockExistentes.add(PASTA_ANTIGA);
+
+      excluirArquivosDocumento(DOCUMENTO);
+
+      expect(mockOperacoes).toEqual([['apagar pasta', PASTA_ANTIGA]]);
+    });
+
+    test('quando as duas existem, vale a pasta nova', () => {
+      mockExistentes.add(PASTA_ANTIGA);
+      mockExistentes.add(PASTA);
+
+      expect(uriFotoDocumento(DOCUMENTO)).toBe(`${PASTA}/foto.jpg`);
+    });
+
+    test('um documento novo, sem nenhuma das duas pastas, é criado na pasta nova', async () => {
+      await guardarPdfDocumento(DOCUMENTO, createBase64('JVBERi0xLjQK'));
+
+      expect(mockOperacoes[0]).toEqual(['criar pasta', PASTA, { intermediates: true, idempotent: true }]);
+    });
   });
 });

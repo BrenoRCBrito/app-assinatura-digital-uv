@@ -29,7 +29,8 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 jest.mock('../../services/sharing', () => ({ compartilharPdf: jest.fn() }));
 jest.mock('../../services/fileSystem', () => ({
-  uriFotoDocumento: (id: string) => `file:///app/documentos/${id}/foto.jpg`,
+  uriFotoDocumento: ({ id, usuarioId }: { id: string; usuarioId: string }) =>
+    `file:///app/usuarios/${usuarioId}/documentos/${id}/foto.jpg`,
   excluirArquivosDocumento: jest.fn(),
   lerFotoDocumentoBase64: jest.fn(),
 }));
@@ -86,7 +87,7 @@ describe('DocumentoScreen', () => {
 
     expect(screen.getByText('PDF A4, 1 página')).toBeTruthy();
     expect(screen.getByLabelText('Foto do documento').props.source).toEqual({
-      uri: 'file:///app/documentos/1757680000000/foto.jpg',
+      uri: 'file:///app/usuarios/1/documentos/1757680000000/foto.jpg',
     });
     for (const rotulo of ['Assinado em', 'Local', 'Coordenadas', 'Assinatura']) {
       expect(screen.getByText(rotulo)).toBeTruthy();
@@ -214,7 +215,7 @@ describe('DocumentoScreen', () => {
       'Excluir "Contrato de locação"? O PDF e a foto também são apagados.',
     ]);
     await expect(createRepositories('sqlite').documentos.findById(DOCUMENTO.id)).resolves.toBeNull();
-    expect(excluirArquivosDocumento).toHaveBeenCalledWith(DOCUMENTO.id);
+    expect(excluirArquivosDocumento).toHaveBeenCalledWith(DOCUMENTO);
     expect(toast).toHaveBeenCalledWith({ type: 'success', text1: 'Documento excluído' });
     toast.mockRestore();
   });
@@ -236,10 +237,27 @@ describe('DocumentoScreen', () => {
     erro.mockRestore();
   });
 
-  test('Copiar código gera o código do documento e copia para a área de transferência', async () => {
+  test('Copiar código copia o código gravado na assinatura, sem refazer nada', async () => {
+    const toast = jest.spyOn(Toast, 'show').mockImplementation(() => undefined);
+    const gravado = { ...DOCUMENTO, codigo: 'AA1;id=1757680000000#gravado' as never, fotoSha256: 'a'.repeat(64) };
+    await createRepositories('sqlite').documentos.save(gravado);
+    await abrirDocumento();
+
+    await fireEvent.press(await screen.findByText('Copiar código'));
+
+    await waitFor(() => expect(setStringAsync).toHaveBeenCalledWith('AA1;id=1757680000000#gravado'));
+    expect(emitirCodigoDoDocumento).not.toHaveBeenCalled();
+    expect(lerFotoDocumentoBase64).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith({ type: 'success', text1: 'Código copiado' });
+    toast.mockRestore();
+  });
+
+  test('documento antigo, sem código gravado, refaz o código e copia', async () => {
     const toast = jest.spyOn(Toast, 'show').mockImplementation(() => undefined);
     jest.mocked(lerFotoDocumentoBase64).mockResolvedValue(createBase64('Zm90bw=='));
-    jest.mocked(emitirCodigoDoDocumento).mockResolvedValue('AA1;id=1757680000000#carimbo' as never);
+    jest
+      .mocked(emitirCodigoDoDocumento)
+      .mockResolvedValue({ codigo: 'AA1;id=1757680000000#carimbo' as never, fotoSha256: 'b'.repeat(64) });
     await createRepositories('sqlite').documentos.save(DOCUMENTO);
     await abrirDocumento();
 

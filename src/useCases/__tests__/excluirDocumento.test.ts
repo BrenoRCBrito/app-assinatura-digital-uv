@@ -16,8 +16,8 @@ async function criarDependencias() {
         await registro.delete(id);
       },
     },
-    excluirArquivosDocumento: jest.fn((id) => {
-      passos.push(`apagar pasta ${id}`);
+    excluirArquivosDocumento: jest.fn((documento) => {
+      passos.push(`apagar pasta ${documento.usuarioId}/${documento.id}`);
     }),
   };
   return { dependencias, passos, registro };
@@ -27,8 +27,8 @@ describe('excluirDocumento', () => {
   test('apaga o registro antes da pasta do documento', async () => {
     const { dependencias, passos, registro } = await criarDependencias();
 
-    await expect(excluirDocumento(dependencias, DOCUMENTO.id)).resolves.toBe('excluido');
-    expect(passos).toEqual(['apagar registro 1757680000000', 'apagar pasta 1757680000000']);
+    await expect(excluirDocumento(dependencias, DOCUMENTO)).resolves.toBe('excluido');
+    expect(passos).toEqual(['apagar registro 1757680000000', 'apagar pasta 1/1757680000000']);
     await expect(registro.list(USUARIO_DE_TESTE)).resolves.toEqual([]);
   });
 
@@ -40,7 +40,7 @@ describe('excluirDocumento', () => {
       documentos: { ...registro, delete: jest.fn().mockRejectedValue(new Error('Falha no armazenamento')) },
     };
 
-    await expect(excluirDocumento(semRegistro, DOCUMENTO.id)).resolves.toBe('falhou');
+    await expect(excluirDocumento(semRegistro, DOCUMENTO)).resolves.toBe('falhou');
     expect(dependencias.excluirArquivosDocumento).not.toHaveBeenCalled();
     await expect(registro.list(USUARIO_DE_TESTE)).resolves.toEqual([DOCUMENTO]);
     expect(erro).toHaveBeenCalledTimes(1);
@@ -57,7 +57,7 @@ describe('excluirDocumento', () => {
       }),
     };
 
-    await expect(excluirDocumento(semPasta, DOCUMENTO.id)).resolves.toBe('excluido');
+    await expect(excluirDocumento(semPasta, DOCUMENTO)).resolves.toBe('excluido');
     await expect(registro.list(USUARIO_DE_TESTE)).resolves.toEqual([]);
     expect(erro).toHaveBeenCalledTimes(1);
     erro.mockRestore();

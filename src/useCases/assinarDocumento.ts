@@ -1,7 +1,14 @@
 import type { Assinatura } from '../domain/assinatura';
 import type { CodigoDeAutenticidade } from '../domain/codigoDeAutenticidade';
 import type { IsoDateTime } from '../domain/dateTime';
-import type { Base64, DocumentoAssinado, DocumentoId, Html, TituloDocumento } from '../domain/documento';
+import type {
+  ArquivosDoDocumento,
+  Base64,
+  DocumentoAssinado,
+  DocumentoId,
+  Html,
+  TituloDocumento,
+} from '../domain/documento';
 import type { Size } from '../domain/geometry';
 import type { CapturedPhoto } from '../domain/photo';
 import type { PosicaoSelo } from '../domain/selo';
@@ -10,6 +17,7 @@ import type { AuthenticationPurpose, AuthenticationResult } from '../services/lo
 import type { ResultadoLocalAssinatura } from '../services/location';
 import type { DocumentoHtml } from '../services/print';
 import type { DocumentoAssinadoRepository } from '../storage/repositories';
+import type { CodigoEmitido } from './emitirCodigoDoDocumento';
 
 export type PedidoAssinatura = Readonly<{
   titulo: TituloDocumento;
@@ -34,11 +42,11 @@ export type ResultadoAssinatura =
 export type DependenciasAssinatura = Readonly<{
   authenticateDeviceOwner: (purpose: AuthenticationPurpose) => Promise<AuthenticationResult>;
   obterLocalAssinatura: () => Promise<ResultadoLocalAssinatura>;
-  copiarFotoDocumento: (id: DocumentoId, foto: CapturedPhoto) => Promise<void>;
-  lerFotoDocumentoBase64: (id: DocumentoId) => Promise<Base64>;
-  emitirCodigo: (documento: DocumentoAssinado, fotoBase64: Base64) => Promise<CodigoDeAutenticidade>;
-  guardarPdfDocumento: (id: DocumentoId, pdf: Base64) => Promise<void>;
-  excluirArquivosDocumento: (id: DocumentoId) => void;
+  copiarFotoDocumento: (documento: ArquivosDoDocumento, foto: CapturedPhoto) => Promise<void>;
+  lerFotoDocumentoBase64: (documento: ArquivosDoDocumento) => Promise<Base64>;
+  emitirCodigo: (documento: DocumentoAssinado, fotoBase64: Base64) => Promise<CodigoEmitido>;
+  guardarPdfDocumento: (documento: ArquivosDoDocumento, pdf: Base64) => Promise<void>;
+  excluirArquivosDocumento: (documento: ArquivosDoDocumento) => void;
   montarHtmlDocumento: (
     documento: DocumentoAssinado,
     fotoBase64: Base64,
@@ -59,9 +67,9 @@ const MOTIVO_DA_AUTENTICACAO: Readonly<Record<FalhaDeAutenticacao, MotivoFalhaAs
   failed: 'autenticacaoFalhou',
 };
 
-function apagarArquivos(dependencias: DependenciasAssinatura, id: DocumentoId): void {
+function apagarArquivos(dependencias: DependenciasAssinatura, documento: ArquivosDoDocumento): void {
   try {
-    dependencias.excluirArquivosDocumento(id);
+    dependencias.excluirArquivosDocumento(documento);
   } catch (error) {
     console.error('Falha ao apagar os arquivos do documento:', error);
   }
@@ -87,7 +95,7 @@ export async function assinarDocumento(
     return { tipo: 'falhou', motivo: 'localIndisponivel' };
   }
 
-  const documento: DocumentoAssinado = {
+  const semCodigo: DocumentoAssinado = {
     id: dependencias.criarDocumentoId(),
     usuarioId: dependencias.usuarioId,
     titulo: pedido.titulo,
@@ -96,20 +104,24 @@ export async function assinarDocumento(
     selo: pedido.selo,
     local: local.local,
     assinadoEm: dependencias.agora(),
+    codigo: null,
+    fotoSha256: null,
   };
 
   try {
-    await dependencias.copiarFotoDocumento(documento.id, pedido.foto);
-    const fotoBase64 = await dependencias.lerFotoDocumentoBase64(documento.id);
-    const codigo = await dependencias.emitirCodigo(documento, fotoBase64);
+    await dependencias.copiarFotoDocumento(semCodigo, pedido.foto);
+    const fotoBase64 = await dependencias.lerFotoDocumentoBase64(semCodigo);
+    // O código depende dos dados do documento, então só entra no registro depois de emitido.
+    const { codigo, fotoSha256 } = await dependencias.emitirCodigo(semCodigo, fotoBase64);
+    const documento: DocumentoAssinado = { ...semCodigo, codigo, fotoSha256 };
     const { html, tamanhoDaPagina } = dependencias.montarHtmlDocumento(documento, fotoBase64, codigo);
     const pdf = await dependencias.gerarPdf(html, tamanhoDaPagina);
-    await dependencias.guardarPdfDocumento(documento.id, pdf);
+    await dependencias.guardarPdfDocumento(documento, pdf);
     await dependencias.documentos.save(documento);
     return { tipo: 'assinado', documento };
   } catch (error) {
     console.error('Falha ao gerar o documento assinado:', error);
-    apagarArquivos(dependencias, documento.id);
+    apagarArquivos(dependencias, semCodigo);
     return { tipo: 'falhou', motivo: 'erroAoGerarDocumento' };
   }
 }

@@ -9,7 +9,7 @@ export async function compartilharPdf(documento: DocumentoAssinado): Promise<Res
   if (!(await isAvailableAsync())) {
     return 'indisponivel';
   }
-  await shareAsync(uriPdfDocumento(documento.id), {
+  await shareAsync(uriPdfDocumento(documento), {
     mimeType: 'application/pdf',
     UTI: 'com.adobe.pdf',
     dialogTitle: documento.titulo,

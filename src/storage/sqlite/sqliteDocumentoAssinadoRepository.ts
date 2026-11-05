@@ -15,6 +15,8 @@ type LinhaDocumento = Readonly<{
   selo: string;
   local_assinatura: string;
   assinado_em: string;
+  codigo: string | null;
+  foto_sha256: string | null;
 }>;
 
 function paraDocumentoDaLinha(linha: LinhaDocumento): DocumentoAssinado {
@@ -27,6 +29,8 @@ function paraDocumentoDaLinha(linha: LinhaDocumento): DocumentoAssinado {
     selo: JSON.parse(linha.selo),
     local: JSON.parse(linha.local_assinatura),
     assinadoEm: linha.assinado_em,
+    codigo: linha.codigo,
+    fotoSha256: linha.foto_sha256,
   });
 }
 
@@ -59,22 +63,26 @@ export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): 
         JSON.stringify(documento.selo),
         JSON.stringify(documento.local),
         documento.assinadoEm,
+        documento.codigo,
+        documento.fotoSha256,
       ];
       const existente = await db.getFirstAsync<LinhaDocumento>('SELECT * FROM documentos WHERE id = ?', documento.id);
       if (existente === null) {
         await db.runAsync(
-          'INSERT INTO documentos (id, usuario_id, titulo, assinatura_usada, tamanho_foto, selo, local_assinatura, assinado_em, created_at, updated_at, deleted_at, sync_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO documentos (id, usuario_id, titulo, assinatura_usada, tamanho_foto, selo, local_assinatura, assinado_em, codigo, foto_sha256, created_at, updated_at, deleted_at, sync_status, foto_status, pdf_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           documento.id,
           ...valores,
           agora,
           agora,
           null,
           'pending',
+          'local',
+          'local',
         );
         return;
       }
       await db.runAsync(
-        'UPDATE documentos SET usuario_id = ?, titulo = ?, assinatura_usada = ?, tamanho_foto = ?, selo = ?, local_assinatura = ?, assinado_em = ?, updated_at = ?, deleted_at = ?, sync_status = ? WHERE id = ?',
+        'UPDATE documentos SET usuario_id = ?, titulo = ?, assinatura_usada = ?, tamanho_foto = ?, selo = ?, local_assinatura = ?, assinado_em = ?, codigo = ?, foto_sha256 = ?, updated_at = ?, deleted_at = ?, sync_status = ? WHERE id = ?',
         ...valores,
         agora,
         null,

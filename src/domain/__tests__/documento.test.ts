@@ -1,4 +1,5 @@
 import { criarNomeAssinatura } from '../assinatura';
+import type { CodigoDeAutenticidade } from '../codigoDeAutenticidade';
 import { ValidationError } from '../brand';
 import { createIsoDateTime } from '../dateTime';
 import { criarDesenho, criarTraco } from '../desenho';
@@ -33,6 +34,8 @@ function documentoValido(id: string, assinadoEm: string, cidade: string | null =
       cidade: cidade === null ? null : createCity(cidade),
     },
     assinadoEm: createIsoDateTime(assinadoEm),
+    codigo: null,
+    fotoSha256: null,
   };
 }
 
@@ -110,6 +113,34 @@ describe('paraDocumentoAssinado', () => {
     const documento = documentoValido('1757680000000', '2026-09-12T10:00:00.000Z');
 
     expect(paraDocumentoAssinado(JSON.parse(JSON.stringify(documento)))).toEqual(documento);
+  });
+
+  test('reconstrói um documento com o código e o resumo da foto gravados', () => {
+    const documento = {
+      ...documentoValido('1', '2026-09-12T10:00:00.000Z'),
+      codigo: 'AA1;id=1#carimbo' as CodigoDeAutenticidade,
+      fotoSha256: 'a'.repeat(64),
+    };
+
+    expect(paraDocumentoAssinado(JSON.parse(JSON.stringify(documento)))).toEqual(documento);
+  });
+
+  test('documento salvo antes de existir o código volta com código e resumo nulos', () => {
+    const { codigo, fotoSha256, ...antigo } = documentoValido('1', '2026-09-12T10:00:00.000Z');
+
+    expect(codigo).toBeNull();
+    expect(fotoSha256).toBeNull();
+    expect(paraDocumentoAssinado(JSON.parse(JSON.stringify(antigo)))).toEqual({
+      ...antigo,
+      codigo: null,
+      fotoSha256: null,
+    });
+  });
+
+  test.each(['abc', 'A'.repeat(64), 'a'.repeat(63), 12])('recusa o resumo da foto inválido %p', (resumo) => {
+    const documento = { ...documentoValido('1', '2026-09-12T10:00:00.000Z'), fotoSha256: resumo };
+
+    expect(() => paraDocumentoAssinado(JSON.parse(JSON.stringify(documento)))).toThrow('Documento salvo inválido.');
   });
 
   test('reconstrói um documento sem cidade', () => {

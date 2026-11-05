@@ -30,8 +30,13 @@ describe('emitirCodigoDoDocumento', () => {
     const buscarUsuario = jest.fn(async () => USUARIO);
     const resumirSha256 = jest.fn(async () => RESUMO);
 
-    const codigo = await emitirCodigoDoDocumento({ buscarUsuario, resumirSha256, carimbar }, DOCUMENTO, FOTO);
+    const { codigo, fotoSha256 } = await emitirCodigoDoDocumento(
+      { buscarUsuario, resumirSha256, carimbar },
+      DOCUMENTO,
+      FOTO,
+    );
 
+    expect(fotoSha256).toBe(RESUMO);
     expect(buscarUsuario).toHaveBeenCalledWith(DOCUMENTO.usuarioId);
     expect(resumirSha256).toHaveBeenCalledWith(FOTO);
     await expect(validarCodigo(codigo, carimbar)).resolves.toEqual({
@@ -45,7 +50,7 @@ describe('emitirCodigoDoDocumento', () => {
     const titular = { ...USUARIO, cpf: criarCpf('123.456.789-09'), telefone: criarTelefone('(11) 98765-4321') };
     const dependencias = { buscarUsuario: async () => titular, resumirSha256: async () => RESUMO, carimbar };
 
-    const codigo = await emitirCodigoDoDocumento(dependencias, DOCUMENTO, FOTO);
+    const { codigo } = await emitirCodigoDoDocumento(dependencias, DOCUMENTO, FOTO);
 
     expect(codigo).toContain(`cpf=${encodeURIComponent('***.456.789-**')}`);
     expect(codigo).toContain(`telefone=${encodeURIComponent('(**) *****-4321')}`);

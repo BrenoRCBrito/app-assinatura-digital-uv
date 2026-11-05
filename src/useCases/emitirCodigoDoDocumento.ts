@@ -7,6 +7,8 @@ import {
 import type { Base64, DocumentoAssinado } from '../domain/documento';
 import type { Usuario, UsuarioId } from '../domain/usuario';
 
+export type CodigoEmitido = Readonly<{ codigo: CodigoDeAutenticidade; fotoSha256: string }>;
+
 export type DependenciasDoCodigo = Readonly<{
   buscarUsuario: (id: UsuarioId) => Promise<Usuario | null>;
   resumirSha256: (texto: string) => Promise<string>;
@@ -17,11 +19,12 @@ export async function emitirCodigoDoDocumento(
   dependencias: DependenciasDoCodigo,
   documento: DocumentoAssinado,
   fotoBase64: Base64,
-): Promise<CodigoDeAutenticidade> {
+): Promise<CodigoEmitido> {
   const usuario = await dependencias.buscarUsuario(documento.usuarioId);
   if (usuario === null) {
     throw new Error('A conta que assina o documento não foi encontrada.');
   }
   const resumoDaFoto = await dependencias.resumirSha256(fotoBase64);
-  return emitirCodigo(camposDoDocumento(documento, usuario, resumoDaFoto), dependencias.carimbar);
+  const codigo = await emitirCodigo(camposDoDocumento(documento, usuario, resumoDaFoto), dependencias.carimbar);
+  return { codigo, fotoSha256: resumoDaFoto };
 }

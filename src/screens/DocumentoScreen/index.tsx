@@ -92,11 +92,16 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
     }
     copiandoRef.current = true;
     try {
-      const codigo = await emitirCodigoDoDocumento(
-        { buscarUsuario: (id) => usuarios.findById(id), resumirSha256, carimbar: carimbarComOSegredoDoApp },
-        documentoAberto,
-        await lerFotoDocumentoBase64(documentoAberto.id),
-      );
+      // Documentos assinados antes de o código ser gravado não têm um: o código é refeito com os dados atuais da conta.
+      const codigo =
+        documentoAberto.codigo ??
+        (
+          await emitirCodigoDoDocumento(
+            { buscarUsuario: (id) => usuarios.findById(id), resumirSha256, carimbar: carimbarComOSegredoDoApp },
+            documentoAberto,
+            await lerFotoDocumentoBase64(documentoAberto),
+          )
+        ).codigo;
       await copiarTexto(codigo);
       showSuccess('Código copiado');
     } catch (error) {
@@ -112,7 +117,7 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
       return;
     }
     excluindoRef.current = true;
-    if ((await excluirDocumento({ documentos, excluirArquivosDocumento }, documentoAberto.id)) === 'falhou') {
+    if ((await excluirDocumento({ documentos, excluirArquivosDocumento }, documentoAberto)) === 'falhou') {
       excluindoRef.current = false;
       showError('Erro', 'Não foi possível excluir o documento.');
       return;
@@ -182,7 +187,7 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
         </Stack>
         <Row gap="documentSummary" align="start">
           <PreviaDocumento
-            foto={uriFotoDocumento(documento.id)}
+            foto={uriFotoDocumento(documento)}
             tamanhoFoto={documento.tamanhoFoto}
             desenho={documento.assinaturaUsada.desenho}
             selo={documento.selo}
@@ -207,7 +212,7 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
       <VisualizadorDocumento
         visible={ampliado}
         titulo={documento.titulo}
-        foto={uriFotoDocumento(documento.id)}
+        foto={uriFotoDocumento(documento)}
         tamanhoFoto={documento.tamanhoFoto}
         desenho={documento.assinaturaUsada.desenho}
         selo={documento.selo}

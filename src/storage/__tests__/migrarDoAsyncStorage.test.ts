@@ -45,6 +45,16 @@ describe('migração do AsyncStorage para o SQLite', () => {
     await expect(AsyncStorage.getItem(DOCUMENTOS_STORAGE_KEY)).resolves.toBeNull();
   });
 
+  test('documento do AsyncStorage, salvo antes do código existir, migra com código e resumo nulos', async () => {
+    const { codigo, fotoSha256, ...antigo } = DOCUMENTO;
+    expect([codigo, fotoSha256]).toEqual([null, null]);
+    await AsyncStorage.setItem(DOCUMENTOS_STORAGE_KEY, JSON.stringify([antigo]));
+
+    const { documentos } = await abrirEEsperar();
+
+    await expect(documentos.findById(DOCUMENTO.id)).resolves.toEqual(DOCUMENTO);
+  });
+
   test('sem dados antigos, não faz nada', async () => {
     const { assinaturas, documentos } = await abrirEEsperar();
 

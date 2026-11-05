@@ -1,9 +1,10 @@
 import { criarNomeAssinatura, type NomeAssinatura } from './assinatura';
 import { ValidationError, validarId, type Brand } from './brand';
+import type { CodigoDeAutenticidade } from './codigoDeAutenticidade';
 import { createIsoDateTime, type IsoDateTime } from './dateTime';
 import { paraDesenho, type Desenho } from './desenho';
 import { createFraction, paraSize, type Size } from './geometry';
-import { lerNumero, lerObjeto, lerTexto } from './leitura';
+import { lerNumero, lerObjeto, lerTexto, lerTextoOuNulo } from './leitura';
 import type { PosicaoSelo } from './selo';
 import { criarUsuarioId, type UsuarioId } from './usuario';
 
@@ -31,11 +32,18 @@ export type DocumentoAssinado = Readonly<{
   selo: PosicaoSelo;
   local: LocalAssinatura;
   assinadoEm: IsoDateTime;
+  // Gravados na hora da assinatura. Ficam null em documentos assinados antes de existirem.
+  codigo: CodigoDeAutenticidade | null;
+  fotoSha256: string | null;
 }>;
+
+// O que basta saber de um documento para achar os arquivos dele (foto e PDF) no aparelho.
+export type ArquivosDoDocumento = Pick<DocumentoAssinado, 'id' | 'usuarioId'>;
 
 const DOCUMENTO_ID = validarId;
 const TAMANHO_MAXIMO_DO_TITULO = 60;
 const DOCTYPE = '<!DOCTYPE html>';
+const SHA256_HEX = /^[0-9a-f]{64}$/;
 const DOCUMENTO_INVALIDO = 'Documento salvo inválido.';
 
 export function criarDocumentoId(texto: string): DocumentoId {
@@ -138,6 +146,18 @@ function paraLocal(dado: unknown): LocalAssinatura {
   };
 }
 
+function paraCodigo(dado: unknown): CodigoDeAutenticidade | null {
+  return lerTextoOuNulo(dado, DOCUMENTO_INVALIDO) as CodigoDeAutenticidade | null;
+}
+
+function paraFotoSha256(dado: unknown): string | null {
+  const resumo = lerTextoOuNulo(dado, DOCUMENTO_INVALIDO);
+  if (resumo !== null && !SHA256_HEX.test(resumo)) {
+    throw new ValidationError(DOCUMENTO_INVALIDO);
+  }
+  return resumo;
+}
+
 export function paraDocumentoAssinado(dado: unknown): DocumentoAssinado {
   const documento = lerObjeto(dado, DOCUMENTO_INVALIDO);
 
@@ -154,6 +174,8 @@ export function paraDocumentoAssinado(dado: unknown): DocumentoAssinado {
     assinadoEm: createIsoDateTime(
       lerTexto('assinadoEm' in documento ? documento.assinadoEm : undefined, DOCUMENTO_INVALIDO),
     ),
+    codigo: paraCodigo('codigo' in documento ? documento.codigo : undefined),
+    fotoSha256: paraFotoSha256('fotoSha256' in documento ? documento.fotoSha256 : undefined),
   };
 }
 

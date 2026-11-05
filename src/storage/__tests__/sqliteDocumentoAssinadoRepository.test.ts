@@ -1,5 +1,6 @@
 import { openDatabaseSync } from 'expo-sqlite';
 
+import type { CodigoDeAutenticidade } from '../../domain/codigoDeAutenticidade';
 import { criarDocumentoId } from '../../domain/documento';
 import { abrirBanco, NOME_DO_BANCO } from '../sqlite/banco';
 import { createSqliteDocumentoAssinadoRepository } from '../sqlite/sqliteDocumentoAssinadoRepository';
@@ -96,6 +97,32 @@ describe('DocumentoAssinadoRepository (SQLite), colunas de sincronização', () 
     await repositorio.delete(criarDocumentoId('999'));
 
     expect((await linhasSalvas())[0].deleted_at).toBeNull();
+  });
+
+  test('guarda o código e o resumo da foto gravados na assinatura e devolve o mesmo documento', async () => {
+    const assinado = {
+      ...DOCUMENTO,
+      codigo: 'AA1;id=1#carimbo' as CodigoDeAutenticidade,
+      fotoSha256: 'a'.repeat(64),
+    };
+
+    await criarRepositorio().save(assinado);
+
+    expect((await linhasSalvas())[0]).toMatchObject({ codigo: 'AA1;id=1#carimbo', foto_sha256: 'a'.repeat(64) });
+    await expect(criarRepositorio().findById(assinado.id)).resolves.toEqual(assinado);
+  });
+
+  test('documento sem código (assinado antes de ele ser gravado) guarda nulos e volta igual', async () => {
+    await criarRepositorio().save(DOCUMENTO);
+
+    expect((await linhasSalvas())[0]).toMatchObject({ codigo: null, foto_sha256: null });
+    await expect(criarRepositorio().findById(DOCUMENTO.id)).resolves.toEqual(DOCUMENTO);
+  });
+
+  test('os arquivos nascem marcados como locais, para o sync saber que ainda precisam subir', async () => {
+    await criarRepositorio().save(DOCUMENTO);
+
+    expect((await linhasSalvas())[0]).toMatchObject({ foto_status: 'local', pdf_status: 'local' });
   });
 
   test('guarda os campos aninhados como JSON e devolve o mesmo documento', async () => {
