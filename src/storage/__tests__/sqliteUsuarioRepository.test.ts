@@ -1,4 +1,7 @@
-import { criarEmail } from '../../domain/usuario';
+import { openDatabaseSync } from 'expo-sqlite';
+
+import { criarEmail, criarNome } from '../../domain/usuario';
+import { abrirBanco, NOME_DO_BANCO } from '../sqlite/banco';
 import { createSqliteUsuarioRepository } from '../sqlite/sqliteUsuarioRepository';
 import { testarContratoUsuarioRepository } from '../testing/usuarioRepositoryContract';
 
@@ -26,5 +29,84 @@ describe('UsuarioRepository (SQLite), atualizações', () => {
 
     const comNovaSenha = await repositorio.updateSenha(criado.id, 'hash-b');
     expect(comNovaSenha.senhaHash).toBe('hash-b');
+  });
+});
+
+describe('UsuarioRepository (SQLite), colunas de sincronização', () => {
+  function linhasSalvas() {
+    return openDatabaseSync(NOME_DO_BANCO).getAllAsync<Record<string, unknown>>('SELECT * FROM usuarios');
+  }
+
+  beforeEach(() => {
+    __resetTodosOsBancosDeTeste();
+    jest.useFakeTimers({ now: new Date('2026-10-01T10:00:00.000Z') });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test('create grava created_at e updated_at com a hora atual e marca como pendente', async () => {
+    const criado = await createSqliteUsuarioRepository().create({ email: EMAIL, senhaHash: 'hash-a' });
+
+    expect(criado.criadoEm).toBe('2026-10-01T10:00:00.000Z');
+    expect((await linhasSalvas())[0]).toMatchObject({
+      id: criado.id,
+      created_at: '2026-10-01T10:00:00.000Z',
+      updated_at: '2026-10-01T10:00:00.000Z',
+      deleted_at: null,
+      sync_status: 'pending',
+    });
+  });
+
+  test('cada atualização muda updated_at, mantém created_at e deixa a linha pendente', async () => {
+    const repositorio = createSqliteUsuarioRepository();
+    const criado = await repositorio.create({ email: EMAIL, senhaHash: 'hash-a' });
+    jest.setSystemTime(new Date('2026-10-02T08:00:00.000Z'));
+
+    const atualizado = await repositorio.updateNome(criado.id, criarNome('Ana Souza'));
+
+    expect(atualizado.criadoEm).toBe('2026-10-01T10:00:00.000Z');
+    expect((await linhasSalvas())[0]).toMatchObject({
+      nome: 'Ana Souza',
+      created_at: '2026-10-01T10:00:00.000Z',
+      updated_at: '2026-10-02T08:00:00.000Z',
+      sync_status: 'pending',
+    });
+  });
+
+  test('usuário marcado como apagado some das buscas', async () => {
+    const repositorio = createSqliteUsuarioRepository();
+    const criado = await repositorio.create({ email: EMAIL, senhaHash: 'hash-a' });
+    await openDatabaseSync(NOME_DO_BANCO).runAsync('UPDATE usuarios SET deleted_at = ? WHERE id = ?', '2026-10-03T09:00:00.000Z', criado.id);
+
+    await expect(repositorio.findById(criado.id)).resolves.toBeNull();
+    await expect(repositorio.findByEmail(EMAIL)).resolves.toBeNull();
+  });
+
+  test('ao abrir um banco antigo, renomeia criado_em para created_at e acrescenta as colunas novas', async () => {
+    const banco = abrirBanco();
+    const execucoes = (banco.db.execAsync as jest.Mock).mock.calls;
+
+    await createSqliteUsuarioRepository(banco).findById('1' as never);
+
+    const comandos = execucoes.map(([sql]) => String(sql));
+    expect(comandos).toContain('ALTER TABLE usuarios RENAME COLUMN criado_em TO created_at');
+    expect(comandos).toContain('ALTER TABLE usuarios ADD COLUMN updated_at TEXT');
+    expect(comandos).toContain('ALTER TABLE usuarios ADD COLUMN deleted_at TEXT');
+    expect(comandos).toContain("ALTER TABLE usuarios ADD COLUMN sync_status TEXT NOT NULL DEFAULT 'pending'");
+    expect(comandos).toContain('UPDATE usuarios SET updated_at = created_at WHERE updated_at IS NULL');
+  });
+
+  test('banco que já está na versão nova não quebra quando os comandos de atualização falham', async () => {
+    const banco = abrirBanco();
+    const original = banco.db.execAsync as jest.Mock;
+    original.mockImplementation(async (sql: string) => {
+      if (/^ALTER TABLE/.test(sql)) {
+        throw new Error('duplicate column name');
+      }
+    });
+
+    await expect(createSqliteUsuarioRepository(banco).findById('1' as never)).resolves.toBeNull();
   });
 });

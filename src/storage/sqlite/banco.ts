@@ -6,6 +6,15 @@ export const NOME_DO_BANCO = 'assinaaqui.db';
 
 export type Banco = Readonly<{ db: SQLiteDatabase; pronto: Promise<void> }>;
 
+// SQLite não tem "ADD COLUMN IF NOT EXISTS": se a coluna já existe o comando falha e seguimos em frente.
+export async function adicionarColunaSeFaltar(db: SQLiteDatabase, tabela: string, definicao: string): Promise<void> {
+  try {
+    await db.execAsync(`ALTER TABLE ${tabela} ADD COLUMN ${definicao}`);
+  } catch {
+    // Coluna já existe: banco criado depois desta versão do esquema.
+  }
+}
+
 async function prepararBanco(db: SQLiteDatabase): Promise<void> {
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS assinaturas (
@@ -36,6 +45,10 @@ async function prepararBanco(db: SQLiteDatabase): Promise<void> {
     );
     CREATE INDEX IF NOT EXISTS idx_documentos_usuario ON documentos (usuario_id, deleted_at);
   `);
+  await adicionarColunaSeFaltar(db, 'documentos', 'codigo TEXT');
+  await adicionarColunaSeFaltar(db, 'documentos', 'foto_sha256 TEXT');
+  await adicionarColunaSeFaltar(db, 'documentos', "foto_status TEXT NOT NULL DEFAULT 'local'");
+  await adicionarColunaSeFaltar(db, 'documentos', "pdf_status TEXT NOT NULL DEFAULT 'local'");
   await migrarDoAsyncStorage(db);
 }
 
