@@ -24,6 +24,7 @@ import { carimbarComOSegredoDoApp } from '../../services/carimbo';
 import { copiarTexto } from '../../services/clipboard';
 import { resumirSha256 } from '../../services/hmac';
 import { emitirCodigoDoDocumento } from '../../useCases/emitirCodigoDoDocumento';
+import { useAuthentication } from '../../hooks/useAuthentication';
 
 type DocumentoScreenProps = Readonly<{
   documentoId: DocumentoId;
@@ -33,6 +34,7 @@ type DocumentoScreenProps = Readonly<{
 
 export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: DocumentoScreenProps) {
   const { documentos, usuarios } = useRepositories();
+  const { usuarioId } = useAuthentication();
   const [documento, setDocumento] = useState<DocumentoAssinado | null>(null);
   const compartilhandoRef = useRef(false);
   const excluindoRef = useRef(false);
@@ -46,8 +48,11 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
   });
 
   useEffect(() => {
+    if (usuarioId === null) {
+      return;
+    }
     let ativo = true;
-    documentos.findById(documentoId).then(
+    documentos.findById(documentoId, usuarioId).then(
       (encontrado) => {
         if (!ativo) {
           return;
@@ -71,6 +76,10 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
   }, [documentoId, documentos]);
 
   async function compartilhar(documentoAberto: DocumentoAssinado) {
+    if (documentoAberto.pdfStatus !== 'local') {
+      showError('Erro', 'O PDF deste documento ainda não está neste aparelho.');
+      return;
+    }
     if (compartilhandoRef.current) {
       return;
     }
@@ -87,6 +96,10 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
     }
   }
   async function copiarCodigo(documentoAberto: DocumentoAssinado) {
+    if (documentoAberto.codigo === null && documentoAberto.fotoStatus !== 'local') {
+      showError('Erro', 'A foto deste documento ainda não está neste aparelho.');
+      return;
+    }
     if (copiandoRef.current) {
       return;
     }
@@ -185,15 +198,20 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
           <Text preset="screenTitle">{documento.titulo}</Text>
           <Text preset="supporting">PDF A4, 1 página</Text>
         </Stack>
+        {documento.fotoStatus === 'local' ? null : (
+          <Text preset="supporting">A foto deste documento ainda não está neste aparelho.</Text>
+        )}
         <Row gap="documentSummary" align="start">
-          <PreviaDocumento
-            foto={uriFotoDocumento(documento)}
-            tamanhoFoto={documento.tamanhoFoto}
-            desenho={documento.assinaturaUsada.desenho}
-            selo={documento.selo}
-            linhas={[assinadoEm, formatLocal(documento.local)]}
-            onAmpliar={() => setAmpliado(true)}
-          />
+          {documento.fotoStatus === 'local' ? (
+            <PreviaDocumento
+              foto={uriFotoDocumento(documento)}
+              tamanhoFoto={documento.tamanhoFoto}
+              desenho={documento.assinaturaUsada.desenho}
+              selo={documento.selo}
+              linhas={[assinadoEm, formatLocal(documento.local)]}
+              onAmpliar={() => setAmpliado(true)}
+            />
+          ) : null}
           <Stack gap="documentData" flex={1}>
             <DadoDoDocumento rotulo="Assinado em" valor={assinadoEm} />
             {documento.local.cidade === null ? null : (

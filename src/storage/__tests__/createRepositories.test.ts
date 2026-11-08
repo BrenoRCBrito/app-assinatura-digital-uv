@@ -25,7 +25,7 @@ describe('createRepositories', () => {
 
     await createRepositories('sqlite').documentos.save(documento);
 
-    await expect(createRepositories('sqlite').documentos.findById(documento.id)).resolves.toEqual(documento);
+    await expect(createRepositories('sqlite').documentos.findById(documento.id, documento.usuarioId)).resolves.toEqual(documento);
   });
 
   test('em memória, cada chamada começa vazia', async () => {

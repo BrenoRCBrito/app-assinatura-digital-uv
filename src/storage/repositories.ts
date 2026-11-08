@@ -11,7 +11,7 @@ export interface AssinaturaRepository {
 
 export interface DocumentoAssinadoRepository {
   list(usuarioId: UsuarioId): Promise<readonly DocumentoAssinado[]>;
-  findById(id: DocumentoId): Promise<DocumentoAssinado | null>;
+  findById(id: DocumentoId, usuarioId: UsuarioId): Promise<DocumentoAssinado | null>;
   save(documento: DocumentoAssinado): Promise<void>;
   delete(id: DocumentoId): Promise<void>;
   clear(): Promise<void>;

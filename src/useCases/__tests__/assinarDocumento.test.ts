@@ -215,6 +215,8 @@ describe('assinarDocumento', () => {
       assinadoEm: '2026-09-12T14:32:00.000Z',
       codigo: CODIGO,
       fotoSha256: RESUMO_DA_FOTO,
+      fotoStatus: 'local',
+      pdfStatus: 'local',
     };
     expect(resultado).toEqual({ tipo: 'assinado', documento });
     expect(passos).toEqual([
@@ -230,6 +232,6 @@ describe('assinarDocumento', () => {
     ]);
     expect(dependencias.emitirCodigo).toHaveBeenCalledWith({ ...documento, codigo: null, fotoSha256: null }, FOTO_BASE64);
     expect(dependencias.montarHtmlDocumento).toHaveBeenCalledWith(documento, FOTO_BASE64, CODIGO);
-    await expect(registro.findById(ID)).resolves.toEqual(documento);
+    await expect(registro.findById(ID, USUARIO_ID)).resolves.toEqual(documento);
   });
 });

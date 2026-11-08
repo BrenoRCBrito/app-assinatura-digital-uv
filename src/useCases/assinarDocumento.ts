@@ -106,6 +106,8 @@ export async function assinarDocumento(
     assinadoEm: dependencias.agora(),
     codigo: null,
     fotoSha256: null,
+    fotoStatus: 'local',
+    pdfStatus: 'local',
   };
 
   try {

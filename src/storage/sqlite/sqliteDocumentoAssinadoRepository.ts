@@ -17,6 +17,9 @@ type LinhaDocumento = Readonly<{
   assinado_em: string;
   codigo: string | null;
   foto_sha256: string | null;
+  foto_status: string;
+  pdf_status: string;
+
 }>;
 
 function paraDocumentoDaLinha(linha: LinhaDocumento): DocumentoAssinado {
@@ -31,6 +34,9 @@ function paraDocumentoDaLinha(linha: LinhaDocumento): DocumentoAssinado {
     assinadoEm: linha.assinado_em,
     codigo: linha.codigo,
     fotoSha256: linha.foto_sha256,
+    fotoStatus: linha.foto_status,
+    pdfStatus: linha.pdf_status,
+
   });
 }
 
@@ -44,14 +50,16 @@ export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): 
       );
       return ordenarDocumentosMaisNovosPrimeiro(linhas.map(paraDocumentoDaLinha));
     },
-    async findById(id) {
+    async findById(id, usuarioId) {
       await pronto;
       const linha = await db.getFirstAsync<LinhaDocumento>(
-        'SELECT * FROM documentos WHERE id = ? AND deleted_at IS NULL',
+        'SELECT * FROM documentos WHERE id = ? AND usuario_id = ? AND deleted_at IS NULL',
         id,
+        usuarioId,
       );
       return linha === null ? null : paraDocumentoDaLinha(linha);
     },
+
     async save(documento) {
       await pronto;
       const agora = new Date().toISOString();
@@ -65,24 +73,25 @@ export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): 
         documento.assinadoEm,
         documento.codigo,
         documento.fotoSha256,
+        documento.fotoStatus,
+        documento.pdfStatus,
       ];
+
       const existente = await db.getFirstAsync<LinhaDocumento>('SELECT * FROM documentos WHERE id = ?', documento.id);
       if (existente === null) {
         await db.runAsync(
-          'INSERT INTO documentos (id, usuario_id, titulo, assinatura_usada, tamanho_foto, selo, local_assinatura, assinado_em, codigo, foto_sha256, created_at, updated_at, deleted_at, sync_status, foto_status, pdf_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO documentos (id, usuario_id, titulo, assinatura_usada, tamanho_foto, selo, local_assinatura, assinado_em, codigo, foto_sha256, foto_status, pdf_status, created_at, updated_at, deleted_at, sync_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           documento.id,
           ...valores,
           agora,
           agora,
           null,
           'pending',
-          'local',
-          'local',
         );
         return;
       }
       await db.runAsync(
-        'UPDATE documentos SET usuario_id = ?, titulo = ?, assinatura_usada = ?, tamanho_foto = ?, selo = ?, local_assinatura = ?, assinado_em = ?, codigo = ?, foto_sha256 = ?, updated_at = ?, deleted_at = ?, sync_status = ? WHERE id = ?',
+        'UPDATE documentos SET usuario_id = ?, titulo = ?, assinatura_usada = ?, tamanho_foto = ?, selo = ?, local_assinatura = ?, assinado_em = ?, codigo = ?, foto_sha256 = ?, foto_status = ?, pdf_status = ?, updated_at = ?, deleted_at = ?, sync_status = ? WHERE id = ?',
         ...valores,
         agora,
         null,

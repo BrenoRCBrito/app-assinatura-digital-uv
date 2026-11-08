@@ -40,19 +40,20 @@ describe('migração do AsyncStorage para o SQLite', () => {
     const { assinaturas, documentos } = await abrirEEsperar();
 
     await expect(assinaturas.list(USUARIO_DE_TESTE)).resolves.toEqual([ASSINATURA]);
-    await expect(documentos.findById(DOCUMENTO.id)).resolves.toEqual(DOCUMENTO);
+    await expect(documentos.findById(DOCUMENTO.id, DOCUMENTO.usuarioId)).resolves.toEqual(DOCUMENTO);
     await expect(AsyncStorage.getItem(ASSINATURAS_STORAGE_KEY)).resolves.toBeNull();
     await expect(AsyncStorage.getItem(DOCUMENTOS_STORAGE_KEY)).resolves.toBeNull();
   });
 
   test('documento do AsyncStorage, salvo antes do código existir, migra com código e resumo nulos', async () => {
-    const { codigo, fotoSha256, ...antigo } = DOCUMENTO;
-    expect([codigo, fotoSha256]).toEqual([null, null]);
+    const { codigo, fotoSha256, fotoStatus, pdfStatus, ...antigo } = DOCUMENTO;
+    expect([codigo, fotoSha256, fotoStatus, pdfStatus]).toEqual([null, null, 'local', 'local']);
+
     await AsyncStorage.setItem(DOCUMENTOS_STORAGE_KEY, JSON.stringify([antigo]));
 
     const { documentos } = await abrirEEsperar();
 
-    await expect(documentos.findById(DOCUMENTO.id)).resolves.toEqual(DOCUMENTO);
+    await expect(documentos.findById(DOCUMENTO.id, DOCUMENTO.usuarioId)).resolves.toEqual(DOCUMENTO);
   });
 
   test('sem dados antigos, não faz nada', async () => {
@@ -70,7 +71,7 @@ describe('migração do AsyncStorage para o SQLite', () => {
 
     const depois = await abrirEEsperar();
 
-    await expect(depois.documentos.findById(DOCUMENTO.id)).resolves.toEqual(maisNovo);
+    await expect(depois.documentos.findById(DOCUMENTO.id, DOCUMENTO.usuarioId)).resolves.toEqual(maisNovo);
     await expect(AsyncStorage.getItem(DOCUMENTOS_STORAGE_KEY)).resolves.toBeNull();
   });
 

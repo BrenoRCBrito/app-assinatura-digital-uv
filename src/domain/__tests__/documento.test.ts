@@ -36,6 +36,8 @@ function documentoValido(id: string, assinadoEm: string, cidade: string | null =
     assinadoEm: createIsoDateTime(assinadoEm),
     codigo: null,
     fotoSha256: null,
+    fotoStatus: 'local',
+    pdfStatus: 'local',
   };
 }
 
@@ -139,6 +141,28 @@ describe('paraDocumentoAssinado', () => {
 
   test.each(['abc', 'A'.repeat(64), 'a'.repeat(63), 12])('recusa o resumo da foto inválido %p', (resumo) => {
     const documento = { ...documentoValido('1', '2026-09-12T10:00:00.000Z'), fotoSha256: resumo };
+
+    expect(() => paraDocumentoAssinado(JSON.parse(JSON.stringify(documento)))).toThrow('Documento salvo inválido.');
+  });
+
+    test('documento salvo antes de existir o status dos arquivos volta com os dois como locais', () => {
+    const { fotoStatus, pdfStatus, ...antigo } = documentoValido('1', '2026-09-12T10:00:00.000Z');
+
+    expect([fotoStatus, pdfStatus]).toEqual(['local', 'local']);
+    expect(paraDocumentoAssinado(JSON.parse(JSON.stringify(antigo)))).toMatchObject({
+      fotoStatus: 'local',
+      pdfStatus: 'local',
+    });
+  });
+
+  test.each(['remote', 'downloading'] as const)('mantém o status %s dos arquivos', (status) => {
+    const documento = { ...documentoValido('1', '2026-09-12T10:00:00.000Z'), fotoStatus: status, pdfStatus: status };
+
+    expect(paraDocumentoAssinado(JSON.parse(JSON.stringify(documento)))).toEqual(documento);
+  });
+
+  test.each(['baixado', '', 'LOCAL', 3])('recusa o status de arquivo inválido %p', (status) => {
+    const documento = { ...documentoValido('1', '2026-09-12T10:00:00.000Z'), pdfStatus: status };
 
     expect(() => paraDocumentoAssinado(JSON.parse(JSON.stringify(documento)))).toThrow('Documento salvo inválido.');
   });

@@ -44,6 +44,8 @@ export function criarDocumentoDeTeste(
     assinadoEm: createIsoDateTime(assinadoEm),
     codigo: null,
     fotoSha256: null,
+    fotoStatus: 'local',
+    pdfStatus: 'local',
   };
 }
 
@@ -94,9 +96,24 @@ export function testarContratoDocumentoAssinadoRepository(
       const documento = criarDocumentoDeTeste('1', 'Contrato de locação', '2026-09-12T10:00:00.000Z');
       await repositorio.save(documento);
 
-      await expect(repositorio.findById(documento.id)).resolves.toEqual(documento);
-      await expect(repositorio.findById(criarDocumentoId('999'))).resolves.toBeNull();
+      await expect(repositorio.findById(documento.id, USUARIO_DE_TESTE)).resolves.toEqual(documento);
+      await expect(repositorio.findById(criarDocumentoId('999'), USUARIO_DE_TESTE)).resolves.toBeNull();
     });
+
+    test('findById não devolve o documento de outra conta, mesmo sabendo o id', async () => {
+      const repositorio = criarRepositorio();
+      const daOutraConta = criarDocumentoDeTeste(
+        '1',
+        'De outra conta',
+        '2026-09-12T10:00:00.000Z',
+        OUTRO_USUARIO_DE_TESTE,
+      );
+      await repositorio.save(daOutraConta);
+
+      await expect(repositorio.findById(daOutraConta.id, USUARIO_DE_TESTE)).resolves.toBeNull();
+      await expect(repositorio.findById(daOutraConta.id, OUTRO_USUARIO_DE_TESTE)).resolves.toEqual(daOutraConta);
+    });
+
 
     test('save substitui o documento com o mesmo id', async () => {
       const repositorio = criarRepositorio();

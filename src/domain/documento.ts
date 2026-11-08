@@ -23,6 +23,8 @@ export type LocalAssinatura = Readonly<{ coordenadas: Coordinates; cidade: City 
 
 export type AssinaturaUsada = Readonly<{ nome: NomeAssinatura; desenho: Desenho }>;
 
+export type StatusDoArquivo = 'local' | 'remote' | 'downloading';
+
 export type DocumentoAssinado = Readonly<{
   id: DocumentoId;
   usuarioId: UsuarioId;
@@ -35,6 +37,8 @@ export type DocumentoAssinado = Readonly<{
   // Gravados na hora da assinatura. Ficam null em documentos assinados antes de existirem.
   codigo: CodigoDeAutenticidade | null;
   fotoSha256: string | null;
+  fotoStatus: StatusDoArquivo;
+  pdfStatus: StatusDoArquivo;
 }>;
 
 // O que basta saber de um documento para achar os arquivos dele (foto e PDF) no aparelho.
@@ -44,6 +48,7 @@ const DOCUMENTO_ID = validarId;
 const TAMANHO_MAXIMO_DO_TITULO = 60;
 const DOCTYPE = '<!DOCTYPE html>';
 const SHA256_HEX = /^[0-9a-f]{64}$/;
+const STATUS_DO_ARQUIVO: readonly StatusDoArquivo[] = ['local', 'remote', 'downloading'];
 const DOCUMENTO_INVALIDO = 'Documento salvo inválido.';
 
 export function criarDocumentoId(texto: string): DocumentoId {
@@ -158,6 +163,18 @@ function paraFotoSha256(dado: unknown): string | null {
   return resumo;
 }
 
+function paraStatusDoArquivo(dado: unknown): StatusDoArquivo {
+  const texto = lerTextoOuNulo(dado, DOCUMENTO_INVALIDO);
+  if (texto === null) {
+    return 'local';
+  }
+  const status = STATUS_DO_ARQUIVO.find((atual) => atual === texto);
+  if (status === undefined) {
+    throw new ValidationError(DOCUMENTO_INVALIDO);
+  }
+  return status;
+}
+
 export function paraDocumentoAssinado(dado: unknown): DocumentoAssinado {
   const documento = lerObjeto(dado, DOCUMENTO_INVALIDO);
 
@@ -176,6 +193,8 @@ export function paraDocumentoAssinado(dado: unknown): DocumentoAssinado {
     ),
     codigo: paraCodigo('codigo' in documento ? documento.codigo : undefined),
     fotoSha256: paraFotoSha256('fotoSha256' in documento ? documento.fotoSha256 : undefined),
+    fotoStatus: paraStatusDoArquivo('fotoStatus' in documento ? documento.fotoStatus : undefined),
+    pdfStatus: paraStatusDoArquivo('pdfStatus' in documento ? documento.pdfStatus : undefined),
   };
 }
 

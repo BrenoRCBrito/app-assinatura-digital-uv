@@ -19,8 +19,9 @@ import {
   falharProximaEscritaNoBanco,
   reiniciarBancoDeTeste,
 } from '../../storage/testing/bancoDeTeste';
-import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
+import { criarDocumentoDeTeste ,OUTRO_USUARIO_DE_TESTE ,USUARIO_DE_TESTE} from '../../storage/testing/documentoAssinadoRepositoryContract';
 import { DocumentoScreen } from '../DocumentoScreen';
+import { useAuthentication } from '../../hooks/useAuthentication';
 
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -38,7 +39,7 @@ jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn() }));
 jest.mock('../../services/carimbo', () => ({ carimbarComOSegredoDoApp: jest.fn() }));
 jest.mock('../../services/hmac', () => ({ resumirSha256: jest.fn() }));
 jest.mock('../../useCases/emitirCodigoDoDocumento', () => ({ emitirCodigoDoDocumento: jest.fn() }));
-
+jest.mock('../../hooks/useAuthentication', () => ({ useAuthentication: jest.fn() }));
 
 const DOCUMENTO = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z');
 
@@ -66,6 +67,7 @@ describe('DocumentoScreen', () => {
   beforeEach(async () => {
     await AsyncStorage.clear();
     reiniciarBancoDeTeste();
+    jest.mocked(useAuthentication).mockReturnValue({ usuarioId: USUARIO_DE_TESTE } as ReturnType<typeof useAuthentication>);
     jest.mocked(compartilharPdf).mockReset();
     jest.mocked(excluirArquivosDocumento).mockReset();
     alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
@@ -145,7 +147,84 @@ describe('DocumentoScreen', () => {
     await waitFor(() => expect(compartilharPdf).toHaveBeenCalledWith(DOCUMENTO));
   });
 
+    test('documento de outra conta não abre, mesmo sabendo o id: mostra a mensagem e volta', async () => {
+    await createRepositories('sqlite').documentos.save(
+      criarDocumentoDeTeste('1757680000000', 'Documento alheio', '2026-09-12T14:32:00.000Z', OUTRO_USUARIO_DE_TESTE),
+    );
+    const { onNaoEncontrado } = await abrirDocumento();
 
+    await waitFor(() => expect(onNaoEncontrado).toHaveBeenCalledTimes(1));
+    expect(alerta).toHaveBeenCalledWith('Erro', 'Documento não encontrado.');
+    expect(screen.queryByText('Documento alheio')).toBeNull();
+  });
+
+  test('sem conta logada, não carrega nada e não volta', async () => {
+    jest.mocked(useAuthentication).mockReturnValue({ usuarioId: null } as ReturnType<typeof useAuthentication>);
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
+    const { onNaoEncontrado } = await abrirDocumento();
+
+    await new Promise((resolver) => setTimeout(resolver, 50));
+
+    expect(screen.queryByText('Contrato de locação')).toBeNull();
+    expect(onNaoEncontrado).not.toHaveBeenCalled();
+    expect(alerta).not.toHaveBeenCalled();
+  });
+
+  test('com a foto só na nuvem, avisa e não tenta mostrar a prévia', async () => {
+    await createRepositories('sqlite').documentos.save({ ...DOCUMENTO, fotoStatus: 'remote' });
+    await abrirDocumento();
+
+    expect(await screen.findByText('A foto deste documento ainda não está neste aparelho.')).toBeTruthy();
+    expect(screen.queryByLabelText('Prévia do documento')).toBeNull();
+    expect(screen.queryByLabelText('Ampliar documento')).toBeNull();
+    expect(screen.getByText('Assinado em')).toBeTruthy();
+  });
+
+  test('com a foto no aparelho, não mostra o aviso da foto', async () => {
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
+    await abrirDocumento();
+
+    await screen.findByLabelText('Prévia do documento');
+
+    expect(screen.queryByText('A foto deste documento ainda não está neste aparelho.')).toBeNull();
+  });
+
+  test('com o PDF só na nuvem, Compartilhar PDF avisa e não compartilha', async () => {
+    await createRepositories('sqlite').documentos.save({ ...DOCUMENTO, pdfStatus: 'remote' });
+    await abrirDocumento();
+
+    await fireEvent.press(await screen.findByText('Compartilhar PDF'));
+
+    expect(alerta).toHaveBeenCalledWith('Erro', 'O PDF deste documento ainda não está neste aparelho.');
+    expect(compartilharPdf).not.toHaveBeenCalled();
+  });
+
+  test('documento antigo, sem código gravado e com a foto na nuvem, não consegue copiar o código', async () => {
+    await createRepositories('sqlite').documentos.save({ ...DOCUMENTO, fotoStatus: 'remote' });
+    await abrirDocumento();
+
+    await fireEvent.press(await screen.findByText('Copiar código'));
+
+    expect(alerta).toHaveBeenCalledWith('Erro', 'A foto deste documento ainda não está neste aparelho.');
+    expect(emitirCodigoDoDocumento).not.toHaveBeenCalled();
+    expect(setStringAsync).not.toHaveBeenCalled();
+  });
+
+  test('com o código gravado, copia mesmo que a foto esteja só na nuvem', async () => {
+    const gravado = {
+      ...DOCUMENTO,
+      codigo: 'AA1;id=1757680000000#gravado' as never,
+      fotoSha256: 'a'.repeat(64),
+      fotoStatus: 'remote' as const,
+    };
+    await createRepositories('sqlite').documentos.save(gravado);
+    await abrirDocumento();
+
+    await fireEvent.press(await screen.findByText('Copiar código'));
+
+    await waitFor(() => expect(setStringAsync).toHaveBeenCalledWith('AA1;id=1757680000000#gravado'));
+    expect(alerta).not.toHaveBeenCalled();
+  });
 
   test('documento que não existe mostra a mensagem e volta', async () => {
     const { onNaoEncontrado } = await abrirDocumento(criarDocumentoId('999'));
@@ -214,7 +293,7 @@ describe('DocumentoScreen', () => {
       'Excluir documento',
       'Excluir "Contrato de locação"? O PDF e a foto também são apagados.',
     ]);
-    await expect(createRepositories('sqlite').documentos.findById(DOCUMENTO.id)).resolves.toBeNull();
+    await expect(createRepositories('sqlite').documentos.findById(DOCUMENTO.id ,DOCUMENTO.usuarioId)).resolves.toBeNull();
     expect(excluirArquivosDocumento).toHaveBeenCalledWith(DOCUMENTO);
     expect(toast).toHaveBeenCalledWith({ type: 'success', text1: 'Documento excluído' });
     toast.mockRestore();

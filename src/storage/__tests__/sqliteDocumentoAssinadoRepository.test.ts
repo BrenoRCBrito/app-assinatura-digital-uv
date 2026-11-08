@@ -9,6 +9,7 @@ import {
   criarDocumentoDeTeste,
   testarContratoDocumentoAssinadoRepository,
   USUARIO_DE_TESTE,
+  OUTRO_USUARIO_DE_TESTE,
 } from '../testing/documentoAssinadoRepositoryContract';
 
 jest.mock('expo-sqlite');
@@ -86,7 +87,7 @@ describe('DocumentoAssinadoRepository (SQLite), colunas de sincronização', () 
       updated_at: '2026-10-03T09:00:00.000Z',
       sync_status: 'pending',
     });
-    await expect(repositorio.findById(DOCUMENTO.id)).resolves.toBeNull();
+    await expect(repositorio.findById(DOCUMENTO.id , USUARIO_DE_TESTE)).resolves.toBeNull();
     await expect(repositorio.list(USUARIO_DE_TESTE)).resolves.toEqual([]);
   });
 
@@ -109,14 +110,14 @@ describe('DocumentoAssinadoRepository (SQLite), colunas de sincronização', () 
     await criarRepositorio().save(assinado);
 
     expect((await linhasSalvas())[0]).toMatchObject({ codigo: 'AA1;id=1#carimbo', foto_sha256: 'a'.repeat(64) });
-    await expect(criarRepositorio().findById(assinado.id)).resolves.toEqual(assinado);
+    await expect(criarRepositorio().findById(assinado.id,USUARIO_DE_TESTE)).resolves.toEqual(assinado);
   });
 
   test('documento sem código (assinado antes de ele ser gravado) guarda nulos e volta igual', async () => {
     await criarRepositorio().save(DOCUMENTO);
 
     expect((await linhasSalvas())[0]).toMatchObject({ codigo: null, foto_sha256: null });
-    await expect(criarRepositorio().findById(DOCUMENTO.id)).resolves.toEqual(DOCUMENTO);
+    await expect(criarRepositorio().findById(DOCUMENTO.id,USUARIO_DE_TESTE)).resolves.toEqual(DOCUMENTO);
   });
 
   test('os arquivos nascem marcados como locais, para o sync saber que ainda precisam subir', async () => {
@@ -132,6 +133,36 @@ describe('DocumentoAssinadoRepository (SQLite), colunas de sincronização', () 
 
     expect(JSON.parse(String(linha.selo))).toEqual(DOCUMENTO.selo);
     expect(JSON.parse(String(linha.local_assinatura))).toEqual(DOCUMENTO.local);
-    await expect(criarRepositorio().findById(DOCUMENTO.id)).resolves.toEqual(DOCUMENTO);
+    await expect(criarRepositorio().findById(DOCUMENTO.id ,USUARIO_DE_TESTE)).resolves.toEqual(DOCUMENTO);
   });
+    test('os arquivos de um documento assinado aqui nascem marcados como locais', async () => {
+    await criarRepositorio().save(DOCUMENTO);
+
+    expect((await linhasSalvas())[0]).toMatchObject({ foto_status: 'local', pdf_status: 'local' });
+  });
+
+  test('guarda e devolve o status dos arquivos, inclusive quando só existem na nuvem', async () => {
+    const naNuvem = { ...DOCUMENTO, fotoStatus: 'remote' as const, pdfStatus: 'downloading' as const };
+
+    await criarRepositorio().save(naNuvem);
+
+    expect((await linhasSalvas())[0]).toMatchObject({ foto_status: 'remote', pdf_status: 'downloading' });
+    await expect(criarRepositorio().findById(naNuvem.id, USUARIO_DE_TESTE)).resolves.toEqual(naNuvem);
+  });
+
+  test('salvar de novo com os arquivos já baixados atualiza o status', async () => {
+    const repositorio = criarRepositorio();
+    await repositorio.save({ ...DOCUMENTO, fotoStatus: 'remote', pdfStatus: 'remote' });
+
+    await repositorio.save(DOCUMENTO);
+
+    expect((await linhasSalvas())[0]).toMatchObject({ foto_status: 'local', pdf_status: 'local' });
+  });
+
+  test('findById não devolve o documento quando o dono é outro', async () => {
+    await criarRepositorio().save(DOCUMENTO);
+
+    await expect(criarRepositorio().findById(DOCUMENTO.id, OUTRO_USUARIO_DE_TESTE)).resolves.toBeNull();
+  });
+
 });

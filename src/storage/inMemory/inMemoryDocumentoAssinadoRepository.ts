@@ -8,8 +8,8 @@ export function createInMemoryDocumentoAssinadoRepository(): DocumentoAssinadoRe
     async list(usuarioId) {
       return ordenarDocumentosMaisNovosPrimeiro(documentos.filter((d) => d.usuarioId === usuarioId));
     },
-    async findById(id) {
-      return documentos.find((documento) => documento.id === id) ?? null;
+    async findById(id, usuarioId) {
+      return documentos.find((documento) => documento.id === id && documento.usuarioId === usuarioId) ?? null;
     },
     async save(documento) {
       documentos = [...documentos.filter((atual) => atual.id !== documento.id), documento];
