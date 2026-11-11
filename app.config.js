@@ -19,29 +19,30 @@ function lerVariavel(variavel) {
   return doAmbiente === undefined || doAmbiente === '' ? lerDoArquivo(variavel) : doAmbiente;
 }
 
+const VARIAVEIS_DO_FIREBASE = {
+  apiKey: 'FIREBASE_API_KEY',
+  authDomain: 'FIREBASE_AUTH_DOMAIN',
+  projectId: 'FIREBASE_PROJECT_ID',
+  messagingSenderId: 'FIREBASE_MESSAGING_SENDER_ID',
+  appId: 'FIREBASE_APP_ID',
+};
+
+// Sem as variáveis obrigatórias o app abre normalmente, só que sem Firebase.
+function lerConfiguracaoDoFirebase() {
+  const config = Object.fromEntries(
+    Object.entries(VARIAVEIS_DO_FIREBASE).map(([campo, variavel]) => [campo, lerVariavel(variavel)]),
+  );
+  if (Object.values(config).some((valor) => valor === undefined || valor === '')) {
+    return undefined;
+  }
+  const storageBucket = lerVariavel('FIREBASE_STORAGE_BUCKET');
+  return storageBucket === undefined || storageBucket === '' ? config : { ...config, storageBucket };
+}
+
 module.exports = ({ config }) => {
   const chaveDoMaps = lerVariavel('GOOGLE_MAPS_ANDROID_KEY');
   const segredoDoCarimbo = lerVariavel('ASSINAAQUI_HMAC_SECRET');
   const firebase = lerConfiguracaoDoFirebase();
-
-  const VARIAVEIS_DO_FIREBASE = {
-    apiKey: 'FIREBASE_API_KEY',
-    authDomain: 'FIREBASE_AUTH_DOMAIN',
-    projectId: 'FIREBASE_PROJECT_ID',
-    messagingSenderId: 'FIREBASE_MESSAGING_SENDER_ID',
-    appId: 'FIREBASE_APP_ID',
-  };
-
-  function lerConfiguracaoDoFirebase() {
-    const config = Object.fromEntries(
-      Object.entries(VARIAVEIS_DO_FIREBASE).map(([campo, variavel]) => [campo, lerVariavel(variavel)]),
-    );
-    if (Object.values(config).some((valor) => valor === undefined || valor === '')) {
-      return undefined;
-    }
-    const storageBucket = lerVariavel('FIREBASE_STORAGE_BUCKET');
-    return storageBucket === undefined || storageBucket === '' ? config : { ...config, storageBucket };
-  }
 
   return {
     ...config,
@@ -54,5 +55,5 @@ module.exports = ({ config }) => {
       ...(segredoDoCarimbo === undefined ? {} : { hmacSecret: segredoDoCarimbo }),
       ...(firebase === undefined ? {} : { firebase }),
     },
-  }
+  };
 };
