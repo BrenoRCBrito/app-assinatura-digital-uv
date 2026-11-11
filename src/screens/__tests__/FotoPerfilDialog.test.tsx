@@ -24,7 +24,6 @@ jest.mock('../../storage/RepositoriesProvider', () => ({
 const USUARIO: Usuario = {
   id: criarUsuarioId('1'),
   email: criarEmail('ana@exemplo.com'),
-  senhaHash: 'hash',
   nome: criarNome('Ana Souza'),
   cpf: null,
   telefone: null,

@@ -20,9 +20,10 @@ export interface DocumentoAssinadoRepository {
 export interface UsuarioRepository {
   findByEmail(email: Email): Promise<Usuario | null>;
   findById(id: UsuarioId): Promise<Usuario | null>;
-  create(dados: Readonly<{ email: Email; senhaHash: string; nome?: Nome; cpf?: Cpf; telefone?: Telefone }>): Promise<Usuario>;
+  create(
+    dados: Readonly<{ id: UsuarioId; email: Email; nome?: Nome; cpf?: Cpf; telefone?: Telefone }>,
+  ): Promise<Usuario>;
   updateEmail(id: UsuarioId, email: Email): Promise<Usuario>;
-  updateSenha(id: UsuarioId, senhaHash: string): Promise<Usuario>;
   updateNome(id: UsuarioId, nome: Nome): Promise<Usuario>;
   updateCpf(id: UsuarioId, cpf: Cpf): Promise<Usuario>;
   updateTelefone(id: UsuarioId, telefone: Telefone): Promise<Usuario>;

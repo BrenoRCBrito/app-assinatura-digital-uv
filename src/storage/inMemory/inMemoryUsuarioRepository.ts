@@ -1,7 +1,6 @@
 import { createIsoDateTime } from '../../domain/dateTime';
-import { criarUsuarioId, type Usuario, type UsuarioId } from '../../domain/usuario';
+import type { Usuario, UsuarioId } from '../../domain/usuario';
 import type { UsuarioRepository } from '../repositories';
-import { gerarId } from '../../services/id';
 
 export function createInMemoryUsuarioRepository(): UsuarioRepository {
   let usuarios: readonly Usuario[] = [];
@@ -23,26 +22,21 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
     async findById(id) {
       return usuarios.find((usuario) => usuario.id === id) ?? null;
     },
-    async create({ email, senhaHash, nome, cpf, telefone }) {
+    async create({ id, email, nome, cpf, telefone }) {
       const usuario: Usuario = {
-      id: criarUsuarioId(gerarId()),
-      email,
-      senhaHash,
-      nome: nome ?? null,
-      cpf: cpf ?? null,
-      telefone: telefone ?? null,
-      foto: null,
-      criadoEm: createIsoDateTime(new Date().toISOString()),
-    };
-    usuarios = [...usuarios, usuario];
-    return usuario;
-  },
-
+        id,
+        email,
+        nome: nome ?? null,
+        cpf: cpf ?? null,
+        telefone: telefone ?? null,
+        foto: null,
+        criadoEm: createIsoDateTime(new Date().toISOString()),
+      };
+      usuarios = [...usuarios, usuario];
+      return usuario;
+    },
     async updateEmail(id, email) {
       return atualizar(id, { email });
-    },
-    async updateSenha(id, senhaHash) {
-      return atualizar(id, { senhaHash });
     },
     async updateCpf(id, cpf) {
       return atualizar(id, { cpf });
@@ -56,8 +50,6 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
     async updateNome(id, nome) {
       return atualizar(id, { nome });
     },
-
-
     async clear() {
       usuarios = [];
     },

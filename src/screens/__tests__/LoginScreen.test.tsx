@@ -21,7 +21,6 @@ const loginComSenha = jest.fn();
 const USUARIO: Usuario = {
   id: criarUsuarioId('1'),
   email: criarEmail('ana@exemplo.com'),
-  senhaHash: 'hash',
   nome: criarNome('Ana Souza'),
   cpf: criarCpf('11144477735'),
   telefone: null,

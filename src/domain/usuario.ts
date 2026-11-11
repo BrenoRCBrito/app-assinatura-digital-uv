@@ -12,7 +12,6 @@ export type Nome = Brand<string, 'Nome'>;
 export type Usuario = Readonly<{
   id: UsuarioId;
   email: Email;
-  senhaHash: string;
   nome: Nome | null;
   cpf: Cpf | null;
   telefone: Telefone | null;
@@ -128,7 +127,6 @@ export function paraUsuario(dado: unknown): Usuario {
   return {
     id: criarUsuarioId(lerTexto('id' in usuario ? usuario.id : undefined, USUARIO_INVALIDO)),
     email: criarEmail(lerTexto('email' in usuario ? usuario.email : undefined, USUARIO_INVALIDO)),
-    senhaHash: lerTexto('senhaHash' in usuario ? usuario.senhaHash : undefined, USUARIO_INVALIDO),
     nome: nomeBruto === null ? null : criarNome(nomeBruto),
     cpf: cpfBruto === null ? null : criarCpf(cpfBruto),
     telefone: telefoneBruto === null ? null : criarTelefone(telefoneBruto),

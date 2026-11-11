@@ -1,6 +1,5 @@
 import { createIsoDateTime } from '../../domain/dateTime';
 import {
-  criarUsuarioId,
   paraUsuario,
   type Cpf,
   type Email,
@@ -10,14 +9,12 @@ import {
   type Usuario,
   type UsuarioId,
 } from '../../domain/usuario';
-import { gerarId } from '../../services/id';
 import type { UsuarioRepository } from '../repositories';
 import { abrirBanco, adicionarColunaSeFaltar, type Banco } from './banco';
 
 type LinhaUsuario = Readonly<{
   id: string;
   email: string;
-  senha_hash: string;
   nome: string | null;
   cpf: string | null;
   telefone: string | null;
@@ -29,7 +26,6 @@ function paraUsuarioDaLinha(linha: LinhaUsuario): Usuario {
   return paraUsuario({
     id: linha.id,
     email: linha.email,
-    senhaHash: linha.senha_hash,
     nome: linha.nome,
     cpf: linha.cpf,
     telefone: linha.telefone,
@@ -46,18 +42,14 @@ export function createSqliteUsuarioRepository(banco: Banco = abrirBanco()): Usua
       CREATE TABLE IF NOT EXISTS usuarios (
         id TEXT PRIMARY KEY NOT NULL,
         email TEXT UNIQUE NOT NULL,
-        senha_hash TEXT NOT NULL,
         cpf TEXT,
         telefone TEXT,
         created_at TEXT NOT NULL
       );
     `);
-    // Banco criado antes desta versão: a data de criação se chamava criado_em e faltavam estas colunas.
     try {
       await db.execAsync('ALTER TABLE usuarios RENAME COLUMN criado_em TO created_at');
-    } catch {
-      // Já renomeada, ou tabela criada agora com created_at.
-    }
+    } catch {}
     await adicionarColunaSeFaltar(db, 'usuarios', 'cpf TEXT');
     await adicionarColunaSeFaltar(db, 'usuarios', 'telefone TEXT');
     await adicionarColunaSeFaltar(db, 'usuarios', 'foto TEXT');
@@ -66,6 +58,10 @@ export function createSqliteUsuarioRepository(banco: Banco = abrirBanco()): Usua
     await adicionarColunaSeFaltar(db, 'usuarios', 'deleted_at TEXT');
     await adicionarColunaSeFaltar(db, 'usuarios', "sync_status TEXT NOT NULL DEFAULT 'pending'");
     await db.execAsync('UPDATE usuarios SET updated_at = created_at WHERE updated_at IS NULL');
+    try {
+      await db.execAsync('ALTER TABLE usuarios DROP COLUMN senha_hash');
+      await db.execAsync('DELETE FROM usuarios');
+    } catch {}
   })();
 
   async function buscarPorId(id: UsuarioId): Promise<Usuario | null> {
@@ -103,13 +99,12 @@ export function createSqliteUsuarioRepository(banco: Banco = abrirBanco()): Usua
       return linha === null ? null : paraUsuarioDaLinha(linha);
     },
     findById: buscarPorId,
-    async create({ email, senhaHash, nome, cpf, telefone }) {
+    async create({ id, email, nome, cpf, telefone }) {
       await pronto;
       const agora = new Date().toISOString();
       const usuario: Usuario = {
-        id: criarUsuarioId(gerarId()),
+        id,
         email,
-        senhaHash,
         nome: nome ?? null,
         cpf: cpf ?? null,
         telefone: telefone ?? null,
@@ -118,10 +113,9 @@ export function createSqliteUsuarioRepository(banco: Banco = abrirBanco()): Usua
       };
 
       await db.runAsync(
-        'INSERT INTO usuarios (id, email, senha_hash, nome, cpf, telefone, foto, created_at, updated_at, deleted_at, sync_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO usuarios (id, email, nome, cpf, telefone, foto, created_at, updated_at, deleted_at, sync_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         usuario.id,
         usuario.email,
-        usuario.senhaHash,
         usuario.nome,
         usuario.cpf,
         usuario.telefone,
@@ -135,7 +129,6 @@ export function createSqliteUsuarioRepository(banco: Banco = abrirBanco()): Usua
       return usuario;
     },
     updateEmail: (id: UsuarioId, email: Email) => atualizarCampo(id, 'email', email),
-    updateSenha: (id: UsuarioId, senhaHash: string) => atualizarCampo(id, 'senha_hash', senhaHash),
     updateNome: (id: UsuarioId, nome: Nome) => atualizarCampo(id, 'nome', nome),
     updateCpf: (id: UsuarioId, cpf: Cpf) => atualizarCampo(id, 'cpf', cpf),
     updateTelefone: (id: UsuarioId, telefone: Telefone) => atualizarCampo(id, 'telefone', telefone),

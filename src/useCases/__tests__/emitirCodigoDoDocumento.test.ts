@@ -16,7 +16,6 @@ const RESUMO = 'b'.repeat(64);
 const USUARIO: Usuario = {
   id: DOCUMENTO.usuarioId,
   email: criarEmail('breno@exemplo.com'),
-  senhaHash: 'hash',
   nome: null,
   cpf: null,
   telefone: null,
