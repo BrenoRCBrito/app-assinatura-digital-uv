@@ -5,7 +5,6 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updatePassword,
-  verifyBeforeUpdateEmail,
   type User,
 } from 'firebase/auth';
 
@@ -77,10 +76,6 @@ export async function contaDoFirebase(): Promise<ContaFirebase | null> {
 
 export async function alterarSenhaNoFirebase(senhaAtual: string, novaSenha: string): Promise<void> {
   await updatePassword(await reautenticar(senhaAtual), novaSenha);
-}
-
-export async function pedirTrocaDeEmailNoFirebase(senhaAtual: string, novoEmail: string): Promise<void> {
-  await verifyBeforeUpdateEmail(await reautenticar(senhaAtual), novoEmail);
 }
 
 export function codigoDoErroDeAutenticacao(error: unknown): string | null {

@@ -5,7 +5,6 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updatePassword,
-  verifyBeforeUpdateEmail,
 } from 'firebase/auth';
 
 import {
@@ -16,7 +15,6 @@ import {
   ehCredencialInvalida,
   entrarNoFirebase,
   mensagemDoErroDeAutenticacao,
-  pedirTrocaDeEmailNoFirebase,
   sairDoFirebase,
 } from '../autenticacaoFirebase';
 import { obterAuth } from '../firebase';
@@ -29,7 +27,6 @@ jest.mock('firebase/auth', () => ({
   signInWithEmailAndPassword: jest.fn(),
   signOut: jest.fn(),
   updatePassword: jest.fn(),
-  verifyBeforeUpdateEmail: jest.fn(),
 }));
 
 const USUARIO = { uid: 'uid-123', email: 'ana@exemplo.com' };
@@ -146,30 +143,6 @@ describe('autenticacaoFirebase', () => {
         'Nenhuma conta logada no Firebase.',
       );
       expect(reauthenticateWithCredential).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('pedirTrocaDeEmailNoFirebase', () => {
-    test('confirma a senha e pede o link de confirmação para o novo e-mail', async () => {
-      criarAuth();
-      jest.mocked(reauthenticateWithCredential).mockResolvedValue({} as never);
-      jest.mocked(verifyBeforeUpdateEmail).mockResolvedValue(undefined);
-
-      await pedirTrocaDeEmailNoFirebase('Atual#123', 'novo@exemplo.com');
-
-      expect(reauthenticateWithCredential).toHaveBeenCalledWith(USUARIO, CREDENCIAL);
-      expect(verifyBeforeUpdateEmail).toHaveBeenCalledWith(USUARIO, 'novo@exemplo.com');
-    });
-
-    test('com a senha errada, não pede o link', async () => {
-      criarAuth();
-      jest
-        .mocked(reauthenticateWithCredential)
-        .mockRejectedValue(Object.assign(new Error('x'), { code: 'auth/wrong-password' }));
-
-      await expect(pedirTrocaDeEmailNoFirebase('errada', 'novo@exemplo.com')).rejects.toThrow();
-
-      expect(verifyBeforeUpdateEmail).not.toHaveBeenCalled();
     });
   });
 
