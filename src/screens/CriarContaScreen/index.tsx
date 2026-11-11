@@ -11,25 +11,18 @@ import {
   Stack,
   Text,
   TextField,
-  showError,
   showSuccess,
 } from '../../components';
-import { ValidationError } from '../../domain/brand';
-import { criarCpf, criarEmail, criarNome, criarTelefone, REQUISITOS_SENHA } from '../../domain/usuario';
-import { hashSenha } from '../../services/passwordHash';
-import { useRepositories } from '../../storage/RepositoriesProvider';
+import { REQUISITOS_SENHA } from '../../domain/usuario';
+import { useAuthentication } from '../../hooks/useAuthentication';
 import { useAppTheme } from '../../theme';
 
-
-
-
 type CriarContaScreenProps = Readonly<{
-  onContaCriada: () => void;
   onJaTenhoConta: () => void;
 }>;
 
-export function CriarContaScreen({ onContaCriada, onJaTenhoConta }: CriarContaScreenProps) {
-  const { usuarios } = useRepositories();
+export function CriarContaScreen({ onJaTenhoConta }: CriarContaScreenProps) {
+  const { cadastrar } = useAuthentication();
   const { theme } = useAppTheme();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -44,54 +37,31 @@ export function CriarContaScreen({ onContaCriada, onJaTenhoConta }: CriarContaSc
   const senhaValida = requisitos.every((requisito) => requisito.atendido);
   const mostrarSenhasDiferentes = confirmarSenha.length > 0 && senha !== confirmarSenha;
   const podeCriarConta =
-  senhaValida &&
-  senha === confirmarSenha &&
-  email.trim().length > 0 &&
-  nome.trim().length > 0 &&
-  cpf.trim().length > 0 &&
-  telefone.trim().length > 0 &&
-  !criando;
+    senhaValida &&
+    senha === confirmarSenha &&
+    email.trim().length > 0 &&
+    nome.trim().length > 0 &&
+    cpf.trim().length > 0 &&
+    telefone.trim().length > 0 &&
+    !criando;
 
-
-async function criarConta() {
-  if (!podeCriarConta) {
-    return;
-  }
-  setErro(null);
-  setCriando(true);
-  try {
-    const emailValido = criarEmail(email);
-    const existente = await usuarios.findByEmail(emailValido);
-    if (existente !== null) {
-      setErro('Este e-mail já tem uma conta.');
+  async function criarConta() {
+    if (!podeCriarConta) {
       return;
     }
-    const nomeValido = criarNome(nome);
-    const cpfValido = criarCpf(cpf);
-    const telefoneValido = criarTelefone(telefone);
-    const senhaHash = await hashSenha(senha);
-    await usuarios.create({
-      email: emailValido,
-      senhaHash,
-      nome: nomeValido,
-      cpf: cpfValido,
-      telefone: telefoneValido,
-    });
-    showSuccess('Conta criada! Faça login.');
-    onContaCriada();
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      setErro(error.message);
-    } else {
-      console.error('Falha ao criar conta:', error);
-      showError('Erro', 'Não foi possível criar a conta.');
+    setErro(null);
+    setCriando(true);
+    try {
+      const resultado = await cadastrar({ email, senha, nome, cpf, telefone });
+      if (resultado.ok) {
+        showSuccess('Conta criada!');
+      } else {
+        setErro(resultado.mensagem);
+      }
+    } finally {
+      setCriando(false);
     }
-  } finally {
-    setCriando(false);
   }
-}
-
-
 
   return (
     <KeyboardDismissArea>
@@ -107,51 +77,50 @@ async function criarConta() {
                 value={nome}
                 onChangeText={setNome}
                 placeholder="Seu nome completo"
-            />
-            <TextField
-              label="E-mail"
-              accessibilityLabel="E-mail"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="voce@exemplo.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            <TextField
-              label="CPF"
-              accessibilityLabel="CPF"
-              value={cpf}
-              onChangeText={setCpf}
-              placeholder="000.000.000-00"
-              keyboardType="number-pad"
-            />
-            <TextField
-              label="Telefone"
-              accessibilityLabel="Telefone"
-              value={telefone}
-              onChangeText={setTelefone}
-              placeholder="(00) 00000-0000"
-              keyboardType="phone-pad"
-            />
-            <TextField
-              label="Senha"
-              accessibilityLabel="Senha"
-              value={senha}
-              onChangeText={setSenha}
-              placeholder="Crie uma senha"
-              secureTextEntry
-            />
-            <TextField
-              label="Confirmar senha"
-              accessibilityLabel="Confirmar senha"
-              value={confirmarSenha}
-              onChangeText={setConfirmarSenha}
-              placeholder="Repita a senha"
-              secureTextEntry
-            />
-            {mostrarSenhasDiferentes ? <Text preset="status">As senhas ainda não são iguais.</Text> : null}
-          </Stack>
-
+              />
+              <TextField
+                label="E-mail"
+                accessibilityLabel="E-mail"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="voce@exemplo.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              <TextField
+                label="CPF"
+                accessibilityLabel="CPF"
+                value={cpf}
+                onChangeText={setCpf}
+                placeholder="000.000.000-00"
+                keyboardType="number-pad"
+              />
+              <TextField
+                label="Telefone"
+                accessibilityLabel="Telefone"
+                value={telefone}
+                onChangeText={setTelefone}
+                placeholder="(00) 00000-0000"
+                keyboardType="phone-pad"
+              />
+              <TextField
+                label="Senha"
+                accessibilityLabel="Senha"
+                value={senha}
+                onChangeText={setSenha}
+                placeholder="Crie uma senha"
+                secureTextEntry
+              />
+              <TextField
+                label="Confirmar senha"
+                accessibilityLabel="Confirmar senha"
+                value={confirmarSenha}
+                onChangeText={setConfirmarSenha}
+                placeholder="Repita a senha"
+                secureTextEntry
+              />
+              {mostrarSenhasDiferentes ? <Text preset="status">As senhas ainda não são iguais.</Text> : null}
+            </Stack>
 
             <Stack gap="label">
               {requisitos.map((requisito) => (
@@ -170,7 +139,6 @@ async function criarConta() {
             <Stack align="center">
               <Link label="Já tenho conta" onPress={onJaTenhoConta} preset="linkQuiet" />
             </Stack>
-
           </Stack>
         </FormColumn>
       </Screen>

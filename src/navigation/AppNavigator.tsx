@@ -119,10 +119,7 @@ export function AppNavigator() {
             </Stack.Screen>
             <Stack.Screen name="CriarConta" options={{ headerShown: false }}>
               {({ navigation }: { navigation: AppNavigation }) => (
-                <CriarContaScreen
-                  onContaCriada={() => navigation.navigate('Login')}
-                  onJaTenhoConta={() => navigation.navigate('Login')}
-                />
+                <CriarContaScreen onJaTenhoConta={() => navigation.navigate('Login')} />
               )}
             </Stack.Screen>
             {validarDocumento}
