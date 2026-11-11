@@ -90,6 +90,8 @@ function mockUsuarios(usuarios: readonly Usuario[]) {
       updateCpf: jest.fn(),
       updateTelefone: jest.fn(),
       updateFoto: jest.fn(),
+      listarPerfisPendentes: jest.fn(),
+      marcarPerfilSincronizado: jest.fn(),
       clear: jest.fn(),
     },
   } as Repositories);

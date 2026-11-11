@@ -87,5 +87,102 @@ export function testarContratoUsuarioRepository(
       const nova = await repositorio.create({ id: ID_B, email: EMAIL_A });
       await expect(repositorio.findByEmail(EMAIL_A)).resolves.toEqual(nova);
     });
+
+    describe('perfis pendentes de sincronização', () => {
+      beforeEach(() => {
+        jest.useFakeTimers({ now: new Date('2026-10-01T10:00:00.000Z') });
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      test('conta nova aparece como pendente, com os dados do perfil e as datas', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({
+          id: ID_A,
+          email: EMAIL_A,
+          nome: criarNome('Ana Souza'),
+          cpf: criarCpf('111.444.777-35'),
+          telefone: criarTelefone('(11) 98765-4321'),
+        });
+
+        await expect(repositorio.listarPerfisPendentes()).resolves.toEqual([
+          {
+            id: ID_A,
+            email: EMAIL_A,
+            nome: 'Ana Souza',
+            cpf: '11144477735',
+            telefone: '11987654321',
+            createdAt: '2026-10-01T10:00:00.000Z',
+            updatedAt: '2026-10-01T10:00:00.000Z',
+            deletedAt: null,
+          },
+        ]);
+      });
+
+      test('perfil sem nome, CPF e telefone sai com null', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({ id: ID_A, email: EMAIL_A });
+
+        await expect(repositorio.listarPerfisPendentes()).resolves.toMatchObject([
+          { nome: null, cpf: null, telefone: null },
+        ]);
+      });
+
+      test('depois de marcado como sincronizado, sai da lista', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({ id: ID_A, email: EMAIL_A });
+        const [pendente] = await repositorio.listarPerfisPendentes();
+
+        await repositorio.marcarPerfilSincronizado(pendente.id, pendente.updatedAt);
+
+        await expect(repositorio.listarPerfisPendentes()).resolves.toEqual([]);
+      });
+
+      test('alterar o perfil depois do envio volta a deixá-lo pendente, com updatedAt novo', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({ id: ID_A, email: EMAIL_A });
+        const [enviado] = await repositorio.listarPerfisPendentes();
+        await repositorio.marcarPerfilSincronizado(enviado.id, enviado.updatedAt);
+        jest.setSystemTime(new Date('2026-10-02T08:00:00.000Z'));
+
+        await repositorio.updateNome(ID_A, criarNome('Ana Souza'));
+
+        await expect(repositorio.listarPerfisPendentes()).resolves.toMatchObject([
+          { nome: 'Ana Souza', createdAt: '2026-10-01T10:00:00.000Z', updatedAt: '2026-10-02T08:00:00.000Z' },
+        ]);
+      });
+
+      test('se o perfil mudou durante o envio, marcar a versão antiga não o tira da lista', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({ id: ID_A, email: EMAIL_A });
+        const [versaoEnviada] = await repositorio.listarPerfisPendentes();
+        jest.setSystemTime(new Date('2026-10-01T10:00:05.000Z'));
+        await repositorio.updateNome(ID_A, criarNome('Ana Souza'));
+
+        await repositorio.marcarPerfilSincronizado(versaoEnviada.id, versaoEnviada.updatedAt);
+
+        await expect(repositorio.listarPerfisPendentes()).resolves.toHaveLength(1);
+      });
+
+      test('só os perfis pendentes são listados', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({ id: ID_A, email: EMAIL_A });
+        await repositorio.create({ id: ID_B, email: EMAIL_B });
+        const [primeiro] = await repositorio.listarPerfisPendentes();
+        await repositorio.marcarPerfilSincronizado(primeiro.id, primeiro.updatedAt);
+
+        const pendentes = await repositorio.listarPerfisPendentes();
+
+        expect(pendentes.map((perfil) => perfil.id)).toEqual([ID_B]);
+      });
+
+      test('marcar um id que não existe não faz nada nem lança erro', async () => {
+        await expect(
+          criarRepositorio().marcarPerfilSincronizado(criarUsuarioId('999'), '2026-10-01T10:00:00.000Z'),
+        ).resolves.toBeUndefined();
+      });
+    });
   });
 }

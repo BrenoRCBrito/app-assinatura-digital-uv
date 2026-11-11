@@ -19,6 +19,17 @@ export type Usuario = Readonly<{
   criadoEm: IsoDateTime;
 }>;
 
+export type PerfilParaSincronizar = Readonly<{
+  id: UsuarioId;
+  email: Email;
+  nome: Nome | null;
+  cpf: Cpf | null;
+  telefone: Telefone | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}>;
+
 export type RequisitoSenha = Readonly<{
   chave: string;
   label: string;

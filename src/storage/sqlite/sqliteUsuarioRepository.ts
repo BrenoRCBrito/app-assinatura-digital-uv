@@ -5,6 +5,7 @@ import {
   type Email,
   type FotoPerfil,
   type Nome,
+  type PerfilParaSincronizar,
   type Telefone,
   type Usuario,
   type UsuarioId,
@@ -20,6 +21,8 @@ type LinhaUsuario = Readonly<{
   telefone: string | null;
   foto: string | null;
   created_at: string;
+  updated_at: string | null;
+  deleted_at: string | null;
 }>;
 
 function paraUsuarioDaLinha(linha: LinhaUsuario): Usuario {
@@ -32,6 +35,20 @@ function paraUsuarioDaLinha(linha: LinhaUsuario): Usuario {
     foto: linha.foto,
     criadoEm: linha.created_at,
   });
+}
+
+function paraPerfilParaSincronizar(linha: LinhaUsuario): PerfilParaSincronizar {
+  const usuario = paraUsuarioDaLinha(linha);
+  return {
+    id: usuario.id,
+    email: usuario.email,
+    nome: usuario.nome,
+    cpf: usuario.cpf,
+    telefone: usuario.telefone,
+    createdAt: linha.created_at,
+    updatedAt: linha.updated_at ?? linha.created_at,
+    deletedAt: linha.deleted_at,
+  };
 }
 
 export function createSqliteUsuarioRepository(banco: Banco = abrirBanco()): UsuarioRepository {
@@ -133,6 +150,20 @@ export function createSqliteUsuarioRepository(banco: Banco = abrirBanco()): Usua
     updateCpf: (id: UsuarioId, cpf: Cpf) => atualizarCampo(id, 'cpf', cpf),
     updateTelefone: (id: UsuarioId, telefone: Telefone) => atualizarCampo(id, 'telefone', telefone),
     updateFoto: (id: UsuarioId, foto: FotoPerfil | null) => atualizarCampo(id, 'foto', foto),
+    async listarPerfisPendentes() {
+      await pronto;
+      const linhas = await db.getAllAsync<LinhaUsuario>('SELECT * FROM usuarios WHERE sync_status = ?', 'pending');
+      return linhas.map(paraPerfilParaSincronizar);
+    },
+    async marcarPerfilSincronizado(id: UsuarioId, updatedAt: string) {
+      await pronto;
+      await db.runAsync(
+        'UPDATE usuarios SET sync_status = ? WHERE id = ? AND updated_at = ?',
+        'synced',
+        id,
+        updatedAt,
+      );
+    },
     async clear() {
       await pronto;
       await db.runAsync('DELETE FROM usuarios');

@@ -1,6 +1,15 @@
 import type { Assinatura, AssinaturaId } from '../domain/assinatura';
 import type { DocumentoAssinado, DocumentoId } from '../domain/documento';
-import type { Email, Usuario, UsuarioId, Cpf, Telefone, FotoPerfil, Nome } from '../domain/usuario';
+import type {
+  Cpf,
+  Email,
+  FotoPerfil,
+  Nome,
+  PerfilParaSincronizar,
+  Telefone,
+  Usuario,
+  UsuarioId,
+} from '../domain/usuario';
 
 export interface AssinaturaRepository {
   list(usuarioId: UsuarioId): Promise<readonly Assinatura[]>;
@@ -28,6 +37,8 @@ export interface UsuarioRepository {
   updateCpf(id: UsuarioId, cpf: Cpf): Promise<Usuario>;
   updateTelefone(id: UsuarioId, telefone: Telefone): Promise<Usuario>;
   updateFoto(id: UsuarioId, foto: FotoPerfil | null): Promise<Usuario>;
+  listarPerfisPendentes(): Promise<readonly PerfilParaSincronizar[]>;
+  marcarPerfilSincronizado(id: UsuarioId, updatedAt: string): Promise<void>;
   clear(): Promise<void>;
 }
 

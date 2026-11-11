@@ -146,3 +146,48 @@ describe('UsuarioRepository (SQLite), colunas de sincronização', () => {
     expect(comandos).not.toContain('DELETE FROM usuarios');
   });
 });
+
+describe('UsuarioRepository (SQLite), envio para a nuvem', () => {
+  beforeEach(() => {
+    __resetTodosOsBancosDeTeste();
+    jest.useFakeTimers({ now: new Date('2026-10-01T10:00:00.000Z') });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test('marcar como sincronizado grava sync_status synced só na versão enviada', async () => {
+    const repositorio = createSqliteUsuarioRepository();
+    await repositorio.create({ id: ID, email: EMAIL });
+    const [pendente] = await repositorio.listarPerfisPendentes();
+
+    await repositorio.marcarPerfilSincronizado(pendente.id, pendente.updatedAt);
+
+    const [linha] = await openDatabaseSync(NOME_DO_BANCO).getAllAsync<Record<string, unknown>>('SELECT * FROM usuarios');
+    expect(linha).toMatchObject({ id: ID, sync_status: 'synced', updated_at: '2026-10-01T10:00:00.000Z' });
+  });
+
+  test('perfil antigo, sem updated_at, usa created_at como updatedAt', async () => {
+    await createSqliteUsuarioRepository().create({ id: ID, email: EMAIL });
+    await openDatabaseSync(NOME_DO_BANCO).runAsync('UPDATE usuarios SET updated_at = ? WHERE id = ?', null, ID);
+
+    await expect(createSqliteUsuarioRepository().listarPerfisPendentes()).resolves.toMatchObject([
+      { updatedAt: '2026-10-01T10:00:00.000Z' },
+    ]);
+  });
+
+  test('perfil marcado como apagado continua na lista de pendentes, com deletedAt, para a exclusão subir', async () => {
+    const repositorio = createSqliteUsuarioRepository();
+    await repositorio.create({ id: ID, email: EMAIL });
+    await openDatabaseSync(NOME_DO_BANCO).runAsync(
+      'UPDATE usuarios SET deleted_at = ? WHERE id = ?',
+      '2026-10-03T09:00:00.000Z',
+      ID,
+    );
+
+    await expect(repositorio.listarPerfisPendentes()).resolves.toMatchObject([
+      { id: ID, deletedAt: '2026-10-03T09:00:00.000Z' },
+    ]);
+  });
+});

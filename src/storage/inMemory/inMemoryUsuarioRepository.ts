@@ -1,9 +1,16 @@
 import { createIsoDateTime } from '../../domain/dateTime';
-import type { Usuario, UsuarioId } from '../../domain/usuario';
+import type { PerfilParaSincronizar, Usuario, UsuarioId } from '../../domain/usuario';
 import type { UsuarioRepository } from '../repositories';
+
+type Controle = Readonly<{ updatedAt: string; pendente: boolean }>;
 
 export function createInMemoryUsuarioRepository(): UsuarioRepository {
   let usuarios: readonly Usuario[] = [];
+  const controles = new Map<UsuarioId, Controle>();
+
+  function registrarMudanca(id: UsuarioId): void {
+    controles.set(id, { updatedAt: new Date().toISOString(), pendente: true });
+  }
 
   function atualizar(id: UsuarioId, alteracoes: Partial<Usuario>): Usuario {
     const atual = usuarios.find((usuario) => usuario.id === id);
@@ -12,6 +19,7 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
     }
     const atualizado: Usuario = { ...atual, ...alteracoes };
     usuarios = usuarios.map((usuario) => (usuario.id === id ? atualizado : usuario));
+    registrarMudanca(id);
     return atualizado;
   }
 
@@ -33,6 +41,7 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
         criadoEm: createIsoDateTime(new Date().toISOString()),
       };
       usuarios = [...usuarios, usuario];
+      registrarMudanca(id);
       return usuario;
     },
     async updateEmail(id, email) {
@@ -50,8 +59,35 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
     async updateNome(id, nome) {
       return atualizar(id, { nome });
     },
+    async listarPerfisPendentes() {
+      return usuarios.flatMap((usuario): PerfilParaSincronizar[] => {
+        const controle = controles.get(usuario.id);
+        if (controle === undefined || !controle.pendente) {
+          return [];
+        }
+        return [
+          {
+            id: usuario.id,
+            email: usuario.email,
+            nome: usuario.nome,
+            cpf: usuario.cpf,
+            telefone: usuario.telefone,
+            createdAt: usuario.criadoEm,
+            updatedAt: controle.updatedAt,
+            deletedAt: null,
+          },
+        ];
+      });
+    },
+    async marcarPerfilSincronizado(id, updatedAt) {
+      const controle = controles.get(id);
+      if (controle !== undefined && controle.updatedAt === updatedAt) {
+        controles.set(id, { ...controle, pendente: false });
+      }
+    },
     async clear() {
       usuarios = [];
+      controles.clear();
     },
   };
 }
