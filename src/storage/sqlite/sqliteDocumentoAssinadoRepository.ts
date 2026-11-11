@@ -60,6 +60,8 @@ export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): 
       return linha === null ? null : paraDocumentoDaLinha(linha);
     },
 
+
+    
     async save(documento) {
       await pronto;
       const agora = new Date().toISOString();
