@@ -1,4 +1,4 @@
-import { criarCpf, criarEmail, criarNome, criarTelefone, criarUsuarioId } from '../../domain/usuario';
+import { criarCpf, criarEmail, criarFotoPerfil, criarNome, criarTelefone, criarUsuarioId } from '../../domain/usuario';
 import type { UsuarioRepository } from '../repositories';
 
 type OpcoesDoContrato = Readonly<{
@@ -176,6 +176,87 @@ export function testarContratoUsuarioRepository(
         const pendentes = await repositorio.listarPerfisPendentes();
 
         expect(pendentes.map((perfil) => perfil.id)).toEqual([ID_B]);
+      });
+
+      test('lerPerfilLocal devolve o perfil e se ele está pendente, e null se não existe', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({ id: ID_A, email: EMAIL_A });
+
+        await expect(repositorio.lerPerfilLocal(ID_A)).resolves.toMatchObject({
+          perfil: { id: ID_A, email: EMAIL_A, createdAt: '2026-10-01T10:00:00.000Z' },
+          pendente: true,
+        });
+        await repositorio.marcarPerfilSincronizado(ID_A, '2026-10-01T10:00:00.000Z');
+        await expect(repositorio.lerPerfilLocal(ID_A)).resolves.toMatchObject({ pendente: false });
+        await expect(repositorio.lerPerfilLocal(ID_B)).resolves.toBeNull();
+      });
+
+      test('aplicarPerfilDaNuvem grava os dados e as datas da nuvem, mantém o e-mail e deixa sincronizado', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({ id: ID_A, email: EMAIL_A });
+
+        await repositorio.aplicarPerfilDaNuvem({
+          id: ID_A,
+          email: EMAIL_B,
+          nome: criarNome('Ana Souza'),
+          cpf: criarCpf('111.444.777-35'),
+          telefone: criarTelefone('(11) 98765-4321'),
+          createdAt: '2026-09-01T10:00:00.000Z',
+          updatedAt: '2026-09-02T10:00:00.000Z',
+          deletedAt: null,
+        });
+
+        await expect(repositorio.lerPerfilLocal(ID_A)).resolves.toEqual({
+          perfil: {
+            id: ID_A,
+            email: EMAIL_A,
+            nome: 'Ana Souza',
+            cpf: '11144477735',
+            telefone: '11987654321',
+            createdAt: '2026-09-01T10:00:00.000Z',
+            updatedAt: '2026-09-02T10:00:00.000Z',
+            deletedAt: null,
+          },
+          pendente: false,
+        });
+        await expect(repositorio.findById(ID_A)).resolves.toMatchObject({
+          nome: 'Ana Souza',
+          criadoEm: '2026-09-01T10:00:00.000Z',
+        });
+      });
+
+      test('aplicarPerfilDaNuvem não mexe na foto do perfil', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({ id: ID_A, email: EMAIL_A });
+        await repositorio.updateFoto(ID_A, criarFotoPerfil('base64'));
+
+        await repositorio.aplicarPerfilDaNuvem({
+          id: ID_A,
+          email: EMAIL_A,
+          nome: null,
+          cpf: null,
+          telefone: null,
+          createdAt: '2026-09-01T10:00:00.000Z',
+          updatedAt: '2026-09-02T10:00:00.000Z',
+          deletedAt: null,
+        });
+
+        await expect(repositorio.findById(ID_A)).resolves.toMatchObject({ foto: 'base64' });
+      });
+
+      test('aplicarPerfilDaNuvem num usuário que não existe lança erro', async () => {
+        await expect(
+          criarRepositorio().aplicarPerfilDaNuvem({
+            id: ID_A,
+            email: EMAIL_A,
+            nome: null,
+            cpf: null,
+            telefone: null,
+            createdAt: '2026-09-01T10:00:00.000Z',
+            updatedAt: '2026-09-02T10:00:00.000Z',
+            deletedAt: null,
+          }),
+        ).rejects.toThrow('Usuário não encontrado');
       });
 
       test('marcar um id que não existe não faz nada nem lança erro', async () => {

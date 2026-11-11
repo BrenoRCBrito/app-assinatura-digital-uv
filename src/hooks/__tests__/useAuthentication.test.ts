@@ -18,6 +18,7 @@ import {
   getBiometricStatus,
   type AuthenticationResult,
 } from '../../services/localAuthentication';
+import { sincronizarPerfil } from '../../services/sincronizacaoDoPerfil';
 import type { Repositories } from '../../storage/repositories';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 import { useSettings } from '../../storage/SettingsProvider';
@@ -39,6 +40,7 @@ jest.mock('../../services/autenticacaoFirebase', () => ({
   sairDoFirebase: jest.fn(),
   mensagemDoErroDeAutenticacao: jest.fn(),
 }));
+jest.mock('../../services/sincronizacaoDoPerfil', () => ({ sincronizarPerfil: jest.fn() }));
 jest.mock('../../storage/RepositoriesProvider', () => ({ useRepositories: jest.fn() }));
 jest.mock('../../storage/SettingsProvider', () => ({ useSettings: jest.fn() }));
 
@@ -91,6 +93,8 @@ function mockUsuarios(usuarios: readonly Usuario[]) {
       updateTelefone: jest.fn(),
       updateFoto: jest.fn(),
       listarPerfisPendentes: jest.fn(),
+      lerPerfilLocal: jest.fn(),
+      aplicarPerfilDaNuvem: jest.fn(),
       marcarPerfilSincronizado: jest.fn(),
       clear: jest.fn(),
     },
@@ -677,6 +681,68 @@ describe('AuthenticationProvider', () => {
       });
 
       expect(alerta).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('sincronização com a nuvem', () => {
+    test('não sincroniza enquanto ninguém entrou', async () => {
+      await renderAuthentication();
+
+      expect(sincronizarPerfil).not.toHaveBeenCalled();
+    });
+
+    test('ao entrar com e-mail e senha, sincroniza o perfil dessa conta', async () => {
+      mockUsuarios([criarUsuarioDeTeste(USUARIO_A, EMAIL_A)]);
+      jest.mocked(entrarNoFirebase).mockResolvedValue(CONTA_A);
+      const { result } = await renderAuthentication();
+
+      await act(async () => {
+        await result.current.loginComSenha('a@exemplo.com', 'Senha@123');
+      });
+
+      expect(sincronizarPerfil).toHaveBeenCalledTimes(1);
+      expect(sincronizarPerfil).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
+    });
+
+    test('ao desbloquear com a biometria, sincroniza o perfil da conta', async () => {
+      mockSettings(BIOMETRIA_DA_CONTA_A);
+      mockUsuarios([criarUsuarioDeTeste(USUARIO_A, EMAIL_A)]);
+      jest.mocked(authenticateDeviceOwner).mockResolvedValue({ type: 'authenticated' });
+      jest.mocked(contaDoFirebase).mockResolvedValue(CONTA_A);
+      const { result } = await renderAuthentication();
+
+      await act(async () => {
+        await result.current.unlock();
+      });
+
+      expect(sincronizarPerfil).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
+    });
+
+    test('ao criar a conta, sincroniza o perfil novo', async () => {
+      mockUsuarios([]);
+      jest.mocked(cadastrarNoFirebase).mockResolvedValue({ uid: USUARIO_A, email: 'novo@exemplo.com' });
+      const { result } = await renderAuthentication();
+
+      await act(async () => {
+        await result.current.cadastrar(CADASTRO);
+      });
+
+      expect(sincronizarPerfil).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
+    });
+
+    test('ao sair da conta, não sincroniza de novo', async () => {
+      mockUsuarios([criarUsuarioDeTeste(USUARIO_A, EMAIL_A)]);
+      jest.mocked(entrarNoFirebase).mockResolvedValue(CONTA_A);
+      const { result } = await renderAuthentication();
+      await act(async () => {
+        await result.current.loginComSenha('a@exemplo.com', 'Senha@123');
+      });
+
+      await act(async () => {
+        await result.current.sair();
+      });
+
+      expect(sincronizarPerfil).toHaveBeenCalledTimes(1);
     });
   });
 

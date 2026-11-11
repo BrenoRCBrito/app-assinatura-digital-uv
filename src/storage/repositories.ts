@@ -26,6 +26,8 @@ export interface DocumentoAssinadoRepository {
   clear(): Promise<void>;
 }
 
+export type PerfilLocal = Readonly<{ perfil: PerfilParaSincronizar; pendente: boolean }>;
+
 export interface UsuarioRepository {
   findByEmail(email: Email): Promise<Usuario | null>;
   findById(id: UsuarioId): Promise<Usuario | null>;
@@ -38,6 +40,8 @@ export interface UsuarioRepository {
   updateTelefone(id: UsuarioId, telefone: Telefone): Promise<Usuario>;
   updateFoto(id: UsuarioId, foto: FotoPerfil | null): Promise<Usuario>;
   listarPerfisPendentes(): Promise<readonly PerfilParaSincronizar[]>;
+  lerPerfilLocal(id: UsuarioId): Promise<PerfilLocal | null>;
+  aplicarPerfilDaNuvem(perfil: PerfilParaSincronizar): Promise<void>;
   marcarPerfilSincronizado(id: UsuarioId, updatedAt: string): Promise<void>;
   clear(): Promise<void>;
 }

@@ -79,6 +79,43 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
         ];
       });
     },
+    async lerPerfilLocal(id) {
+      const usuario = usuarios.find((candidato) => candidato.id === id);
+      const controle = controles.get(id);
+      if (usuario === undefined || controle === undefined) {
+        return null;
+      }
+      return {
+        perfil: {
+          id: usuario.id,
+          email: usuario.email,
+          nome: usuario.nome,
+          cpf: usuario.cpf,
+          telefone: usuario.telefone,
+          createdAt: usuario.criadoEm,
+          updatedAt: controle.updatedAt,
+          deletedAt: null,
+        },
+        pendente: controle.pendente,
+      };
+    },
+    async aplicarPerfilDaNuvem(perfil) {
+      if (!usuarios.some((usuario) => usuario.id === perfil.id)) {
+        throw new Error(`Usuário não encontrado: ${perfil.id}`);
+      }
+      usuarios = usuarios.map((usuario) =>
+        usuario.id === perfil.id
+          ? {
+              ...usuario,
+              nome: perfil.nome,
+              cpf: perfil.cpf,
+              telefone: perfil.telefone,
+              criadoEm: createIsoDateTime(perfil.createdAt),
+            }
+          : usuario,
+      );
+      controles.set(perfil.id, { updatedAt: perfil.updatedAt, pendente: false });
+    },
     async marcarPerfilSincronizado(id, updatedAt) {
       const controle = controles.get(id);
       if (controle !== undefined && controle.updatedAt === updatedAt) {

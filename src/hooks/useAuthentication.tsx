@@ -25,6 +25,7 @@ import {
   type AuthenticationResult,
   type BiometricStatus,
 } from '../services/localAuthentication';
+import { sincronizarPerfil } from '../services/sincronizacaoDoPerfil';
 import { useRepositories } from '../storage/RepositoriesProvider';
 import { useSettings } from '../storage/SettingsProvider';
 
@@ -90,6 +91,12 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
     };
   }, []);
 
+
+  useEffect(() => {
+    if (usuarioId !== null) {
+      void sincronizarPerfil(usuarios, usuarioId);
+    }
+  }, [usuarioId, usuarios]);
 
   useEffect(() => {
     let active = true;

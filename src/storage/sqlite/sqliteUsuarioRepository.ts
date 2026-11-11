@@ -23,6 +23,7 @@ type LinhaUsuario = Readonly<{
   created_at: string;
   updated_at: string | null;
   deleted_at: string | null;
+  sync_status: string;
 }>;
 
 function paraUsuarioDaLinha(linha: LinhaUsuario): Usuario {
@@ -154,6 +155,31 @@ export function createSqliteUsuarioRepository(banco: Banco = abrirBanco()): Usua
       await pronto;
       const linhas = await db.getAllAsync<LinhaUsuario>('SELECT * FROM usuarios WHERE sync_status = ?', 'pending');
       return linhas.map(paraPerfilParaSincronizar);
+    },
+    async lerPerfilLocal(id: UsuarioId) {
+      await pronto;
+      const linha = await db.getFirstAsync<LinhaUsuario>('SELECT * FROM usuarios WHERE id = ?', id);
+      if (linha === null) {
+        return null;
+      }
+      return { perfil: paraPerfilParaSincronizar(linha), pendente: linha.sync_status === 'pending' };
+    },
+    async aplicarPerfilDaNuvem(perfil: PerfilParaSincronizar) {
+      await pronto;
+      const resultado = await db.runAsync(
+        'UPDATE usuarios SET nome = ?, cpf = ?, telefone = ?, created_at = ?, updated_at = ?, deleted_at = ?, sync_status = ? WHERE id = ?',
+        perfil.nome,
+        perfil.cpf,
+        perfil.telefone,
+        perfil.createdAt,
+        perfil.updatedAt,
+        perfil.deletedAt,
+        'synced',
+        perfil.id,
+      );
+      if (resultado.changes === 0) {
+        throw new Error(`Usuário não encontrado: ${perfil.id}`);
+      }
     },
     async marcarPerfilSincronizado(id: UsuarioId, updatedAt: string) {
       await pronto;
