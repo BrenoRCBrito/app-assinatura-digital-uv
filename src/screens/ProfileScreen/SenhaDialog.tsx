@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from 'react';
 
 import { Button, FieldEditModal, Icon, Row, Stack, Text, TextField, showError, showSuccess } from '../../components';
-import { REQUISITOS_SENHA, type Usuario } from '../../domain/usuario';
-import { hashSenha } from '../../services/passwordHash';
-import { useRepositories } from '../../storage/RepositoriesProvider';
+import { REQUISITOS_SENHA } from '../../domain/usuario';
+import {
+  alterarSenhaNoFirebase,
+  ehCredencialInvalida,
+  mensagemDoErroDeAutenticacao,
+} from '../../services/autenticacaoFirebase';
 import { useAppTheme } from '../../theme';
 
 type SenhaDialogProps = Readonly<{
   visible: boolean;
-  usuario: Usuario;
   onClose: () => void;
-  onSaved: (usuario: Usuario) => void;
 }>;
 
-export function SenhaDialog({ visible, usuario, onClose, onSaved }: SenhaDialogProps) {
-  const { usuarios } = useRepositories();
+export function SenhaDialog({ visible, onClose }: SenhaDialogProps) {
   const { theme } = useAppTheme();
   const [senhaAtual, setSenhaAtual] = useState('');
   const [novaSenha, setNovaSenha] = useState('');
@@ -40,19 +40,19 @@ export function SenhaDialog({ visible, usuario, onClose, onSaved }: SenhaDialogP
     }
     setSalvando(true);
     try {
-      const senhaHashDigitada = await hashSenha(senhaAtual);
-      if (senhaHashDigitada !== usuario.senhaHash) {
+      await alterarSenhaNoFirebase(senhaAtual, novaSenha);
+      showSuccess('Senha atualizada.');
+      onClose();
+    } catch (error) {
+      if (ehCredencialInvalida(error)) {
         showError('Senha incorreta', 'Confira a senha atual e tente de novo.');
         return;
       }
-      const novoHash = await hashSenha(novaSenha);
-      const atualizado = await usuarios.updateSenha(usuario.id, novoHash);
-      showSuccess('Senha atualizada.');
-      onSaved(atualizado);
-      onClose();
-    } catch (error) {
-      console.error('Falha ao atualizar a senha:', error);
-      showError('Erro', 'Não foi possível atualizar a senha.');
+      const mensagem = mensagemDoErroDeAutenticacao(error);
+      if (mensagem === null) {
+        console.error('Falha ao atualizar a senha:', error);
+      }
+      showError('Erro', mensagem ?? 'Não foi possível atualizar a senha.');
     } finally {
       setSalvando(false);
     }
