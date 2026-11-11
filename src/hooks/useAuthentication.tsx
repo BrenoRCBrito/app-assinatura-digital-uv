@@ -2,18 +2,41 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { Alert } from 'react-native';
 
 import { ValidationError } from '../domain/brand';
-import { criarEmail,type Usuario , type UsuarioId } from '../domain/usuario';
+import {
+  criarCpf,
+  criarEmail,
+  criarNome,
+  criarTelefone,
+  criarUsuarioId,
+  type Usuario,
+  type UsuarioId,
+} from '../domain/usuario';
+import {
+  cadastrarNoFirebase,
+  contaDoFirebase,
+  entrarNoFirebase,
+  mensagemDoErroDeAutenticacao,
+  sairDoFirebase,
+  type ContaFirebase,
+} from '../services/autenticacaoFirebase';
 import {
   authenticateDeviceOwner,
   getBiometricStatus,
   type AuthenticationResult,
   type BiometricStatus,
 } from '../services/localAuthentication';
-import { hashSenha } from '../services/passwordHash';
 import { useRepositories } from '../storage/RepositoriesProvider';
 import { useSettings } from '../storage/SettingsProvider';
 
 export type ResultadoLoginComSenha = Readonly<{ ok: true }> | Readonly<{ ok: false; mensagem: string }>;
+
+export type DadosDoCadastro = Readonly<{
+  email: string;
+  senha: string;
+  nome: string;
+  cpf: string;
+  telefone: string;
+}>;
 
 type AuthenticationContextValue = Readonly<{
   isUnlocked: boolean;
@@ -23,8 +46,9 @@ type AuthenticationContextValue = Readonly<{
   mostrarEntrarComBiometria: boolean;
   usuarioBiometria: Usuario | null;
   loginComSenha: (email: string, senha: string) => Promise<ResultadoLoginComSenha>;
+  cadastrar: (dados: DadosDoCadastro) => Promise<ResultadoLoginComSenha>;
   unlock: () => Promise<void>;
-  lock: () => void;
+  sair: () => Promise<void>;
 }>;
 
 type AuthenticationErrorType = Exclude<AuthenticationResult['type'], 'authenticated' | 'cancelled'>;
@@ -34,6 +58,8 @@ const AUTHENTICATION_ERROR_MESSAGES: Readonly<Record<AuthenticationErrorType, st
   unavailable: 'Ative um bloqueio de tela no aparelho.',
   failed: 'Não foi possível autenticar. Tente de novo.',
 };
+
+const SESSAO_ENCERRADA = 'Sua sessão terminou. Entre com e-mail e senha.';
 
 const AuthenticationContext = createContext<AuthenticationContextValue | null>(null);
 
@@ -118,28 +144,80 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
 );
 
 
+  // O Firebase manda a conta; o aparelho guarda o perfil. Se o perfil ainda não existe aqui (primeiro acesso
+  // neste aparelho), ele nasce só com o e-mail, e se o e-mail mudou do lado do Firebase, acompanha.
+  const garantirUsuarioLocal = useCallback(
+    async (conta: ContaFirebase): Promise<Usuario> => {
+      const id = criarUsuarioId(conta.uid);
+      const email = criarEmail(conta.email);
+      const existente = await usuarios.findById(id);
+      if (existente === null) {
+        return usuarios.create({ id, email });
+      }
+      return existente.email === email ? existente : usuarios.updateEmail(id, email);
+    },
+    [usuarios],
+  );
+
+  const resultadoDeErro = useCallback((error: unknown, contexto: string, padrao: string): ResultadoLoginComSenha => {
+    if (error instanceof ValidationError) {
+      return { ok: false, mensagem: error.message };
+    }
+    const mensagem = mensagemDoErroDeAutenticacao(error);
+    if (mensagem !== null) {
+      return { ok: false, mensagem };
+    }
+    console.error(`${contexto}:`, error);
+    return { ok: false, mensagem: padrao };
+  }, []);
+
   const loginComSenha = useCallback(
     async (email: string, senha: string): Promise<ResultadoLoginComSenha> => {
       try {
-        const emailValido = criarEmail(email);
-        const usuario = await usuarios.findByEmail(emailValido);
-        const senhaHash = await hashSenha(senha);
-        if (usuario === null || usuario.senhaHash !== senhaHash) {
-          return { ok: false, mensagem: 'E-mail ou senha inválidos.' };
+        const conta = await entrarNoFirebase(criarEmail(email), senha);
+        const usuario = await garantirUsuarioLocal(conta);
+        setUsuarioId(usuario.id);
+        setIsUnlocked(true);
+        perguntarSobreBiometria(usuario.id);
+        return { ok: true };
+      } catch (error) {
+        return resultadoDeErro(error, 'Falha inesperada ao entrar com e-mail e senha', 'Não foi possível entrar.');
+      }
+    },
+    [garantirUsuarioLocal, perguntarSobreBiometria, resultadoDeErro],
+  );
+
+  // Criar a conta já deixa a pessoa logada: o Firebase abre a sessão sozinho, então basta guardar o perfil.
+  const cadastrar = useCallback(
+    async (dados: DadosDoCadastro): Promise<ResultadoLoginComSenha> => {
+      try {
+        const email = criarEmail(dados.email);
+        const perfil = {
+          nome: criarNome(dados.nome),
+          cpf: criarCpf(dados.cpf),
+          telefone: criarTelefone(dados.telefone),
+        };
+        const conta = await cadastrarNoFirebase(email, dados.senha);
+        let usuario: Usuario;
+        try {
+          usuario = await usuarios.create({ id: criarUsuarioId(conta.uid), email, ...perfil });
+        } catch (error) {
+          console.error('Falha ao guardar o perfil da conta nova neste aparelho:', error);
+          await sairDoFirebase().catch(() => undefined);
+          return {
+            ok: false,
+            mensagem: 'A conta foi criada, mas não foi possível salvar seus dados neste aparelho. Entre com e-mail e senha.',
+          };
         }
         setUsuarioId(usuario.id);
         setIsUnlocked(true);
         perguntarSobreBiometria(usuario.id);
         return { ok: true };
       } catch (error) {
-        if (error instanceof ValidationError) {
-          return { ok: false, mensagem: error.message };
-        }
-        console.error('Falha inesperada ao entrar com e-mail e senha:', error);
-        return { ok: false, mensagem: 'Não foi possível entrar.' };
+        return resultadoDeErro(error, 'Falha ao criar a conta', 'Não foi possível criar a conta.');
       }
     },
-    [perguntarSobreBiometria, usuarios],
+    [perguntarSobreBiometria, resultadoDeErro, usuarios],
   );
 
   const unlock = useCallback(async () => {
@@ -151,8 +229,16 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
     try {
       const result = await authenticateDeviceOwner('unlockApp');
       if (result.type === 'authenticated') {
-        setUsuarioId(settingsRef.current.ultimoUsuarioIdBiometria as UsuarioId | null);
-        setIsUnlocked(true);
+        // A biometria só prova que é o dono do aparelho; quem abre a conta é a sessão guardada do Firebase.
+        const conta = await contaDoFirebase();
+        if (conta === null || conta.uid !== settingsRef.current.ultimoUsuarioIdBiometria) {
+          updateSettings({ loginBiometricoAtivado: false });
+          Alert.alert('Não foi possível entrar', SESSAO_ENCERRADA);
+        } else {
+          const usuario = await garantirUsuarioLocal(conta);
+          setUsuarioId(usuario.id);
+          setIsUnlocked(true);
+        }
       } else if (result.type !== 'cancelled') {
         Alert.alert('Não foi possível entrar', AUTHENTICATION_ERROR_MESSAGES[result.type]);
       }
@@ -163,12 +249,23 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
       authenticatingRef.current = false;
       setAuthenticating(false);
     }
-  }, []);
+  }, [garantirUsuarioLocal, updateSettings]);
 
-  const lock = useCallback(() => {
+  // Fechar o app só bloqueia (a sessão fica guardada e a biometria destrava). Sair da conta é o logout de verdade.
+  const sair = useCallback(async () => {
+    try {
+      await sairDoFirebase();
+    } catch (error) {
+      console.error('Falha ao encerrar a sessão do Firebase:', error);
+    }
     setIsUnlocked(false);
     setUsuarioId(null);
-  }, []);
+    updateSettings({
+      loginBiometricoAtivado: false,
+      perguntaBiometriaRespondida: false,
+      ultimoUsuarioIdBiometria: null,
+    });
+  }, [updateSettings]);
 
   const mostrarEntrarComBiometria = settings.loginBiometricoAtivado && biometricStatus === 'enrolled';
 
@@ -181,8 +278,9 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
     mostrarEntrarComBiometria,
     usuarioBiometria,
     loginComSenha,
+    cadastrar,
     unlock,
-    lock,
+    sair,
   }),
   [
     isUnlocked,
@@ -192,8 +290,9 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
     mostrarEntrarComBiometria,
     usuarioBiometria,
     loginComSenha,
+    cadastrar,
     unlock,
-    lock,
+    sair,
   ],
 );
 
