@@ -23,7 +23,7 @@ type BotoesDoAlerta = NonNullable<Parameters<typeof Alert.alert>[2]>;
 const limparAssinaturas = jest.fn();
 const limparDocumentos = jest.fn();
 const limparUsuarios = jest.fn();
-const lock = jest.fn();
+const sair = jest.fn();
 
 async function abrirConfiguracoes() {
   await render(<SettingsScreen />, { wrapper: SettingsProvider });
@@ -46,9 +46,9 @@ describe('SettingsScreen', () => {
     limparAssinaturas.mockClear();
     limparDocumentos.mockClear();
     limparUsuarios.mockClear();
-    lock.mockClear();
+    sair.mockClear();
     alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-    jest.mocked(useAuthentication).mockReturnValue({ lock } as unknown as ReturnType<typeof useAuthentication>);
+    jest.mocked(useAuthentication).mockReturnValue({ sair } as unknown as ReturnType<typeof useAuthentication>);
     jest.mocked(useRepositories).mockReturnValue({
       assinaturas: { clear: limparAssinaturas },
       documentos: { clear: limparDocumentos },
@@ -71,7 +71,7 @@ describe('SettingsScreen', () => {
     expect(limparUsuarios).not.toHaveBeenCalled();
   });
 
-  test('confirmar apaga os três repositórios e tranca o app', async () => {
+  test('confirmar apaga os três repositórios e sai da conta', async () => {
     const botao = await abrirConfiguracoes();
 
     await fireEvent.press(botao);
@@ -80,7 +80,7 @@ describe('SettingsScreen', () => {
     expect(limparAssinaturas).toHaveBeenCalledTimes(1);
     expect(limparDocumentos).toHaveBeenCalledTimes(1);
     expect(limparUsuarios).toHaveBeenCalledTimes(1);
-    expect(lock).toHaveBeenCalledTimes(1);
+    expect(sair).toHaveBeenCalledTimes(1);
   });
 
   test('confirmar também desliga a entrada por biometria da conta apagada e mantém as preferências', async () => {

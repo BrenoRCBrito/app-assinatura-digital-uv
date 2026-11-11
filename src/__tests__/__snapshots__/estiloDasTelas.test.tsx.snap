@@ -1128,7 +1128,7 @@ exports[`estilo das telas no tema dark login, início e configurações: início
     "elemento": "texto",
     "fontSize": 16,
     "fontWeight": "600",
-    "texto": "Sair",
+    "texto": "Sair da conta",
   },
 ]
 `;
@@ -2352,7 +2352,7 @@ exports[`estilo das telas no tema light login, início e configurações: iníci
     "elemento": "texto",
     "fontSize": 16,
     "fontWeight": "600",
-    "texto": "Sair",
+    "texto": "Sair da conta",
   },
 ]
 `;

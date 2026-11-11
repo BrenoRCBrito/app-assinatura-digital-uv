@@ -20,14 +20,22 @@ export function HomeScreen({
   onOpenSettings,
 }: HomeScreenProps) {
 
-const { lock } = useAuthentication();
+const { sair } = useAuthentication();
 
 return (
     <Screen
       preset="menu"
       footer={
         <Row justify="center">
-          <Button label="Sair" icon="logout" onPress={lock} preset="danger" size="sm" />
+          <Button
+            label="Sair da conta"
+            icon="logout"
+            onPress={() => {
+              void sair();
+            }}
+            preset="danger"
+            size="sm"
+          />
         </Row>
       }
     >

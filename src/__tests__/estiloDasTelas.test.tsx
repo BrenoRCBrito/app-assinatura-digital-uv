@@ -6,7 +6,8 @@ import type { TestInstance } from 'test-renderer';
 
 import App from '../../App';
 import { DEFAULT_SETTINGS, type ThemeName } from '../domain/settings';
-import { criarEmail, type UsuarioId } from '../domain/usuario';
+import { criarEmail, criarUsuarioId, type UsuarioId } from '../domain/usuario';
+import { contaDoFirebase } from '../services/autenticacaoFirebase';
 import { authenticateDeviceOwner, getBiometricStatus } from '../services/localAuthentication';
 import { createRepositories } from '../storage/createRepositories';
 import { SETTINGS_STORAGE_KEY } from '../storage/settingsStorage';
@@ -17,6 +18,13 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
+jest.mock('../services/autenticacaoFirebase', () => ({
+  cadastrarNoFirebase: jest.fn(),
+  contaDoFirebase: jest.fn(),
+  entrarNoFirebase: jest.fn(),
+  sairDoFirebase: jest.fn(),
+  mensagemDoErroDeAutenticacao: jest.fn(() => null),
+}));
 jest.mock('../services/localAuthentication', () => ({
   authenticateDeviceOwner: jest.fn(),
   getBiometricStatus: jest.fn(),
@@ -124,7 +132,7 @@ describe.each(['light', 'dark'] as const)('estilo das telas no tema %s', (themeN
     reiniciarBancoDeTeste();
     const usuariosRepo = createRepositories('sqlite').usuarios;
     await usuariosRepo.clear();
-    const usuario = await usuariosRepo.create({ email: criarEmail('teste@exemplo.com'), senhaHash: 'hash' });
+    const usuario = await usuariosRepo.create({ id: criarUsuarioId('uid-teste'), email: criarEmail('teste@exemplo.com') });
     usuarioIdReal = usuario.id;
     await AsyncStorage.setItem(
       SETTINGS_STORAGE_KEY,
@@ -136,6 +144,7 @@ describe.each(['light', 'dark'] as const)('estilo das telas no tema %s', (themeN
         ultimoUsuarioIdBiometria: usuarioIdReal,
       }),
     );
+    jest.mocked(contaDoFirebase).mockResolvedValue({ uid: usuario.id, email: usuario.email });
     jest.mocked(getBiometricStatus).mockResolvedValue('enrolled');
     jest.mocked(authenticateDeviceOwner).mockResolvedValue({ type: 'authenticated' });
   });

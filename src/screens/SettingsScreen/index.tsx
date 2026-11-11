@@ -31,7 +31,7 @@ const GESTURE_ENGINE_OPTIONS: readonly SegmentOption<GestureEngine>[] = [
 export function SettingsScreen() {
   const { settings, updateSettings } = useSettings();
   const { assinaturas, documentos, usuarios } = useRepositories();
-  const { lock } = useAuthentication();
+  const { sair } = useAuthentication();
 
   async function limparDados() {
     try {
@@ -44,7 +44,7 @@ export function SettingsScreen() {
         ultimoUsuarioIdBiometria: null,
       });
       showSuccess('Dados do app apagados.');
-      lock();
+      await sair();
     } catch (error) {
       console.error('Falha ao limpar os dados do app:', error);
       showError('Erro', 'Não foi possível limpar os dados.');
