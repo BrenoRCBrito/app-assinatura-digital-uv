@@ -1,5 +1,5 @@
 type Linha = Record<string, unknown>;
-type Condicao = Readonly<{ coluna: string; nulo: boolean }>;
+type Condicao = Readonly<{ coluna: string; tipo: 'igual' | 'nulo' | 'naoNulo' }>;
 
 const bancos = new Map<string, Map<string, Linha[]>>();
 let falharProximaEscrita = false;
@@ -33,19 +33,24 @@ function lerCondicoes(sql: string, texto: string | undefined): readonly Condicao
     return [];
   }
   return texto.split(/\s+AND\s+/i).map((parte) => {
-    const encontrado = /^(\w+)\s*(=\s*\?|IS\s+NULL)$/i.exec(parte.trim());
+    const encontrado = /^(\w+)\s*(=\s*\?|IS\s+NOT\s+NULL|IS\s+NULL)$/i.exec(parte.trim());
     if (encontrado === null) {
       throw naoSabeRodar(sql);
     }
-    return { coluna: encontrado[1], nulo: /IS\s+NULL/i.test(encontrado[2]) };
+    const operador = encontrado[2];
+    const tipo = /IS\s+NOT\s+NULL/i.test(operador) ? 'naoNulo' : /IS\s+NULL/i.test(operador) ? 'nulo' : 'igual';
+    return { coluna: encontrado[1], tipo };
   });
 }
 
 function filtrar(linhas: readonly Linha[], condicoes: readonly Condicao[], parametros: readonly unknown[]): Linha[] {
   let proximo = 0;
-  const esperados = condicoes.map((condicao) => (condicao.nulo ? null : parametros[proximo++]));
+  const esperados = condicoes.map((condicao) => (condicao.tipo === 'igual' ? parametros[proximo++] : null));
   return linhas.filter((linha) =>
-    condicoes.every((condicao, indice) => (linha[condicao.coluna] ?? null) === esperados[indice]),
+    condicoes.every((condicao, indice) => {
+      const valor = linha[condicao.coluna] ?? null;
+      return condicao.tipo === 'naoNulo' ? valor !== null : valor === esperados[indice];
+    }),
   );
 }
 

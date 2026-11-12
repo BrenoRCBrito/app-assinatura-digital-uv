@@ -34,12 +34,19 @@ export interface AssinaturaRepository extends Sincronizavel<Assinatura> {
   clear(): Promise<void>;
 }
 
+export type TipoDeArquivo = 'foto' | 'pdf';
+
+export type ArquivoDoDocumento = Readonly<{ documento: DocumentoAssinado; tipo: TipoDeArquivo }>;
+
 export interface DocumentoAssinadoRepository extends Sincronizavel<DocumentoAssinado> {
   list(usuarioId: UsuarioId): Promise<readonly DocumentoAssinado[]>;
   findById(id: DocumentoId, usuarioId: UsuarioId): Promise<DocumentoAssinado | null>;
   save(documento: DocumentoAssinado): Promise<void>;
   delete(id: DocumentoId): Promise<void>;
   clear(): Promise<void>;
+  listarArquivosParaEnviar(usuarioId: UsuarioId): Promise<readonly ArquivoDoDocumento[]>;
+  listarArquivosParaApagar(usuarioId: UsuarioId): Promise<readonly ArquivoDoDocumento[]>;
+  definirArquivoNaNuvem(id: string, tipo: TipoDeArquivo, naNuvem: boolean): Promise<void>;
 }
 
 export type PerfilLocal = Readonly<{ perfil: PerfilParaSincronizar; pendente: boolean }>;

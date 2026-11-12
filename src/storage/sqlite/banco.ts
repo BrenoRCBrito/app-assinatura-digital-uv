@@ -57,6 +57,8 @@ async function prepararBanco(db: SQLiteDatabase): Promise<void> {
   await adicionarColunaSeFaltar(db, 'documentos', 'foto_sha256 TEXT');
   await adicionarColunaSeFaltar(db, 'documentos', "foto_status TEXT NOT NULL DEFAULT 'local'");
   await adicionarColunaSeFaltar(db, 'documentos', "pdf_status TEXT NOT NULL DEFAULT 'local'");
+  await adicionarColunaSeFaltar(db, 'documentos', 'foto_na_nuvem INTEGER NOT NULL DEFAULT 0');
+  await adicionarColunaSeFaltar(db, 'documentos', 'pdf_na_nuvem INTEGER NOT NULL DEFAULT 0');
   await migrarDoAsyncStorage(db);
 }
 

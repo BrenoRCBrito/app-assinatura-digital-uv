@@ -224,5 +224,135 @@ export function testarContratoDocumentoAssinadoRepository(
         });
       });
     });
+
+    describe('arquivos na nuvem', () => {
+      const ASSINADO = '2026-09-12T10:00:00.000Z';
+      const apagarComoDeUsuario = async (repositorio: DocumentoAssinadoRepository, id: string) =>
+        repositorio.delete(criarDocumentoId(id));
+
+      test('documento recém-assinado tem foto e PDF para enviar', async () => {
+        const repositorio = criarRepositorio();
+        const documento = criarDocumentoDeTeste('d1', 'Contrato', ASSINADO);
+        await repositorio.save(documento);
+
+        const arquivos = await repositorio.listarArquivosParaEnviar(USUARIO_DE_TESTE);
+
+        expect(arquivos.map(({ tipo }) => tipo).sort()).toEqual(['foto', 'pdf']);
+        expect(arquivos.every((arquivo) => arquivo.documento.id === documento.id)).toBe(true);
+      });
+
+      test('arquivo marcado como já na nuvem deixa de ser listado para envio, e o outro continua', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.save(criarDocumentoDeTeste('d1', 'Contrato', ASSINADO));
+
+        await repositorio.definirArquivoNaNuvem('d1', 'foto', true);
+
+        const arquivos = await repositorio.listarArquivosParaEnviar(USUARIO_DE_TESTE);
+        expect(arquivos.map(({ tipo }) => tipo)).toEqual(['pdf']);
+      });
+
+      test('desmarcar volta a listar o arquivo para envio', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.save(criarDocumentoDeTeste('d1', 'Contrato', ASSINADO));
+        await repositorio.definirArquivoNaNuvem('d1', 'foto', true);
+
+        await repositorio.definirArquivoNaNuvem('d1', 'foto', false);
+
+        const arquivos = await repositorio.listarArquivosParaEnviar(USUARIO_DE_TESTE);
+        expect(arquivos.map(({ tipo }) => tipo).sort()).toEqual(['foto', 'pdf']);
+      });
+
+      test('salvar de novo o documento não perde a marca de que o arquivo já está na nuvem', async () => {
+        const repositorio = criarRepositorio();
+        const documento = criarDocumentoDeTeste('d1', 'Contrato', ASSINADO);
+        await repositorio.save(documento);
+        await repositorio.definirArquivoNaNuvem('d1', 'foto', true);
+
+        await repositorio.save({ ...documento, titulo: criarTituloDocumento('Outro título') });
+
+        const arquivos = await repositorio.listarArquivosParaEnviar(USUARIO_DE_TESTE);
+        expect(arquivos.map(({ tipo }) => tipo)).toEqual(['pdf']);
+      });
+
+      test('arquivo que não está neste aparelho (documento vindo da nuvem) não é listado para envio', async () => {
+        const repositorio = criarRepositorio();
+        const documento = {
+          ...criarDocumentoDeTeste('n1', 'Da nuvem', ASSINADO),
+          fotoStatus: 'remote' as const,
+          pdfStatus: 'remote' as const,
+        };
+        await repositorio.aplicarDaNuvem({
+          item: documento,
+          createdAt: ASSINADO,
+          updatedAt: ASSINADO,
+          deletedAt: null,
+        });
+
+        await expect(repositorio.listarArquivosParaEnviar(USUARIO_DE_TESTE)).resolves.toEqual([]);
+      });
+
+      test('só lista os arquivos do usuário pedido', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.save(criarDocumentoDeTeste('d1', 'Meu', ASSINADO, USUARIO_DE_TESTE));
+        await repositorio.save(criarDocumentoDeTeste('d2', 'De outra conta', ASSINADO, OUTRO_USUARIO_DE_TESTE));
+
+        const arquivos = await repositorio.listarArquivosParaEnviar(USUARIO_DE_TESTE);
+
+        expect(arquivos.every((arquivo) => arquivo.documento.id === 'd1')).toBe(true);
+      });
+
+      test('documento excluído não tem arquivo para enviar', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.save(criarDocumentoDeTeste('d1', 'Contrato', ASSINADO));
+        await apagarComoDeUsuario(repositorio, 'd1');
+
+        await expect(repositorio.listarArquivosParaEnviar(USUARIO_DE_TESTE)).resolves.toEqual([]);
+      });
+
+      test('documento excluído com arquivo na nuvem tem esse arquivo para apagar de lá', async () => {
+        const repositorio = criarRepositorio();
+        const documento = criarDocumentoDeTeste('d1', 'Contrato', ASSINADO);
+        await repositorio.save(documento);
+        await repositorio.definirArquivoNaNuvem('d1', 'foto', true);
+        await repositorio.definirArquivoNaNuvem('d1', 'pdf', true);
+        await apagarComoDeUsuario(repositorio, 'd1');
+
+        const arquivos = await repositorio.listarArquivosParaApagar(USUARIO_DE_TESTE);
+
+        expect(arquivos.map(({ tipo }) => tipo).sort()).toEqual(['foto', 'pdf']);
+        expect(arquivos.every((arquivo) => arquivo.documento.id === documento.id)).toBe(true);
+      });
+
+      test('depois de apagado da nuvem, o arquivo sai da lista de apagar', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.save(criarDocumentoDeTeste('d1', 'Contrato', ASSINADO));
+        await repositorio.definirArquivoNaNuvem('d1', 'foto', true);
+        await apagarComoDeUsuario(repositorio, 'd1');
+
+        await repositorio.definirArquivoNaNuvem('d1', 'foto', false);
+
+        await expect(repositorio.listarArquivosParaApagar(USUARIO_DE_TESTE)).resolves.toEqual([]);
+      });
+
+      test('documento que não foi excluído nunca tem arquivo para apagar, mesmo com arquivo na nuvem', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.save(criarDocumentoDeTeste('d1', 'Contrato', ASSINADO));
+        await repositorio.definirArquivoNaNuvem('d1', 'foto', true);
+
+        await expect(repositorio.listarArquivosParaApagar(USUARIO_DE_TESTE)).resolves.toEqual([]);
+      });
+
+      test('excluído sem arquivo na nuvem não tem nada para apagar', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.save(criarDocumentoDeTeste('d1', 'Contrato', ASSINADO));
+        await apagarComoDeUsuario(repositorio, 'd1');
+
+        await expect(repositorio.listarArquivosParaApagar(USUARIO_DE_TESTE)).resolves.toEqual([]);
+      });
+
+      test('marcar um documento que não existe não lança erro', async () => {
+        await expect(criarRepositorio().definirArquivoNaNuvem('nao-existe', 'foto', true)).resolves.toBeUndefined();
+      });
+    });
   });
 }

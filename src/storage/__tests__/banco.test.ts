@@ -19,6 +19,15 @@ describe('banco', () => {
     expect(comandos).toContain("ALTER TABLE documentos ADD COLUMN pdf_status TEXT NOT NULL DEFAULT 'local'");
   });
 
+  test('ao abrir, garante em bancos antigos as colunas que dizem se foto e PDF já estão na nuvem', async () => {
+    const banco = abrirBanco();
+    await banco.pronto;
+
+    const comandos = (banco.db.execAsync as jest.Mock).mock.calls.map(([sql]) => String(sql));
+    expect(comandos).toContain('ALTER TABLE documentos ADD COLUMN foto_na_nuvem INTEGER NOT NULL DEFAULT 0');
+    expect(comandos).toContain('ALTER TABLE documentos ADD COLUMN pdf_na_nuvem INTEGER NOT NULL DEFAULT 0');
+  });
+
   describe('adicionarColunaSeFaltar', () => {
     test('manda acrescentar a coluna na tabela', async () => {
       const execAsync = jest.fn(async () => undefined);

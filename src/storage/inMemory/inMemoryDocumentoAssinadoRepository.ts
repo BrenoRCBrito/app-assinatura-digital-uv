@@ -1,9 +1,14 @@
 import { ordenarDocumentosMaisNovosPrimeiro, type DocumentoAssinado } from '../../domain/documento';
-import type { DocumentoAssinadoRepository } from '../repositories';
+import type { ArquivoDoDocumento, DocumentoAssinadoRepository, TipoDeArquivo } from '../repositories';
 import { criarArmazenamentoSincronizavel } from './armazenamentoSincronizavel';
 
 export function createInMemoryDocumentoAssinadoRepository(): DocumentoAssinadoRepository {
   const armazenamento = criarArmazenamentoSincronizavel<DocumentoAssinado>((_documento, agora) => agora);
+  const naNuvem = new Set<string>();
+  const chave = (id: string, tipo: TipoDeArquivo) => `${id}/${tipo}`;
+  const TIPOS: readonly TipoDeArquivo[] = ['foto', 'pdf'];
+  const statusDoArquivo = (documento: DocumentoAssinado, tipo: TipoDeArquivo) =>
+    tipo === 'foto' ? documento.fotoStatus : documento.pdfStatus;
 
   return {
     async list(usuarioId) {
@@ -21,6 +26,30 @@ export function createInMemoryDocumentoAssinadoRepository(): DocumentoAssinadoRe
     },
     async clear() {
       armazenamento.limpar();
+      naNuvem.clear();
+    },
+    async listarArquivosParaEnviar(usuarioId) {
+      return armazenamento.todos(usuarioId).flatMap(({ item, deletedAt }): ArquivoDoDocumento[] =>
+        deletedAt !== null
+          ? []
+          : TIPOS.filter((tipo) => statusDoArquivo(item, tipo) === 'local' && !naNuvem.has(chave(item.id, tipo))).map(
+              (tipo) => ({ documento: item, tipo }),
+            ),
+      );
+    },
+    async listarArquivosParaApagar(usuarioId) {
+      return armazenamento.todos(usuarioId).flatMap(({ item, deletedAt }): ArquivoDoDocumento[] =>
+        deletedAt === null
+          ? []
+          : TIPOS.filter((tipo) => naNuvem.has(chave(item.id, tipo))).map((tipo) => ({ documento: item, tipo })),
+      );
+    },
+    async definirArquivoNaNuvem(id, tipo, estaNaNuvem) {
+      if (estaNaNuvem) {
+        naNuvem.add(chave(id, tipo));
+      } else {
+        naNuvem.delete(chave(id, tipo));
+      }
     },
     async listarPendentes(usuarioId) {
       return armazenamento.listarPendentes(usuarioId);

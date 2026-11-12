@@ -30,6 +30,9 @@ export function criarArmazenamentoSincronizavel<T extends ComIdentidade>(
         .filter((entrada) => entrada.deletedAt === null && entrada.item.usuarioId === usuarioId)
         .map((entrada) => entrada.item);
     },
+    todos(usuarioId: string): readonly RegistroSincronizavel<T>[] {
+      return [...entradas.values()].filter((entrada) => entrada.item.usuarioId === usuarioId).map(paraRegistro);
+    },
     achar(id: string): T | null {
       const entrada = entradas.get(id);
       return entrada === undefined || entrada.deletedAt !== null ? null : entrada.item;
