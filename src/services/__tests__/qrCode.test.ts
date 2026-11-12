@@ -1,6 +1,5 @@
 import qrcode from 'qrcode-generator';
 
-import { serializarCampos } from '../../domain/codigoDeAutenticidade';
 import { desenharQrSvg, gerarMatrizQr } from '../qrCode';
 
 const TEXTO = 'AA1;id=1757680000000;email=breno%40exemplo.com#W9zBRr9gdU5qBCQmCJV1x1oAPwidJzmDnexYuWTsOEM';
@@ -36,19 +35,8 @@ describe('gerarMatrizQr', () => {
     }
   });
 
-  test('o pior caso de título acentuado e e-mail longo ainda cabe até a versão 25', () => {
-    const mensagem = serializarCampos([
-      { chave: 'id', valor: '17902999999990' },
-      { chave: 'email', valor: 'um.endereco.bem.comprido@exemplo.com.br' },
-      { chave: 'titulo', valor: 'ã'.repeat(60) },
-      { chave: 'em', valor: '2026-09-25T23:59:59.999Z' },
-      { chave: 'local', valor: '-22.4528212,-43.4784823' },
-      { chave: 'foto', valor: 'f'.repeat(64) },
-    ]);
-
-    const matriz = gerarMatrizQr(`${mensagem}#${'c'.repeat(43)}`);
-
-    expect(matriz.length).toBeLessThanOrEqual(17 + 4 * 25);
+  test('o código curto formatado cabe na menor versão do QR, com 21 módulos', () => {
+    expect(gerarMatrizQr('7K3F-9QXZ-M2P4')).toHaveLength(21);
   });
 });
 
