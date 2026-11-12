@@ -70,7 +70,7 @@ describe('DocumentCamera', () => {
     await waitFor(() =>
       expect(onCapture).toHaveBeenCalledWith(createCapturedPhoto('file:///cache/foto.jpg', 3024, 4032)),
     );
-    expect(mockTirarFoto).toHaveBeenCalledWith({ quality: 0.8 });
+    expect(mockTirarFoto).toHaveBeenCalledWith({ quality: 0.6 });
     expect(onCaptureError).not.toHaveBeenCalled();
   });
 

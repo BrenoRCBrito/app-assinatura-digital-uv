@@ -8,7 +8,7 @@ import { IconButton } from '../IconButton';
 import { Text } from '../Text';
 import { documentCameraPresets } from './presets';
 
-const PHOTO_QUALITY = 0.8;
+const PHOTO_QUALITY = 0.6;
 
 type DocumentCameraProps = Readonly<{
   onClose: () => void;
