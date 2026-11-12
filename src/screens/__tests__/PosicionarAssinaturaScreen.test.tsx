@@ -244,6 +244,23 @@ describe('PosicionarAssinaturaScreen', () => {
     alerta.mockRestore();
   });
 
+  test('sem servidor, explica que o celular precisa estar no wifi do servidor', async () => {
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    assinar.mockResolvedValue({ tipo: 'falhou', motivo: 'servidorIndisponivel' });
+    await salvarAssinaturas();
+    await abrirTela();
+
+    await darTituloEAssinar();
+
+    await waitFor(() =>
+      expect(alerta).toHaveBeenCalledWith(
+        'Não foi possível assinar',
+        'Não foi possível falar com o servidor do AssinaAqui. Confira se o celular está no mesmo wifi do servidor e tente de novo.',
+      ),
+    );
+    alerta.mockRestore();
+  });
+
   test('cancelar a biometria não mostra nada e fica no Posicionar', async () => {
     const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     assinar.mockResolvedValue({ tipo: 'cancelado' });

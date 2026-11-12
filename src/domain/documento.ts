@@ -1,12 +1,12 @@
 import { criarNomeAssinatura, type NomeAssinatura } from './assinatura';
 import { ValidationError, type Brand } from './brand';
+import { criarCodigoCurto, type CodigoCurto } from './codigoCurto';
 import { createIsoDateTime, type IsoDateTime } from './dateTime';
 import { paraDesenho, type Desenho } from './desenho';
 import { createFraction, paraSize, type Size } from './geometry';
-import { lerNumero, lerObjeto, lerTexto } from './leitura';
+import { lerNumero, lerObjeto, lerTexto, lerTextoOuNulo } from './leitura';
 import type { PosicaoSelo } from './selo';
 import { criarUsuarioId, type UsuarioId } from './usuario';
-
 
 export type DocumentoId = Brand<string, 'DocumentoId'>;
 export type TituloDocumento = Brand<string, 'TituloDocumento'>;
@@ -31,6 +31,7 @@ export type DocumentoAssinado = Readonly<{
   selo: PosicaoSelo;
   local: LocalAssinatura;
   assinadoEm: IsoDateTime;
+  codigo: CodigoCurto | null;
 }>;
 
 const DOCUMENTO_ID = /^\d+$/;
@@ -140,6 +141,11 @@ function paraLocal(dado: unknown): LocalAssinatura {
   };
 }
 
+function paraCodigo(dado: unknown): CodigoCurto | null {
+  const codigo = lerTextoOuNulo(dado, DOCUMENTO_INVALIDO);
+  return codigo === null ? null : criarCodigoCurto(codigo);
+}
+
 export function paraDocumentoAssinado(dado: unknown): DocumentoAssinado {
   const documento = lerObjeto(dado, DOCUMENTO_INVALIDO);
 
@@ -156,6 +162,6 @@ export function paraDocumentoAssinado(dado: unknown): DocumentoAssinado {
     assinadoEm: createIsoDateTime(
       lerTexto('assinadoEm' in documento ? documento.assinadoEm : undefined, DOCUMENTO_INVALIDO),
     ),
+    codigo: paraCodigo('codigo' in documento ? documento.codigo : undefined),
   };
 }
-

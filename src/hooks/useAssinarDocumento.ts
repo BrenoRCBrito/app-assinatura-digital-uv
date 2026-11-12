@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { createIsoDateTime } from '../domain/dateTime';
 import { criarDocumentoId } from '../domain/documento';
-import { carimbarComOSegredoDoApp } from '../services/carimbo';
+import { registrarDocumento } from '../services/apiDeDocumentos';
 import {
   copiarFotoDocumento,
   excluirArquivosDocumento,
@@ -46,7 +46,7 @@ export function useAssinarDocumento(): AssinarDocumento {
             lerFotoDocumentoBase64,
             emitirCodigo: (documento, fotoBase64) =>
               emitirCodigoDoDocumento(
-                { buscarUsuario: (id) => usuarios.findById(id), resumirSha256, carimbar: carimbarComOSegredoDoApp },
+                { buscarUsuario: (id) => usuarios.findById(id), resumirSha256, registrar: registrarDocumento },
                 documento,
                 fotoBase64,
               ),

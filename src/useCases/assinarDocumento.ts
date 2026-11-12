@@ -1,11 +1,12 @@
 import type { Assinatura } from '../domain/assinatura';
-import type { CodigoDeAutenticidade } from '../domain/codigoDeAutenticidade';
+import type { CodigoCurto } from '../domain/codigoCurto';
 import type { IsoDateTime } from '../domain/dateTime';
 import type { Base64, DocumentoAssinado, DocumentoId, Html, TituloDocumento } from '../domain/documento';
 import type { Size } from '../domain/geometry';
 import type { CapturedPhoto } from '../domain/photo';
 import type { PosicaoSelo } from '../domain/selo';
 import type { UsuarioId } from '../domain/usuario';
+import { ServidorIndisponivel } from '../services/apiDeDocumentos';
 import type { AuthenticationPurpose, AuthenticationResult } from '../services/localAuthentication';
 import type { ResultadoLocalAssinatura } from '../services/location';
 import type { DocumentoHtml } from '../services/print';
@@ -24,6 +25,7 @@ export type MotivoFalhaAssinatura =
   | 'autenticacaoFalhou'
   | 'localSemPermissao'
   | 'localIndisponivel'
+  | 'servidorIndisponivel'
   | 'erroAoGerarDocumento';
 
 export type ResultadoAssinatura =
@@ -36,14 +38,10 @@ export type DependenciasAssinatura = Readonly<{
   obterLocalAssinatura: () => Promise<ResultadoLocalAssinatura>;
   copiarFotoDocumento: (id: DocumentoId, foto: CapturedPhoto) => Promise<void>;
   lerFotoDocumentoBase64: (id: DocumentoId) => Promise<Base64>;
-  emitirCodigo: (documento: DocumentoAssinado, fotoBase64: Base64) => Promise<CodigoDeAutenticidade>;
+  emitirCodigo: (documento: DocumentoAssinado, fotoBase64: Base64) => Promise<CodigoCurto>;
   guardarPdfDocumento: (id: DocumentoId, pdf: Base64) => Promise<void>;
   excluirArquivosDocumento: (id: DocumentoId) => void;
-  montarHtmlDocumento: (
-    documento: DocumentoAssinado,
-    fotoBase64: Base64,
-    codigo: CodigoDeAutenticidade,
-  ) => DocumentoHtml;
+  montarHtmlDocumento: (documento: DocumentoAssinado, fotoBase64: Base64, codigo: CodigoCurto) => DocumentoHtml;
   gerarPdf: (html: Html, tamanhoDaPagina: Size) => Promise<Base64>;
   documentos: DocumentoAssinadoRepository;
   agora: () => IsoDateTime;
@@ -96,20 +94,25 @@ export async function assinarDocumento(
     selo: pedido.selo,
     local: local.local,
     assinadoEm: dependencias.agora(),
+    codigo: null,
   };
 
   try {
     await dependencias.copiarFotoDocumento(documento.id, pedido.foto);
     const fotoBase64 = await dependencias.lerFotoDocumentoBase64(documento.id);
     const codigo = await dependencias.emitirCodigo(documento, fotoBase64);
-    const { html, tamanhoDaPagina } = dependencias.montarHtmlDocumento(documento, fotoBase64, codigo);
+    const assinado: DocumentoAssinado = { ...documento, codigo };
+    const { html, tamanhoDaPagina } = dependencias.montarHtmlDocumento(assinado, fotoBase64, codigo);
     const pdf = await dependencias.gerarPdf(html, tamanhoDaPagina);
     await dependencias.guardarPdfDocumento(documento.id, pdf);
-    await dependencias.documentos.save(documento);
-    return { tipo: 'assinado', documento };
+    await dependencias.documentos.save(assinado);
+    return { tipo: 'assinado', documento: assinado };
   } catch (error) {
     console.error('Falha ao gerar o documento assinado:', error);
     apagarArquivos(dependencias, documento.id);
-    return { tipo: 'falhou', motivo: 'erroAoGerarDocumento' };
+    return {
+      tipo: 'falhou',
+      motivo: error instanceof ServidorIndisponivel ? 'servidorIndisponivel' : 'erroAoGerarDocumento',
+    };
   }
 }
