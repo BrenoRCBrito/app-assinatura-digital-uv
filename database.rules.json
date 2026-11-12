@@ -2,20 +2,22 @@
   "rules": {
     ".read": false,
     ".write": false,
-    "fotos": {
+    "arquivos": {
       "$uid": {
         "$documentoId": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid && (!data.exists() || !newData.exists())",
-          ".validate": "$documentoId.matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.hasChildren(['dados', 'sha256'])",
-          "dados": {
-            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 9000000"
-          },
-          "sha256": {
-            ".validate": "newData.isString() && newData.val().matches(/^[0-9a-f]{64}$/)"
-          },
-          "$outro": {
-            ".validate": false
+          "$tipo": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && (!data.exists() || !newData.exists())",
+            ".validate": "($tipo === 'foto' || $tipo === 'pdf') && $documentoId.matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.hasChildren(['dados', 'sha256'])",
+            "dados": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 9000000"
+            },
+            "sha256": {
+              ".validate": "newData.isString() && newData.val().matches(/^[0-9a-f]{64}$/)"
+            },
+            "$outro": {
+              ".validate": false
+            }
           }
         }
       }
