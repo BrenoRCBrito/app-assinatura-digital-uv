@@ -13,7 +13,7 @@ Na raiz do repositório, com Docker ou Podman instalado:
 | `npm run api:down -- --volumes` | para o contêiner e apaga os documentos registrados |
 | `npm run api:logs` | acompanha o log do contêiner |
 
-Os scripts usam o Docker quando ele responde e, senão, o Podman. Para escolher um deles, defina `CONTAINER_ENGINE=docker` ou `CONTAINER_ENGINE=podman`. A porta padrão é a 3000; para usar outra, defina `PORT`.
+Os scripts usam o Podman quando ele está instalado e, senão, o Docker. Para escolher um deles, defina `CONTAINER_ENGINE=docker` ou `CONTAINER_ENGINE=podman`. A porta padrão é a 3000; para usar outra, defina `PORT`.
 
 Sem contêiner, para desenvolver: `npm --prefix api ci` uma vez e depois `npm run api`.
 
