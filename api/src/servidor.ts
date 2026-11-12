@@ -16,7 +16,7 @@ function iniciar(): void {
   if (existsSync(ARQUIVO_DE_SEGREDOS)) {
     process.loadEnvFile(ARQUIVO_DE_SEGREDOS);
   }
-  const { segredo, porta } = lerConfiguracao(process.env);
+  const { segredo, porta, enderecoNaRede } = lerConfiguracao(process.env);
   mkdirSync(PASTA_DOS_DADOS, { recursive: true });
   const app = criarApp({
     banco: abrirBanco(join(PASTA_DOS_DADOS, 'assinaaqui.db')),
@@ -31,7 +31,9 @@ function iniciar(): void {
       return;
     }
     console.log(`API do AssinaAqui na porta ${porta}. No celular, use um destes endereços:`);
-    for (const endereco of enderecosNaRede(networkInterfaces(), porta)) {
+    // No contêiner, as interfaces são as da rede do Docker: o script de subida informa o IP do PC.
+    const enderecos = enderecoNaRede === null ? enderecosNaRede(networkInterfaces(), porta) : [enderecoNaRede];
+    for (const endereco of enderecos) {
       console.log(`  ${endereco}`);
     }
   });

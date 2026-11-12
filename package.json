@@ -11,7 +11,10 @@
     "test:watch": "jest --watchAll",
     "typecheck": "tsc --noEmit",
     "api": "npm --prefix api start",
-    "test:api": "npm --prefix api test"
+    "test:api": "npm --prefix api test",
+    "api:up": "bash api/scripts/up.sh",
+    "api:down": "bash api/scripts/down.sh",
+    "api:logs": "bash api/scripts/logs.sh"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",

@@ -7,7 +7,18 @@ const SEGREDO = 's'.repeat(32);
 
 describe('lerConfiguracao', () => {
   test('lê o segredo e usa a porta padrão', () => {
-    assert.deepEqual(lerConfiguracao({ ASSINAAQUI_HMAC_SECRET: SEGREDO }), { segredo: SEGREDO, porta: PORTA_PADRAO });
+    assert.deepEqual(lerConfiguracao({ ASSINAAQUI_HMAC_SECRET: SEGREDO }), {
+      segredo: SEGREDO,
+      porta: PORTA_PADRAO,
+      enderecoNaRede: null,
+    });
+  });
+
+  test('leva o endereço que o script de subida informa, para o log do contêiner mostrar o IP do PC', () => {
+    const ambiente = { ASSINAAQUI_HMAC_SECRET: SEGREDO, ASSINAAQUI_ENDERECO_NA_REDE: ' http://192.168.0.10:3000 ' };
+
+    assert.equal(lerConfiguracao(ambiente).enderecoNaRede, 'http://192.168.0.10:3000');
+    assert.equal(lerConfiguracao({ ASSINAAQUI_HMAC_SECRET: SEGREDO, ASSINAAQUI_ENDERECO_NA_REDE: '' }).enderecoNaRede, null);
   });
 
   test('aceita outra porta pelo PORT', () => {

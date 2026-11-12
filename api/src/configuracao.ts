@@ -4,7 +4,7 @@ export const PORTA_PADRAO = 3000;
 const TAMANHO_MINIMO_DO_SEGREDO = 32;
 const MAIOR_PORTA = 65535;
 
-export type Configuracao = Readonly<{ segredo: string; porta: number }>;
+export type Configuracao = Readonly<{ segredo: string; porta: number; enderecoNaRede: string | null }>;
 
 export function lerConfiguracao(ambiente: NodeJS.ProcessEnv): Configuracao {
   const segredo = ambiente.ASSINAAQUI_HMAC_SECRET;
@@ -17,7 +17,8 @@ export function lerConfiguracao(ambiente: NodeJS.ProcessEnv): Configuracao {
   if (!Number.isInteger(porta) || porta < 1 || porta > MAIOR_PORTA) {
     throw new Error(`Porta inválida: ${ambiente.PORT}`);
   }
-  return { segredo, porta };
+  const enderecoNaRede = ambiente.ASSINAAQUI_ENDERECO_NA_REDE?.trim() ?? '';
+  return { segredo, porta, enderecoNaRede: enderecoNaRede === '' ? null : enderecoNaRede };
 }
 
 export function enderecosNaRede(
