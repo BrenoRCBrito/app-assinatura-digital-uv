@@ -18,7 +18,7 @@ import {
   getBiometricStatus,
   type AuthenticationResult,
 } from '../../services/localAuthentication';
-import { sincronizarPerfil } from '../../services/sincronizacaoDoPerfil';
+import { sincronizarTudo } from '../../services/sincronizacao';
 import type { Repositories } from '../../storage/repositories';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 import { useSettings } from '../../storage/SettingsProvider';
@@ -40,7 +40,7 @@ jest.mock('../../services/autenticacaoFirebase', () => ({
   sairDoFirebase: jest.fn(),
   mensagemDoErroDeAutenticacao: jest.fn(),
 }));
-jest.mock('../../services/sincronizacaoDoPerfil', () => ({ sincronizarPerfil: jest.fn() }));
+jest.mock('../../services/sincronizacao', () => ({ sincronizarTudo: jest.fn() }));
 jest.mock('../../storage/RepositoriesProvider', () => ({ useRepositories: jest.fn() }));
 jest.mock('../../storage/SettingsProvider', () => ({ useSettings: jest.fn() }));
 
@@ -689,7 +689,7 @@ describe('AuthenticationProvider', () => {
     test('não sincroniza enquanto ninguém entrou', async () => {
       await renderAuthentication();
 
-      expect(sincronizarPerfil).not.toHaveBeenCalled();
+      expect(sincronizarTudo).not.toHaveBeenCalled();
     });
 
     test('ao entrar com e-mail e senha, sincroniza o perfil dessa conta', async () => {
@@ -701,8 +701,8 @@ describe('AuthenticationProvider', () => {
         await result.current.loginComSenha('a@exemplo.com', 'Senha@123');
       });
 
-      expect(sincronizarPerfil).toHaveBeenCalledTimes(1);
-      expect(sincronizarPerfil).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
+      expect(sincronizarTudo).toHaveBeenCalledTimes(1);
+      expect(sincronizarTudo).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
     });
 
     test('ao desbloquear com a biometria, sincroniza o perfil da conta', async () => {
@@ -716,7 +716,7 @@ describe('AuthenticationProvider', () => {
         await result.current.unlock();
       });
 
-      expect(sincronizarPerfil).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
+      expect(sincronizarTudo).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
     });
 
     test('ao criar a conta, sincroniza o perfil novo', async () => {
@@ -728,7 +728,7 @@ describe('AuthenticationProvider', () => {
         await result.current.cadastrar(CADASTRO);
       });
 
-      expect(sincronizarPerfil).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
+      expect(sincronizarTudo).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
     });
 
     test('ao sair da conta, não sincroniza de novo', async () => {
@@ -743,7 +743,7 @@ describe('AuthenticationProvider', () => {
         await result.current.sair();
       });
 
-      expect(sincronizarPerfil).toHaveBeenCalledTimes(1);
+      expect(sincronizarTudo).toHaveBeenCalledTimes(1);
     });
   });
 

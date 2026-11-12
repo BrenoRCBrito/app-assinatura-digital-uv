@@ -25,7 +25,7 @@ import {
   type AuthenticationResult,
   type BiometricStatus,
 } from '../services/localAuthentication';
-import { sincronizarPerfil } from '../services/sincronizacaoDoPerfil';
+import { sincronizarTudo } from '../services/sincronizacao';
 import { useRepositories } from '../storage/RepositoriesProvider';
 import { useSettings } from '../storage/SettingsProvider';
 
@@ -65,7 +65,8 @@ const SESSAO_ENCERRADA = 'Sua sessão terminou. Entre com e-mail e senha.';
 const AuthenticationContext = createContext<AuthenticationContextValue | null>(null);
 
 export function AuthenticationProvider({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { usuarios } = useRepositories();
+  const repositorios = useRepositories();
+  const { usuarios } = repositorios;
   const { settings, updateSettings } = useSettings();
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
@@ -94,9 +95,9 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
 
   useEffect(() => {
     if (usuarioId !== null) {
-      void sincronizarPerfil(usuarios, usuarioId);
+      void sincronizarTudo(repositorios, usuarioId);
     }
-  }, [usuarioId, usuarios]);
+  }, [usuarioId, repositorios]);
 
   useEffect(() => {
     let active = true;

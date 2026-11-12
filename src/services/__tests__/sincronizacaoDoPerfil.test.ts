@@ -226,6 +226,20 @@ describe('sincronizacaoDoPerfil', () => {
       aviso.mockRestore();
     });
 
+    test('se a nuvem não responder à gravação, desiste depois de 15 segundos e o perfil continua pendente', async () => {
+      const aviso = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+      nuvemSemPerfil();
+      jest.mocked(setDoc).mockReturnValue(new Promise<never>(() => undefined));
+      const usuarios = await repositorioComPerfil();
+
+      const execucao = sincronizarPerfil(usuarios, ID);
+      await jest.advanceTimersByTimeAsync(15000);
+
+      await expect(execucao).resolves.toMatchObject({ falhou: true });
+      await expect(usuarios.lerPerfilLocal(ID)).resolves.toMatchObject({ pendente: true });
+      aviso.mockRestore();
+    });
+
     test('se a gravação for recusada, o perfil continua pendente', async () => {
       const aviso = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
       nuvemSemPerfil();

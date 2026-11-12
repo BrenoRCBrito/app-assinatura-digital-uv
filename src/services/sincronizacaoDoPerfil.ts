@@ -11,12 +11,14 @@ import {
 } from '../domain/usuario';
 import type { PerfilLocal, UsuarioRepository } from '../storage/repositories';
 import { obterFirestore } from './firebase';
+import { comTempoLimite } from './tempoLimite';
 
 export type ResultadoDaSincronizacao = Readonly<{ enviados: number; baixados: number; falhou: boolean }>;
 
 type Acao = 'enviar' | 'baixar' | 'marcar' | 'nada';
 
 const COLECAO_DE_USUARIOS = 'usuarios';
+const TEMPO_LIMITE_DA_GRAVACAO = 15000;
 const PERFIL_INVALIDO = 'Perfil da nuvem inválido.';
 
 export function perfilParaNuvem(perfil: PerfilParaSincronizar) {
@@ -77,7 +79,11 @@ export async function sincronizarPerfil(
 
     switch (decidir(local, nuvem)) {
       case 'enviar':
-        await setDoc(referencia, perfilParaNuvem(local.perfil));
+        await comTempoLimite(
+          setDoc(referencia, perfilParaNuvem(local.perfil)),
+          TEMPO_LIMITE_DA_GRAVACAO,
+          'A gravação na nuvem demorou demais.',
+        );
         await usuarios.marcarPerfilSincronizado(usuarioId, local.perfil.updatedAt);
         return { enviados: 1, baixados: 0, falhou: false };
       case 'baixar':
