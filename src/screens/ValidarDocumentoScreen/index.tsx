@@ -16,38 +16,50 @@ import {
 import {
   camposParaExibir,
   coordenadasDoCodigo,
-  validarCodigo,
   type ResultadoDaValidacao,
 } from '../../domain/codigoDeAutenticidade';
 import { useCameraPermission } from '../../hooks/useCameraPermission';
-import { carimbarComOSegredoDoApp } from '../../services/carimbo';
+import { conferirCodigoAntigo, consultarCodigo, ServidorIndisponivel } from '../../services/apiDeDocumentos';
+import { validarCodigoLido } from '../../useCases/validarCodigoLido';
 
 type ValidarDocumentoScreenProps = Readonly<{
   onFechar: () => void;
 }>;
 
-const VEREDICTOS: Readonly<Record<ResultadoDaValidacao['tipo'], Readonly<{ titulo: string; descricao: string }>>> = {
+type Aviso = Readonly<{ titulo: string; descricao: string }>;
+
+const VEREDICTOS: Readonly<Record<ResultadoDaValidacao['tipo'], Aviso>> = {
   autentico: {
     titulo: 'Documento autêntico',
     descricao: 'O código foi emitido pelo AssinaAqui. Confira se os dados abaixo batem com o documento em mãos.',
   },
   adulterado: {
     titulo: 'Código não autenticado',
-    descricao:
-      'O código não confere com o carimbo desta instalação do AssinaAqui. Ele pode ter sido alterado ou emitido ' +
-      'com outro segredo.',
+    descricao: 'O registro deste código não confere com o carimbo do servidor do AssinaAqui.',
+  },
+  naoEncontrado: {
+    titulo: 'Código não encontrado',
+    descricao: 'Confira os caracteres digitados. Nenhum documento foi emitido com este código.',
   },
   ilegivel: {
     titulo: 'Código não reconhecido',
-    descricao: 'Este QR não é um código de autenticidade do AssinaAqui.',
+    descricao: 'Este código não é do AssinaAqui.',
   },
+};
+
+const SEM_SERVIDOR: Aviso = {
+  titulo: 'Servidor indisponível',
+  descricao: 'O AssinaAqui não alcançou o servidor. Confira o wifi e tente de novo.',
 };
 
 const AVISO_DE_VERSAO = 'O código veio de uma versão mais nova do app; campos novos aparecem com o nome original.';
 
+const EXEMPLO_DO_CODIGO = '7K3F-9QXZ-M2P4';
+
 export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps) {
   const permissao = useCameraPermission();
   const [resultado, setResultado] = useState<ResultadoDaValidacao | null>(null);
+  const [semServidor, setSemServidor] = useState<string | null>(null);
   const [conferindo, setConferindo] = useState(false);
   const [modo, setModo] = useState<'leitor' | 'digitar'>('leitor');
   const [codigoDigitado, setCodigoDigitado] = useState('');
@@ -63,19 +75,32 @@ export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps
     setConferindo(true);
     setMostrarMapa(false);
     try {
-      setResultado(await validarCodigo(texto, carimbarComOSegredoDoApp));
+      const veredicto = await validarCodigoLido({ consultarCodigo, conferirCodigoAntigo }, texto);
+      setSemServidor(null);
+      setResultado(veredicto);
     } catch (error) {
-      console.error('Falha ao conferir o código:', error);
-      showError('Erro', 'Não foi possível conferir o código neste aparelho.');
-      lendoRef.current = false;
+      if (error instanceof ServidorIndisponivel) {
+        setSemServidor(texto);
+      } else {
+        console.error('Falha ao conferir o código:', error);
+        showError('Erro', 'Não foi possível conferir o código.');
+        setSemServidor(null);
+        lendoRef.current = false;
+      }
     } finally {
       setConferindo(false);
     }
   }
 
+  function tentarDeNovo(texto: string) {
+    lendoRef.current = false;
+    void conferir(texto);
+  }
+
   function lerOutro() {
     lendoRef.current = false;
     setResultado(null);
+    setSemServidor(null);
     setCodigoDigitado('');
     setMostrarMapa(false);
   }
@@ -84,6 +109,29 @@ export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps
     console.error('Falha ao abrir a câmera:', error);
     showError('Erro', 'Não foi possível abrir a câmera. Tente de novo.');
     onFechar();
+  }
+
+  if (resultado === null && semServidor !== null) {
+    return (
+      <Screen
+        preset="authScroll"
+        footer={
+          <Stack gap="actions">
+            <Button
+              label={conferindo ? 'Tentando…' : 'Tentar de novo'}
+              onPress={() => tentarDeNovo(semServidor)}
+              disabled={conferindo}
+            />
+            <Button label="Fechar" onPress={onFechar} preset="secondary" />
+          </Stack>
+        }
+      >
+        <Stack gap="titleText" align="center">
+          <Text preset="screenTitle">{SEM_SERVIDOR.titulo}</Text>
+          <Text preset="status">{SEM_SERVIDOR.descricao}</Text>
+        </Stack>
+      </Screen>
+    );
   }
 
   if (resultado === null && modo === 'digitar') {
@@ -110,25 +158,22 @@ export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps
         <Stack gap="block">
           <Stack gap="titleText" align="center">
             <Text preset="screenTitle">Digitar código</Text>
-            <Text preset="status">
-              Cole ou digite o código de autenticidade do documento, sem alterar nenhum caractere.
-            </Text>
+            <Text preset="status">Digite o código impresso ao lado do QR, com ou sem os hífens.</Text>
           </Stack>
           <TextField
             label="Código de autenticidade"
             accessibilityLabel="Código de autenticidade"
             value={codigoDigitado}
             onChangeText={setCodigoDigitado}
-            placeholder="AA1;id=..."
-            preset="multiline"
-            autoCapitalize="none"
+            placeholder={EXEMPLO_DO_CODIGO}
+            autoCapitalize="characters"
           />
         </Stack>
       </Screen>
     );
   }
 
-  if (permissao.status === 'checking') {
+  if (permissao.status === 'checking' && resultado === null) {
     return (
       <Screen preset="immersive">
         <LoadingIndicator />
@@ -136,7 +181,7 @@ export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps
     );
   }
 
-  if (permissao.status !== 'granted') {
+  if (permissao.status !== 'granted' && resultado === null) {
     const bloqueada = permissao.status === 'blocked';
 
     return (

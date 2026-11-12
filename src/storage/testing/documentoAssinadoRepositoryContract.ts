@@ -42,6 +42,7 @@ export function criarDocumentoDeTeste(
       cidade: createCity('Vassouras'),
     },
     assinadoEm: createIsoDateTime(assinadoEm),
+    codigo: null,
   };
 }
 

@@ -1,6 +1,6 @@
 import { printToFileAsync } from 'expo-print';
 
-import type { CodigoDeAutenticidade } from '../domain/codigoDeAutenticidade';
+import { formatarCodigoCurto, type CodigoCurto } from '../domain/codigoCurto';
 import { createBase64, createHtml, type Base64, type DocumentoAssinado, type Html } from '../domain/documento';
 import { formatDateTime, formatLocal } from '../domain/format';
 import { createPixels, type Size } from '../domain/geometry';
@@ -11,8 +11,9 @@ import { tokens } from '../theme/tokens';
 import { desenharQrSvg, gerarMatrizQr } from './qrCode';
 
 const FONTE_DO_SELO = '-apple-system, Helvetica, Arial, sans-serif';
-const PROPORCAO_DO_CODIGO = 0.7;
-export const LEGENDA_DO_QR = 'Código de autenticidade. Para conferir, abra o AssinaAqui e toque em Validar documento.';
+const PROPORCAO_DO_CODIGO = 1.6;
+export const LEGENDA_DO_QR =
+  'Código de autenticidade. Para conferir, abra o AssinaAqui, toque em Validar documento e leia o QR ou digite o código.';
 
 export type DocumentoHtml = Readonly<{ html: Html; tamanhoDaPagina: Size }>;
 
@@ -23,7 +24,7 @@ function escaparHtml(texto: string): string {
 export function montarHtmlDocumento(
   documento: DocumentoAssinado,
   fotoBase64: Base64,
-  codigo: CodigoDeAutenticidade,
+  codigo: CodigoCurto,
 ): DocumentoHtml {
   const { pagina, foto, esquerda, topo, rodape, ladoDoQr, tamanhoDaLegenda } = layoutDaPagina(
     documento.tamanhoFoto,
@@ -34,7 +35,8 @@ export function montarHtmlDocumento(
   const selo = layoutDoSelo(documento.selo.largura, foto, desenho.quadro);
   const local = formatLocal(documento.local);
   const tracos = desenho.tracos.map((traco) => `<path d="${traco}" />`).join('');
-  const qr = desenharQrSvg(gerarMatrizQr(codigo), { tinta: FIXED_COLORS.ink, fundo: FIXED_COLORS.paper });
+  const codigoImpresso = formatarCodigoCurto(codigo);
+  const qr = desenharQrSvg(gerarMatrizQr(codigoImpresso), { tinta: FIXED_COLORS.ink, fundo: FIXED_COLORS.paper });
 
   const html = createHtml(`<!DOCTYPE html>
 <html>
@@ -127,7 +129,7 @@ export function montarHtmlDocumento(
   <div class="rodape">
     <div class="textos">
       <div class="legenda">${LEGENDA_DO_QR}</div>
-      <div class="codigo">${escaparHtml(codigo)}</div>
+      <div class="codigo">${codigoImpresso}</div>
     </div>
     <div class="qr">${qr}</div>
   </div>

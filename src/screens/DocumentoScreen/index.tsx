@@ -14,16 +14,14 @@ import {
   Text,
   VisualizadorDocumento,
 } from '../../components';
+import { formatarCodigoCurto, type CodigoCurto } from '../../domain/codigoCurto';
 import type { DocumentoAssinado, DocumentoId } from '../../domain/documento';
 import { formatCoordinates, formatDateTime, formatLocal } from '../../domain/format';
-import { excluirArquivosDocumento, lerFotoDocumentoBase64, uriFotoDocumento } from '../../services/fileSystem';
+import { copiarTexto } from '../../services/clipboard';
+import { excluirArquivosDocumento, uriFotoDocumento } from '../../services/fileSystem';
 import { compartilharPdf } from '../../services/sharing';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 import { excluirDocumento } from '../../useCases/excluirDocumento';
-import { carimbarComOSegredoDoApp } from '../../services/carimbo';
-import { copiarTexto } from '../../services/clipboard';
-import { resumirSha256 } from '../../services/hmac';
-import { emitirCodigoDoDocumento } from '../../useCases/emitirCodigoDoDocumento';
 
 type DocumentoScreenProps = Readonly<{
   documentoId: DocumentoId;
@@ -32,13 +30,12 @@ type DocumentoScreenProps = Readonly<{
 }>;
 
 export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: DocumentoScreenProps) {
-  const { documentos, usuarios } = useRepositories();
+  const { documentos } = useRepositories();
   const [documento, setDocumento] = useState<DocumentoAssinado | null>(null);
   const compartilhandoRef = useRef(false);
   const excluindoRef = useRef(false);
   const copiandoRef = useRef(false);
   const [ampliado, setAmpliado] = useState(false);
-
 
   const sairComErro = useEffectEvent((mensagem: string) => {
     showError('Erro', mensagem);
@@ -86,18 +83,14 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
       compartilhandoRef.current = false;
     }
   }
-  async function copiarCodigo(documentoAberto: DocumentoAssinado) {
+
+  async function copiarCodigo(codigo: CodigoCurto) {
     if (copiandoRef.current) {
       return;
     }
     copiandoRef.current = true;
     try {
-      const codigo = await emitirCodigoDoDocumento(
-        { buscarUsuario: (id) => usuarios.findById(id), resumirSha256, carimbar: carimbarComOSegredoDoApp },
-        documentoAberto,
-        await lerFotoDocumentoBase64(documentoAberto.id),
-      );
-      await copiarTexto(codigo);
+      await copiarTexto(formatarCodigoCurto(codigo));
       showSuccess('Código copiado');
     } catch (error) {
       console.error('Falha ao copiar o código:', error);
@@ -141,6 +134,7 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
   }
 
   const assinadoEm = formatDateTime(documento.assinadoEm);
+  const { codigo } = documento;
 
   return (
     <Screen
@@ -154,15 +148,16 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
               void compartilhar(documento);
             }}
           />
-          <Button
-            label="Copiar código"
-            icon="share"
-            preset="secondary"
-            onPress={() => {
-              void copiarCodigo(documento);
-            }}
-          />
-
+          {codigo === null ? null : (
+            <Button
+              label="Copiar código"
+              icon="share"
+              preset="secondary"
+              onPress={() => {
+                void copiarCodigo(codigo);
+              }}
+            />
+          )}
           <Row justify="center">
             <Button
               label="Excluir documento"
@@ -217,7 +212,6 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
           void compartilhar(documento);
         }}
       />
-
     </Screen>
   );
 }

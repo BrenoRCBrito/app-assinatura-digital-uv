@@ -1,16 +1,15 @@
 import React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { setStringAsync } from 'expo-clipboard';
 import { Alert } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-import { createBase64, criarDocumentoId, type DocumentoId } from '../../domain/documento';
+import { criarCodigoCurto } from '../../domain/codigoCurto';
+import { criarDocumentoId, type DocumentoId } from '../../domain/documento';
 import { formatDateTime } from '../../domain/format';
-import { excluirArquivosDocumento, lerFotoDocumentoBase64 } from '../../services/fileSystem';
+import { excluirArquivosDocumento } from '../../services/fileSystem';
 import { compartilharPdf } from '../../services/sharing';
-import { setStringAsync } from 'expo-clipboard';
-import { emitirCodigoDoDocumento } from '../../useCases/emitirCodigoDoDocumento';
-
 import {
   createAsyncStorageDocumentoAssinadoRepository,
   DOCUMENTOS_STORAGE_KEY,
@@ -20,7 +19,6 @@ import { SettingsProvider } from '../../storage/SettingsProvider';
 import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
 import { DocumentoScreen } from '../DocumentoScreen';
 
-
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
@@ -29,15 +27,11 @@ jest.mock('../../services/sharing', () => ({ compartilharPdf: jest.fn() }));
 jest.mock('../../services/fileSystem', () => ({
   uriFotoDocumento: (id: string) => `file:///app/documentos/${id}/foto.jpg`,
   excluirArquivosDocumento: jest.fn(),
-  lerFotoDocumentoBase64: jest.fn(),
 }));
 jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn() }));
-jest.mock('../../services/carimbo', () => ({ carimbarComOSegredoDoApp: jest.fn() }));
-jest.mock('../../services/hmac', () => ({ resumirSha256: jest.fn() }));
-jest.mock('../../useCases/emitirCodigoDoDocumento', () => ({ emitirCodigoDoDocumento: jest.fn() }));
-
 
 const DOCUMENTO = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z');
+const COM_CODIGO = { ...DOCUMENTO, codigo: criarCodigoCurto('7K3F9QXZM2P4') };
 
 function Provedores({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -64,10 +58,8 @@ describe('DocumentoScreen', () => {
     await AsyncStorage.clear();
     jest.mocked(compartilharPdf).mockReset();
     jest.mocked(excluirArquivosDocumento).mockReset();
-    alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     jest.mocked(setStringAsync).mockReset();
-    jest.mocked(emitirCodigoDoDocumento).mockReset();
-    jest.mocked(lerFotoDocumentoBase64).mockReset();
+    alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -140,8 +132,6 @@ describe('DocumentoScreen', () => {
 
     await waitFor(() => expect(compartilharPdf).toHaveBeenCalledWith(DOCUMENTO));
   });
-
-
 
   test('documento que não existe mostra a mensagem e volta', async () => {
     const { onNaoEncontrado } = await abrirDocumento(criarDocumentoId('999'));
@@ -233,34 +223,37 @@ describe('DocumentoScreen', () => {
     erro.mockRestore();
   });
 
-  test('Copiar código gera o código do documento e copia para a área de transferência', async () => {
+  test('Copiar código copia o código curto guardado no documento, formatado', async () => {
     const toast = jest.spyOn(Toast, 'show').mockImplementation(() => undefined);
-    jest.mocked(lerFotoDocumentoBase64).mockResolvedValue(createBase64('Zm90bw=='));
-    jest.mocked(emitirCodigoDoDocumento).mockResolvedValue('AA1;id=1757680000000#carimbo' as never);
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await createAsyncStorageDocumentoAssinadoRepository().save(COM_CODIGO);
     await abrirDocumento();
 
     await fireEvent.press(await screen.findByText('Copiar código'));
 
-    await waitFor(() => expect(setStringAsync).toHaveBeenCalledWith('AA1;id=1757680000000#carimbo'));
-    expect(emitirCodigoDoDocumento).toHaveBeenCalledWith(expect.anything(), DOCUMENTO, 'Zm90bw==');
+    await waitFor(() => expect(setStringAsync).toHaveBeenCalledWith('7K3F-9QXZ-M2P4'));
     expect(toast).toHaveBeenCalledWith({ type: 'success', text1: 'Código copiado' });
     toast.mockRestore();
   });
 
   test('quando copiar o código falha, avisa', async () => {
     const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    jest.mocked(lerFotoDocumentoBase64).mockResolvedValue(createBase64('Zm90bw=='));
-    jest.mocked(emitirCodigoDoDocumento).mockRejectedValue(new Error('Sem usuário'));
-    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    jest.mocked(setStringAsync).mockRejectedValue(new Error('Área de transferência indisponível'));
+    await createAsyncStorageDocumentoAssinadoRepository().save(COM_CODIGO);
     await abrirDocumento();
 
     await fireEvent.press(await screen.findByText('Copiar código'));
 
     await waitFor(() => expect(alerta).toHaveBeenCalledWith('Erro', 'Não foi possível copiar o código.'));
-    expect(setStringAsync).not.toHaveBeenCalled();
     expect(erro).toHaveBeenCalledTimes(1);
     erro.mockRestore();
   });
 
+  test('documento assinado antes da API, sem código, não oferece Copiar código', async () => {
+    await createAsyncStorageDocumentoAssinadoRepository().save(DOCUMENTO);
+    await abrirDocumento();
+
+    await screen.findByText('Contrato de locação');
+
+    expect(screen.queryByText('Copiar código')).toBeNull();
+  });
 });

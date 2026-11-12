@@ -1,6 +1,6 @@
 import { printToFileAsync } from 'expo-print';
 
-import { emitirCodigo, validarCodigo, type CodigoDeAutenticidade } from '../../domain/codigoDeAutenticidade';
+import { criarCodigoCurto, formatarCodigoCurto } from '../../domain/codigoCurto';
 import { createBase64, createCity, createHtml } from '../../domain/documento';
 import { formatDateTime } from '../../domain/format';
 import { createPixels, createSize } from '../../domain/geometry';
@@ -15,11 +15,7 @@ jest.mock('expo-print', () => ({ printToFileAsync: jest.fn() }));
 
 const DOCUMENTO = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z');
 const FOTO = createBase64('/9j/4AAQ');
-let CODIGO: CodigoDeAutenticidade;
-
-beforeAll(async () => {
-  CODIGO = await emitirCodigo([{ chave: 'id', valor: '1757680000000' }], async () => 'carimbo-de-teste');
-});
+const CODIGO = criarCodigoCurto('7K3F9QXZM2P4');
 
 describe('montarHtmlDocumento', () => {
   test('monta a página com a foto preenchendo a largura, o desenho em SVG e o selo em porcentagem', () => {
@@ -39,16 +35,16 @@ describe('montarHtmlDocumento', () => {
     expect(html).toContain(`<div>${formatDateTime(DOCUMENTO.assinadoEm)}</div><div>Vassouras</div>`);
   });
 
-  test('põe o QR do código e a legenda no rodapé, abaixo da foto', () => {
+  test('põe no rodapé o QR do código curto formatado e a legenda, abaixo da foto', () => {
     const { html } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
     const { rodape, ladoDoQr } = layoutDaPagina(DOCUMENTO.tamanhoFoto, createPixels(595));
-
-    const qr = desenharQrSvg(gerarMatrizQr(CODIGO), { tinta: FIXED_COLORS.ink, fundo: FIXED_COLORS.paper });
+    const qr = desenharQrSvg(gerarMatrizQr('7K3F-9QXZ-M2P4'), { tinta: FIXED_COLORS.ink, fundo: FIXED_COLORS.paper });
 
     expect(html).toContain(qr);
     expect(html).toContain(`top: ${rodape.topo}px;`);
     expect(html).toContain(`width: ${ladoDoQr}px;`);
     expect(html).toContain(`<div class="legenda">${LEGENDA_DO_QR}</div>`);
+    expect(LEGENDA_DO_QR).toContain('leia o QR ou digite o código');
   });
 
   test('sem cidade, mostra as coordenadas na faixa', () => {
@@ -64,22 +60,14 @@ describe('montarHtmlDocumento', () => {
     expect(html).toContain('<div>A &amp; B &lt;C&gt;</div>');
     expect(html).not.toContain('<C>');
   });
-  test('escreve o código em texto no rodapé, ao lado do QR, para poder ser copiado do PDF', () => {
-    const { html } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
 
-    expect(html).toContain(`<div class="codigo">${CODIGO}</div>`);
-  });
-
-  test('o código escrito no PDF, depois de copiado, volta autêntico na validação', async () => {
+  test('escreve o código curto em texto ao lado do QR, para ser digitado na validação', () => {
     const { html } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
     const escrito = /<div class="codigo">([^<]*)<\/div>/.exec(html)?.[1] ?? '';
 
-    expect(escrito).toBe(CODIGO);
-    await expect(validarCodigo(escrito, async () => 'carimbo-de-teste')).resolves.toMatchObject({
-      tipo: 'autentico',
-    });
+    expect(escrito).toBe(formatarCodigoCurto(CODIGO));
+    expect(criarCodigoCurto(escrito)).toBe(CODIGO);
   });
-
 });
 
 describe('gerarPdf', () => {

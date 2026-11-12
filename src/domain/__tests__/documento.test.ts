@@ -1,5 +1,6 @@
 import { criarNomeAssinatura } from '../assinatura';
 import { ValidationError } from '../brand';
+import { criarCodigoCurto } from '../codigoCurto';
 import { createIsoDateTime } from '../dateTime';
 import { criarDesenho, criarTraco } from '../desenho';
 import {
@@ -33,6 +34,7 @@ function documentoValido(id: string, assinadoEm: string, cidade: string | null =
       cidade: cidade === null ? null : createCity(cidade),
     },
     assinadoEm: createIsoDateTime(assinadoEm),
+    codigo: null,
   };
 }
 
@@ -134,5 +136,28 @@ describe('paraDocumentoAssinado', () => {
 
   test('lança erro quando o dado não é objeto', () => {
     expect(() => paraDocumentoAssinado('documento')).toThrow(ValidationError);
+  });
+});
+
+describe('código do documento', () => {
+  test('reconstrói o código curto guardado', () => {
+    const documento = {
+      ...documentoValido('1', '2026-09-12T10:00:00.000Z'),
+      codigo: criarCodigoCurto('7K3F9QXZM2P4'),
+    };
+
+    expect(paraDocumentoAssinado(JSON.parse(JSON.stringify(documento)))).toEqual(documento);
+  });
+
+  test('documento salvo antes da API, sem o campo, volta com código nulo', () => {
+    const { codigo: _semCodigo, ...antigo } = documentoValido('1', '2026-09-12T10:00:00.000Z');
+
+    expect(paraDocumentoAssinado(JSON.parse(JSON.stringify(antigo))).codigo).toBeNull();
+  });
+
+  test('código guardado fora do formato é dado inválido', () => {
+    expect(() =>
+      paraDocumentoAssinado({ ...documentoValido('1', '2026-09-12T10:00:00.000Z'), codigo: 'abc' }),
+    ).toThrow(ValidationError);
   });
 });
