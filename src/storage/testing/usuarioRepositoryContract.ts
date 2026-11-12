@@ -244,6 +244,45 @@ export function testarContratoUsuarioRepository(
         await expect(repositorio.findById(ID_A)).resolves.toMatchObject({ foto: 'base64' });
       });
 
+      test('aplicarFotoDaNuvem grava a foto sem tocar no resto: data de atualização e estado de envio ficam como estavam', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({ id: ID_A, email: EMAIL_A });
+        await repositorio.marcarPerfilSincronizado(ID_A, '2026-10-01T10:00:00.000Z');
+
+        await repositorio.aplicarFotoDaNuvem(ID_A, criarFotoPerfil('foto-da-nuvem'));
+
+        await expect(repositorio.findById(ID_A)).resolves.toMatchObject({ foto: 'foto-da-nuvem' });
+        await expect(repositorio.lerPerfilLocal(ID_A)).resolves.toMatchObject({
+          perfil: { updatedAt: '2026-10-01T10:00:00.000Z' },
+          pendente: false,
+        });
+      });
+
+      test('aplicarFotoDaNuvem com null tira a foto (foi removida em outro aparelho)', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({ id: ID_A, email: EMAIL_A });
+        await repositorio.updateFoto(ID_A, criarFotoPerfil('antiga'));
+
+        await repositorio.aplicarFotoDaNuvem(ID_A, null);
+
+        await expect(repositorio.findById(ID_A)).resolves.toMatchObject({ foto: null });
+      });
+
+      test('aplicarFotoDaNuvem não mexe nos outros campos do perfil', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({ id: ID_A, email: EMAIL_A, nome: criarNome('Ana Souza') });
+
+        await repositorio.aplicarFotoDaNuvem(ID_A, criarFotoPerfil('foto'));
+
+        await expect(repositorio.findById(ID_A)).resolves.toMatchObject({ nome: 'Ana Souza', email: EMAIL_A });
+      });
+
+      test('aplicarFotoDaNuvem num usuário que não existe lança erro', async () => {
+        await expect(criarRepositorio().aplicarFotoDaNuvem(ID_A, criarFotoPerfil('foto'))).rejects.toThrow(
+          'Usuário não encontrado',
+        );
+      });
+
       test('aplicarPerfilDaNuvem num usuário que não existe lança erro', async () => {
         await expect(
           criarRepositorio().aplicarPerfilDaNuvem({

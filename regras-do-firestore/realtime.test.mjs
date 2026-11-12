@@ -147,6 +147,61 @@ describe('foto e PDF do mesmo documento', () => {
   });
 });
 
+describe('foto de perfil (arquivos/{uid}/perfil/foto)', () => {
+  const caminho = 'arquivos/ana/perfil/foto';
+
+  test('o dono grava, lê e troca a foto de perfil', async () => {
+    await assertSucceeds(set(ref(como('ana'), caminho), arquivo({ dados: 'primeira' })));
+    await assertSucceeds(set(ref(como('ana'), caminho), arquivo({ dados: 'segunda', sha256: 'b'.repeat(64) })));
+
+    const lida = await assertSucceeds(get(ref(como('ana'), caminho)));
+    if (lida.val().dados !== 'segunda') throw new Error('a foto trocada não foi gravada');
+  });
+
+  test('a foto de perfil é a única que pode ser apagada: o dono a remove (ela muda com frequência)', async () => {
+    await assertSucceeds(set(ref(como('ana'), caminho), arquivo()));
+
+    await assertSucceeds(remove(ref(como('ana'), caminho)));
+
+    const lida = await get(ref(como('ana'), caminho));
+    if (lida.exists()) throw new Error('a foto de perfil continuou na nuvem');
+  });
+
+  test('depois de removida, o dono pode gravar outra foto de perfil', async () => {
+    await assertSucceeds(set(ref(como('ana'), caminho), arquivo()));
+    await assertSucceeds(remove(ref(como('ana'), caminho)));
+
+    await assertSucceeds(set(ref(como('ana'), caminho), arquivo({ dados: 'nova' })));
+  });
+
+  test('apagar a foto de perfil que não existe não dá erro', async () => {
+    await assertSucceeds(remove(ref(como('ana'), caminho)));
+  });
+
+  test('outra pessoa não apaga a foto de perfil alheia', async () => {
+    await assertSucceeds(set(ref(como('ana'), caminho), arquivo()));
+
+    await assertFails(remove(ref(como('beto'), caminho)));
+    await assertFails(set(ref(como('beto'), caminho), null));
+  });
+
+  test('a exceção é só da foto: as pastas acima e um PDF de perfil continuam sem poder ser apagados ou criados', async () => {
+    await assertSucceeds(set(ref(como('ana'), caminho), arquivo()));
+
+    await assertFails(remove(ref(como('ana'), 'arquivos/ana/perfil')));
+    await assertFails(remove(ref(como('ana'), 'arquivos/ana')));
+    await assertFails(remove(ref(como('ana'), 'arquivos')));
+    await assertFails(set(ref(como('ana'), 'arquivos/ana/perfil/pdf'), arquivo()));
+  });
+
+  test('outra pessoa não lê nem troca a foto de perfil alheia', async () => {
+    await assertSucceeds(set(ref(como('ana'), caminho), arquivo()));
+
+    await assertFails(get(ref(como('beto'), caminho)));
+    await assertFails(set(ref(como('beto'), caminho), arquivo({ dados: 'invasor' })));
+  });
+});
+
 describe('ninguém lista', () => {
   test('nem o documento, nem a pasta da conta, nem a de todos', async () => {
     await assertSucceeds(set(ref(como('ana'), 'arquivos/ana/d1/foto'), arquivo()));

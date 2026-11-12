@@ -65,6 +65,8 @@ export interface UsuarioRepository {
   listarPerfisPendentes(): Promise<readonly PerfilParaSincronizar[]>;
   lerPerfilLocal(id: UsuarioId): Promise<PerfilLocal | null>;
   aplicarPerfilDaNuvem(perfil: PerfilParaSincronizar): Promise<void>;
+  // A foto de perfil que veio da nuvem (ou null, se foi removida lá). Não conta como alteração do perfil.
+  aplicarFotoDaNuvem(id: UsuarioId, foto: FotoPerfil | null): Promise<void>;
   marcarPerfilSincronizado(id: UsuarioId, updatedAt: string): Promise<void>;
   clear(): Promise<void>;
 }

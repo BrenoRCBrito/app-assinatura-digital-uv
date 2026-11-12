@@ -181,6 +181,13 @@ export function createSqliteUsuarioRepository(banco: Banco = abrirBanco()): Usua
         throw new Error(`Usuário não encontrado: ${perfil.id}`);
       }
     },
+    async aplicarFotoDaNuvem(id: UsuarioId, foto: FotoPerfil | null) {
+      await pronto;
+      const resultado = await db.runAsync('UPDATE usuarios SET foto = ? WHERE id = ?', foto, id);
+      if (resultado.changes === 0) {
+        throw new Error(`Usuário não encontrado: ${id}`);
+      }
+    },
     async marcarPerfilSincronizado(id: UsuarioId, updatedAt: string) {
       await pronto;
       await db.runAsync(

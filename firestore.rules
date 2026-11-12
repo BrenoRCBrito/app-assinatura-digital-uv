@@ -58,12 +58,13 @@ service cloud.firestore {
     }
 
     function perfilValido(dados) {
-      return dados.keys().hasOnly(['email', 'nome', 'cpf', 'telefone', 'createdAt', 'updatedAt', 'deletedAt', 'servidorEm'])
-        && dados.keys().hasAll(['email', 'nome', 'cpf', 'telefone', 'createdAt', 'updatedAt', 'deletedAt', 'servidorEm'])
+      return dados.keys().hasOnly(['email', 'nome', 'cpf', 'telefone', 'fotoSha256', 'createdAt', 'updatedAt', 'deletedAt', 'servidorEm'])
+        && dados.keys().hasAll(['email', 'nome', 'cpf', 'telefone', 'fotoSha256', 'createdAt', 'updatedAt', 'deletedAt', 'servidorEm'])
         && texto(dados.email, 254)
         && textoOuNulo(dados.nome, 120)
         && (dados.cpf == null || (dados.cpf is string && dados.cpf.matches('^[0-9]{11}$')))
         && (dados.telefone == null || (dados.telefone is string && dados.telefone.matches('^[0-9]{10,11}$')))
+        && (dados.fotoSha256 == null || (dados.fotoSha256 is string && dados.fotoSha256.matches('^[0-9a-f]{64}$')))
         && controleValido(dados);
     }
 

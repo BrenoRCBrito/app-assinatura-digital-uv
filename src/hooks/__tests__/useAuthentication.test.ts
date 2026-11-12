@@ -96,6 +96,7 @@ function mockUsuarios(usuarios: readonly Usuario[]) {
       listarPerfisPendentes: jest.fn(),
       lerPerfilLocal: jest.fn(),
       aplicarPerfilDaNuvem: jest.fn(),
+      aplicarFotoDaNuvem: jest.fn(),
       marcarPerfilSincronizado: jest.fn(),
       clear: jest.fn(),
     },

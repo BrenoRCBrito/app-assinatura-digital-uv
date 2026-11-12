@@ -100,6 +100,7 @@ describe('comGatilhoDeSincronizacao', () => {
         updatedAt: DATA,
         deletedAt: null,
       });
+      await repositorios.usuarios.aplicarFotoDaNuvem(ID, criarFotoPerfil('foto-da-nuvem'));
       await repositorios.cursores.gravar(ID, 'documentos', { segundos: 1, nanos: 0 });
 
       expect(aoAlterar).not.toHaveBeenCalled();

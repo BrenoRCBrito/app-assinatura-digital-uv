@@ -116,6 +116,12 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
       );
       controles.set(perfil.id, { updatedAt: perfil.updatedAt, pendente: false });
     },
+    async aplicarFotoDaNuvem(id, foto) {
+      if (!usuarios.some((usuario) => usuario.id === id)) {
+        throw new Error(`Usuário não encontrado: ${id}`);
+      }
+      usuarios = usuarios.map((usuario) => (usuario.id === id ? { ...usuario, foto } : usuario));
+    },
     async marcarPerfilSincronizado(id, updatedAt) {
       const controle = controles.get(id);
       if (controle !== undefined && controle.updatedAt === updatedAt) {

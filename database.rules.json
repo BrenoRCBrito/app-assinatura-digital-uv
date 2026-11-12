@@ -7,8 +7,8 @@
         "$documentoId": {
           "$tipo": {
             ".read": "auth != null && auth.uid === $uid",
-            ".write": "auth != null && auth.uid === $uid && newData.exists()",
-            ".validate": "($tipo === 'foto' || $tipo === 'pdf') && $documentoId.matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.hasChildren(['dados', 'sha256'])",
+            ".write": "auth != null && auth.uid === $uid && (newData.exists() || $documentoId === 'perfil')",
+            ".validate": "($tipo === 'foto' || ($tipo === 'pdf' && $documentoId !== 'perfil')) && $documentoId.matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.hasChildren(['dados', 'sha256'])",
             "dados": {
               ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 9000000"
             },

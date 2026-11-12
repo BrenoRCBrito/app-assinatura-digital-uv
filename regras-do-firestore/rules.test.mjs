@@ -46,6 +46,7 @@ function perfil(extra = {}) {
     nome: 'Ana Souza',
     cpf: '11144477735',
     telefone: '11987654321',
+    fotoSha256: null,
     createdAt: AGORA,
     updatedAt: AGORA,
     deletedAt: null,
@@ -217,6 +218,9 @@ describe('formato dos dados', () => {
     ['perfil com telefone curto', 'usuarios/ana', () => perfil({ telefone: '123' })],
     ['perfil sem e-mail', 'usuarios/ana', () => perfil({ email: '' })],
     ['perfil com data fora do formato', 'usuarios/ana', () => perfil({ updatedAt: '01/10/2026' })],
+    ['perfil com resumo da foto com maiúsculas', 'usuarios/ana', () => perfil({ fotoSha256: 'A'.repeat(64) })],
+    ['perfil com resumo da foto curto', 'usuarios/ana', () => perfil({ fotoSha256: 'abc' })],
+    ['perfil com resumo da foto que não é texto', 'usuarios/ana', () => perfil({ fotoSha256: 12345 })],
     ['perfil com nome enorme', 'usuarios/ana', () => perfil({ nome: 'x'.repeat(121) })],
     [
       'assinatura sem traços',
@@ -248,6 +252,24 @@ describe('formato dos dados', () => {
         documento({ local: { coordenadas: { latitude: 0, longitude: 0 }, cidade: null }, codigo: null, fotoSha256: null }),
       ),
     );
+  });
+
+  test('aceita: perfil com o resumo da foto (a foto em si fica no Realtime Database)', async () => {
+    await assertSucceeds(setDoc(doc(como('ana'), 'usuarios/ana'), perfil({ fotoSha256: 'a'.repeat(64) })));
+  });
+
+  test('aceita: trocar e depois remover a foto do perfil (resumo vira null)', async () => {
+    await assertSucceeds(setDoc(doc(como('ana'), 'usuarios/ana'), perfil({ fotoSha256: 'a'.repeat(64) })));
+
+    await assertSucceeds(setDoc(doc(como('ana'), 'usuarios/ana'), perfil({ fotoSha256: 'b'.repeat(64), updatedAt: DEPOIS })));
+    await assertSucceeds(setDoc(doc(como('ana'), 'usuarios/ana'), perfil({ fotoSha256: null, updatedAt: DEPOIS })));
+  });
+
+  test('recusa: perfil sem o campo do resumo da foto (o app sempre manda, com null quando não há foto)', async () => {
+    const { fotoSha256, ...semFoto } = perfil();
+    void fotoSha256;
+
+    await assertFails(setDoc(doc(como('ana'), 'usuarios/ana'), semFoto));
   });
 
   test('aceita: perfil só com o e-mail (primeiro acesso em outro aparelho)', async () => {
