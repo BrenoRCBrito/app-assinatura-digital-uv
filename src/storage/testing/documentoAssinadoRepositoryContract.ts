@@ -350,6 +350,83 @@ export function testarContratoDocumentoAssinadoRepository(
         await expect(repositorio.listarArquivosParaApagar(USUARIO_DE_TESTE)).resolves.toEqual([]);
       });
 
+      describe('arquivo baixado da nuvem', () => {
+        const DA_NUVEM = '2026-10-05T09:00:00.000Z';
+
+        async function documentoSoNaNuvem(repositorio: DocumentoAssinadoRepository) {
+          const documento = {
+            ...criarDocumentoDeTeste('n1', 'Da nuvem', ASSINADO),
+            fotoStatus: 'remote' as const,
+            pdfStatus: 'remote' as const,
+          };
+          await repositorio.aplicarDaNuvem({ item: documento, createdAt: ASSINADO, updatedAt: DA_NUVEM, deletedAt: null });
+          return documento;
+        }
+
+        test('a foto baixada passa a "local" e o PDF continua "remote"', async () => {
+          const repositorio = criarRepositorio();
+          const documento = await documentoSoNaNuvem(repositorio);
+
+          await repositorio.marcarArquivoBaixado('n1', 'foto');
+
+          await expect(repositorio.findById(documento.id, USUARIO_DE_TESTE)).resolves.toMatchObject({
+            fotoStatus: 'local',
+            pdfStatus: 'remote',
+          });
+        });
+
+        test('o PDF baixado passa a "local" e a foto continua "remote"', async () => {
+          const repositorio = criarRepositorio();
+          const documento = await documentoSoNaNuvem(repositorio);
+
+          await repositorio.marcarArquivoBaixado('n1', 'pdf');
+
+          await expect(repositorio.findById(documento.id, USUARIO_DE_TESTE)).resolves.toMatchObject({
+            fotoStatus: 'remote',
+            pdfStatus: 'local',
+          });
+        });
+
+        test('baixar não altera o documento: continua sincronizado e com a mesma data de atualização', async () => {
+          const repositorio = criarRepositorio();
+          await documentoSoNaNuvem(repositorio);
+
+          await repositorio.marcarArquivoBaixado('n1', 'foto');
+          await repositorio.marcarArquivoBaixado('n1', 'pdf');
+
+          await expect(repositorio.listarPendentes(USUARIO_DE_TESTE)).resolves.toEqual([]);
+          await expect(repositorio.lerParaSincronizar('n1')).resolves.toMatchObject({
+            registro: { updatedAt: DA_NUVEM },
+            pendente: false,
+          });
+        });
+
+        test('o arquivo baixado já está na nuvem, então não é mandado de volta', async () => {
+          const repositorio = criarRepositorio();
+          await documentoSoNaNuvem(repositorio);
+
+          await repositorio.marcarArquivoBaixado('n1', 'foto');
+          await repositorio.marcarArquivoBaixado('n1', 'pdf');
+
+          await expect(repositorio.listarArquivosParaEnviar(USUARIO_DE_TESTE)).resolves.toEqual([]);
+        });
+
+        test('se o documento for excluído depois, os arquivos baixados entram na lista para apagar da nuvem', async () => {
+          const repositorio = criarRepositorio();
+          await documentoSoNaNuvem(repositorio);
+          await repositorio.marcarArquivoBaixado('n1', 'foto');
+          await apagarComoDeUsuario(repositorio, 'n1');
+
+          const arquivos = await repositorio.listarArquivosParaApagar(USUARIO_DE_TESTE);
+
+          expect(arquivos.map(({ tipo }) => tipo)).toEqual(['foto']);
+        });
+
+        test('documento que não existe não lança erro', async () => {
+          await expect(criarRepositorio().marcarArquivoBaixado('nao-existe', 'foto')).resolves.toBeUndefined();
+        });
+      });
+
       test('marcar um documento que não existe não lança erro', async () => {
         await expect(criarRepositorio().definirArquivoNaNuvem('nao-existe', 'foto', true)).resolves.toBeUndefined();
       });

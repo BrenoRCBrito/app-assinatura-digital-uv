@@ -221,6 +221,11 @@ export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): 
         id,
       );
     },
+    async marcarArquivoBaixado(id, tipo) {
+      await pronto;
+      const { status, naNuvem } = COLUNAS_DOS_ARQUIVOS[tipo];
+      await db.runAsync(`UPDATE documentos SET ${status} = ?, ${naNuvem} = ? WHERE id = ?`, 'local', 1, id);
+    },
     async marcarSincronizado(id, updatedAt) {
       await pronto;
       await db.runAsync(

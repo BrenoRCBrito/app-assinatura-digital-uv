@@ -51,6 +51,12 @@ export function createInMemoryDocumentoAssinadoRepository(): DocumentoAssinadoRe
         naNuvem.delete(chave(id, tipo));
       }
     },
+    async marcarArquivoBaixado(id, tipo) {
+      armazenamento.substituirSemMarcar(id, (documento) =>
+        tipo === 'foto' ? { ...documento, fotoStatus: 'local' } : { ...documento, pdfStatus: 'local' },
+      );
+      naNuvem.add(chave(id, tipo));
+    },
     async listarPendentes(usuarioId) {
       return armazenamento.listarPendentes(usuarioId);
     },

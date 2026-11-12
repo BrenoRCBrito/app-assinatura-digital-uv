@@ -48,6 +48,12 @@ export function criarArmazenamentoSincronizavel<T extends ComIdentidade>(
         pendente: true,
       });
     },
+    substituirSemMarcar(id: string, trocar: (item: T) => T): void {
+      const existente = entradas.get(id);
+      if (existente !== undefined) {
+        entradas.set(id, { ...existente, item: trocar(existente.item) });
+      }
+    },
     apagar(id: string): void {
       const existente = entradas.get(id);
       if (existente === undefined) {

@@ -47,6 +47,7 @@ export interface DocumentoAssinadoRepository extends Sincronizavel<DocumentoAssi
   listarArquivosParaEnviar(usuarioId: UsuarioId): Promise<readonly ArquivoDoDocumento[]>;
   listarArquivosParaApagar(usuarioId: UsuarioId): Promise<readonly ArquivoDoDocumento[]>;
   definirArquivoNaNuvem(id: string, tipo: TipoDeArquivo, naNuvem: boolean): Promise<void>;
+  marcarArquivoBaixado(id: string, tipo: TipoDeArquivo): Promise<void>;
 }
 
 export type PerfilLocal = Readonly<{ perfil: PerfilParaSincronizar; pendente: boolean }>;
