@@ -17,6 +17,7 @@ export type TitularDoCodigo = Pick<Usuario, 'email' | 'cpf' | 'telefone'>;
 export type ResultadoDaValidacao =
   | Readonly<{ tipo: 'autentico'; campos: readonly CampoDoCodigo[]; versaoMaisNova: boolean }>
   | Readonly<{ tipo: 'adulterado' }>
+  | Readonly<{ tipo: 'naoEncontrado' }>
   | Readonly<{ tipo: 'ilegivel' }>;
 
 export const VERSAO_DO_CODIGO = 1;

@@ -22,6 +22,7 @@ function lerVariavel(variavel) {
 module.exports = ({ config }) => {
   const chaveDoMaps = lerVariavel('GOOGLE_MAPS_ANDROID_KEY');
   const segredoDoCarimbo = lerVariavel('ASSINAAQUI_HMAC_SECRET');
+  const enderecoDaApi = lerVariavel('ASSINAAQUI_API_URL');
 
   return {
     ...config,
@@ -29,6 +30,10 @@ module.exports = ({ config }) => {
       chaveDoMaps === undefined
         ? config.plugins
         : [...config.plugins, ['react-native-maps', { androidGoogleMapsApiKey: chaveDoMaps }]],
-    extra: segredoDoCarimbo === undefined ? config.extra : { ...config.extra, hmacSecret: segredoDoCarimbo },
+    extra: {
+      ...config.extra,
+      ...(segredoDoCarimbo === undefined ? {} : { hmacSecret: segredoDoCarimbo }),
+      ...(enderecoDaApi === undefined ? {} : { apiUrl: enderecoDaApi }),
+    },
   };
 };

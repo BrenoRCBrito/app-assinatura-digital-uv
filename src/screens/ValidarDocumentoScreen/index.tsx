@@ -37,6 +37,10 @@ const VEREDICTOS: Readonly<Record<ResultadoDaValidacao['tipo'], Readonly<{ titul
       'O código não confere com o carimbo desta instalação do AssinaAqui. Ele pode ter sido alterado ou emitido ' +
       'com outro segredo.',
   },
+  naoEncontrado: {
+    titulo: 'Código não encontrado',
+    descricao: 'Confira os caracteres digitados. Nenhum documento foi emitido com este código.',
+  },
   ilegivel: {
     titulo: 'Código não reconhecido',
     descricao: 'Este QR não é um código de autenticidade do AssinaAqui.',
