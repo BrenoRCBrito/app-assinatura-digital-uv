@@ -6,6 +6,7 @@ import Toast from 'react-native-toast-message';
 
 import { createBase64, criarDocumentoId, type DocumentoId } from '../../domain/documento';
 import { formatDateTime } from '../../domain/format';
+import { baixarArquivosDoDocumento } from '../../services/baixarArquivosDoDocumento';
 import { excluirArquivosDocumento, lerFotoDocumentoBase64 } from '../../services/fileSystem';
 import { compartilharPdf } from '../../services/sharing';
 import { setStringAsync } from 'expo-clipboard';
@@ -29,6 +30,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 jest.mock('../../services/sharing', () => ({ compartilharPdf: jest.fn() }));
+jest.mock('../../services/baixarArquivosDoDocumento', () => ({ baixarArquivosDoDocumento: jest.fn() }));
 jest.mock('../../services/fileSystem', () => ({
   uriFotoDocumento: ({ id, usuarioId }: { id: string; usuarioId: string }) =>
     `file:///app/usuarios/${usuarioId}/documentos/${id}/foto.jpg`,
@@ -74,6 +76,7 @@ describe('DocumentoScreen', () => {
     jest.mocked(setStringAsync).mockReset();
     jest.mocked(emitirCodigoDoDocumento).mockReset();
     jest.mocked(lerFotoDocumentoBase64).mockReset();
+    jest.mocked(baixarArquivosDoDocumento).mockReset();
   });
 
   afterEach(() => {
@@ -224,6 +227,113 @@ describe('DocumentoScreen', () => {
 
     await waitFor(() => expect(setStringAsync).toHaveBeenCalledWith('AA1;id=1757680000000#gravado'));
     expect(alerta).not.toHaveBeenCalled();
+  });
+
+  describe('baixar do servidor', () => {
+    test('com tudo no aparelho, não mostra o botão de baixar', async () => {
+      await createRepositories('sqlite').documentos.save(DOCUMENTO);
+      await abrirDocumento();
+
+      await screen.findByText('Compartilhar PDF');
+
+      expect(screen.queryByText('Baixar do servidor')).toBeNull();
+    });
+
+    test.each([
+      ['só a foto na nuvem', { fotoStatus: 'remote' as const }],
+      ['só o PDF na nuvem', { pdfStatus: 'remote' as const }],
+      ['foto e PDF na nuvem', { fotoStatus: 'remote' as const, pdfStatus: 'remote' as const }],
+    ])('com %s, mostra o botão de baixar', async (_nome, status) => {
+      await createRepositories('sqlite').documentos.save({ ...DOCUMENTO, ...status });
+      await abrirDocumento();
+
+      expect(await screen.findByText('Baixar do servidor')).toBeTruthy();
+    });
+
+    test('baixa com sucesso: avisa, mostra a prévia da foto e esconde o botão', async () => {
+      const toast = jest.spyOn(Toast, 'show').mockImplementation(() => undefined);
+      const repositorios = createRepositories('sqlite');
+      await repositorios.documentos.save({ ...DOCUMENTO, fotoStatus: 'remote', pdfStatus: 'remote' });
+      jest.mocked(baixarArquivosDoDocumento).mockImplementation(async (documentos, documento) => {
+        await documentos.marcarArquivoBaixado(documento.id, 'foto');
+        await documentos.marcarArquivoBaixado(documento.id, 'pdf');
+        return { baixados: 2, ausentes: 0, falhas: 0 };
+      });
+      await abrirDocumento();
+
+      await fireEvent.press(await screen.findByText('Baixar do servidor'));
+
+      expect(await screen.findByLabelText('Prévia do documento')).toBeTruthy();
+      expect(screen.queryByText('Baixar do servidor')).toBeNull();
+      expect(screen.queryByText('A foto deste documento ainda não está neste aparelho.')).toBeNull();
+      expect(toast).toHaveBeenCalledWith({ type: 'success', text1: 'Documento baixado' });
+      expect(baixarArquivosDoDocumento).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ id: DOCUMENTO.id, fotoStatus: 'remote' }),
+      );
+      toast.mockRestore();
+    });
+
+    test('arquivo ainda não enviado pelo outro aparelho: explica o que fazer e mantém o botão', async () => {
+      await createRepositories('sqlite').documentos.save({ ...DOCUMENTO, fotoStatus: 'remote' });
+      jest.mocked(baixarArquivosDoDocumento).mockResolvedValue({ baixados: 0, ausentes: 1, falhas: 0 });
+      await abrirDocumento();
+
+      await fireEvent.press(await screen.findByText('Baixar do servidor'));
+
+      await waitFor(() =>
+        expect(alerta).toHaveBeenCalledWith(
+          'Erro',
+          'O outro aparelho ainda não enviou os arquivos deste documento. Abra o app lá e tente de novo.',
+        ),
+      );
+      expect(screen.getByText('Baixar do servidor')).toBeTruthy();
+    });
+
+    test('falha de rede ou arquivo corrompido: avisa para conferir a conexão', async () => {
+      await createRepositories('sqlite').documentos.save({ ...DOCUMENTO, fotoStatus: 'remote' });
+      jest.mocked(baixarArquivosDoDocumento).mockResolvedValue({ baixados: 0, ausentes: 0, falhas: 1 });
+      await abrirDocumento();
+
+      await fireEvent.press(await screen.findByText('Baixar do servidor'));
+
+      await waitFor(() =>
+        expect(alerta).toHaveBeenCalledWith('Erro', 'Não foi possível baixar. Confira a conexão e tente de novo.'),
+      );
+    });
+
+    test('erro inesperado (banco não configurado) também vira o aviso e fica no log', async () => {
+      const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      await createRepositories('sqlite').documentos.save({ ...DOCUMENTO, fotoStatus: 'remote' });
+      jest.mocked(baixarArquivosDoDocumento).mockRejectedValue(new Error('Realtime Database não configurado'));
+      await abrirDocumento();
+
+      await fireEvent.press(await screen.findByText('Baixar do servidor'));
+
+      await waitFor(() =>
+        expect(alerta).toHaveBeenCalledWith('Erro', 'Não foi possível baixar. Confira a conexão e tente de novo.'),
+      );
+      expect(erro).toHaveBeenCalledTimes(1);
+      erro.mockRestore();
+    });
+
+    test('durante o download o botão mostra "Baixando…" e um segundo toque é ignorado', async () => {
+      await createRepositories('sqlite').documentos.save({ ...DOCUMENTO, fotoStatus: 'remote' });
+      let terminar: (resultado: { baixados: number; ausentes: number; falhas: number }) => void = () => undefined;
+      jest.mocked(baixarArquivosDoDocumento).mockReturnValue(
+        new Promise((resolver) => {
+          terminar = resolver;
+        }),
+      );
+      await abrirDocumento();
+
+      await fireEvent.press(await screen.findByText('Baixar do servidor'));
+      await fireEvent.press(await screen.findByText('Baixando…'));
+
+      expect(baixarArquivosDoDocumento).toHaveBeenCalledTimes(1);
+      terminar({ baixados: 0, ausentes: 1, falhas: 0 });
+      await waitFor(() => expect(screen.getByText('Baixar do servidor')).toBeTruthy());
+    });
   });
 
   test('documento que não existe mostra a mensagem e volta', async () => {

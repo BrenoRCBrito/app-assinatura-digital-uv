@@ -44,6 +44,11 @@ export async function lerFotoDocumentoBase64(documento: ArquivosDoDocumento): Pr
   return createBase64(await fotoDoDocumento(documento).base64());
 }
 
+export async function guardarFotoDocumento(documento: ArquivosDoDocumento, foto: Base64): Promise<void> {
+  pastaDoDocumento(documento).create({ intermediates: true, idempotent: true });
+  fotoDoDocumento(documento).write(foto, { encoding: 'base64' });
+}
+
 export async function lerPdfDocumentoBase64(documento: ArquivosDoDocumento): Promise<Base64> {
   return createBase64(await pdfDoDocumento(documento).base64());
 }

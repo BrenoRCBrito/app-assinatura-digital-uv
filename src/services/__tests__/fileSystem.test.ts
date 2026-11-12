@@ -4,6 +4,7 @@ import { createCapturedPhoto, createFileUri } from '../../domain/photo';
 import {
   copiarFotoDocumento,
   excluirArquivosDocumento,
+  guardarFotoDocumento,
   guardarPdfDocumento,
   lerFotoDocumentoBase64,
   lerPdfDocumentoBase64,
@@ -107,6 +108,15 @@ describe('arquivos do documento', () => {
 
     await expect(lerFotoDocumentoBase64(DOCUMENTO)).resolves.toBe('/9j/4AAQ');
     expect(mockOperacoes).toEqual([['ler base64', `${PASTA}/foto.jpg`]]);
+  });
+
+  test('grava a foto recebida em base64 na pasta do documento', async () => {
+    await guardarFotoDocumento(DOCUMENTO, createBase64('/9j/4AAQ'));
+
+    expect(mockOperacoes).toEqual([
+      ['criar pasta', PASTA, { intermediates: true, idempotent: true }],
+      ['escrever', `${PASTA}/foto.jpg`, '/9j/4AAQ', { encoding: 'base64' }],
+    ]);
   });
 
   test('lê o PDF guardado em base64', async () => {

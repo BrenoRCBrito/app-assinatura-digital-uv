@@ -16,6 +16,7 @@ import {
 } from '../../components';
 import type { DocumentoAssinado, DocumentoId } from '../../domain/documento';
 import { formatCoordinates, formatDateTime, formatLocal } from '../../domain/format';
+import { baixarArquivosDoDocumento } from '../../services/baixarArquivosDoDocumento';
 import { excluirArquivosDocumento, lerFotoDocumentoBase64, uriFotoDocumento } from '../../services/fileSystem';
 import { compartilharPdf } from '../../services/sharing';
 import { useRepositories } from '../../storage/RepositoriesProvider';
@@ -39,6 +40,8 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
   const compartilhandoRef = useRef(false);
   const excluindoRef = useRef(false);
   const copiandoRef = useRef(false);
+  const baixandoRef = useRef(false);
+  const [baixando, setBaixando] = useState(false);
   const [ampliado, setAmpliado] = useState(false);
 
 
@@ -125,6 +128,34 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
     }
   }
 
+  async function baixar(documentoAberto: DocumentoAssinado) {
+    if (baixandoRef.current) {
+      return;
+    }
+    baixandoRef.current = true;
+    setBaixando(true);
+    try {
+      const resultado = await baixarArquivosDoDocumento(documentos, documentoAberto);
+      const atualizado = await documentos.findById(documentoAberto.id, documentoAberto.usuarioId);
+      if (atualizado !== null) {
+        setDocumento(atualizado);
+      }
+      if (resultado.falhas > 0) {
+        showError('Erro', 'Não foi possível baixar. Confira a conexão e tente de novo.');
+      } else if (resultado.ausentes > 0) {
+        showError('Erro', 'O outro aparelho ainda não enviou os arquivos deste documento. Abra o app lá e tente de novo.');
+      } else {
+        showSuccess('Documento baixado');
+      }
+    } catch (error) {
+      console.error('Falha ao baixar o documento:', error);
+      showError('Erro', 'Não foi possível baixar. Confira a conexão e tente de novo.');
+    } finally {
+      baixandoRef.current = false;
+      setBaixando(false);
+    }
+  }
+
   async function excluir(documentoAberto: DocumentoAssinado) {
     if (excluindoRef.current) {
       return;
@@ -165,6 +196,17 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
       preset="menu"
       footer={
         <Stack gap="actions">
+          {documento.fotoStatus === 'local' && documento.pdfStatus === 'local' ? null : (
+            <Button
+              label={baixando ? 'Baixando…' : 'Baixar do servidor'}
+              icon="share"
+              preset="secondary"
+              disabled={baixando}
+              onPress={() => {
+                void baixar(documento);
+              }}
+            />
+          )}
           <Button
             label="Compartilhar PDF"
             icon="share"
