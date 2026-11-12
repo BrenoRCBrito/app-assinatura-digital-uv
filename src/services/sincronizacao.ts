@@ -5,7 +5,11 @@ import { sincronizarArquivos, type ResultadoDosArquivos } from './sincronizacaoD
 import { sincronizarColecao, type AdaptadorDeColecao, type ResultadoDaColecao } from './sincronizacaoDeColecao';
 import { sincronizarPerfil, type ResultadoDaSincronizacao } from './sincronizacaoDoPerfil';
 
-const emAndamento = new Map<string, Promise<ResultadoDaSincronizacao>>();
+type Execucao = { promessa: Promise<ResultadoDaSincronizacao>; repetir: boolean };
+
+const MAXIMO_DE_REPETICOES = 3;
+
+const emAndamento = new Map<string, Execucao>();
 
 async function sincronizarSemLancar<T extends Readonly<{ id: string }>>(
   adaptador: AdaptadorDeColecao<T>,
@@ -52,11 +56,22 @@ async function executar(repositorios: Repositories, usuarioId: UsuarioId): Promi
 export function sincronizarTudo(repositorios: Repositories, usuarioId: UsuarioId): Promise<ResultadoDaSincronizacao> {
   const atual = emAndamento.get(usuarioId);
   if (atual !== undefined) {
-    return atual;
+    atual.repetir = true;
+    return atual.promessa;
   }
-  const execucao = executar(repositorios, usuarioId).finally(() => {
-    emAndamento.delete(usuarioId);
-  });
+  const execucao = { repetir: false } as Execucao;
   emAndamento.set(usuarioId, execucao);
-  return execucao;
+  execucao.promessa = (async () => {
+    try {
+      let resultado = await executar(repositorios, usuarioId);
+      for (let repeticao = 0; execucao.repetir && repeticao < MAXIMO_DE_REPETICOES; repeticao += 1) {
+        execucao.repetir = false;
+        resultado = await executar(repositorios, usuarioId);
+      }
+      return resultado;
+    } finally {
+      emAndamento.delete(usuarioId);
+    }
+  })();
+  return execucao.promessa;
 }

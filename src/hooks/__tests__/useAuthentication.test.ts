@@ -18,10 +18,10 @@ import {
   getBiometricStatus,
   type AuthenticationResult,
 } from '../../services/localAuthentication';
-import { sincronizarTudo } from '../../services/sincronizacao';
 import type { Repositories } from '../../storage/repositories';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 import { useSettings } from '../../storage/SettingsProvider';
+import { useSincronizacaoAutomatica } from '../useSincronizacaoAutomatica';
 import {
   AuthenticationProvider,
   useAuthentication,
@@ -40,7 +40,7 @@ jest.mock('../../services/autenticacaoFirebase', () => ({
   sairDoFirebase: jest.fn(),
   mensagemDoErroDeAutenticacao: jest.fn(),
 }));
-jest.mock('../../services/sincronizacao', () => ({ sincronizarTudo: jest.fn() }));
+jest.mock('../useSincronizacaoAutomatica', () => ({ useSincronizacaoAutomatica: jest.fn() }));
 jest.mock('../../storage/RepositoriesProvider', () => ({ useRepositories: jest.fn() }));
 jest.mock('../../storage/SettingsProvider', () => ({ useSettings: jest.fn() }));
 
@@ -685,14 +685,18 @@ describe('AuthenticationProvider', () => {
     });
   });
 
-  describe('sincronização com a nuvem', () => {
-    test('não sincroniza enquanto ninguém entrou', async () => {
+  describe('sincronização automática', () => {
+    function contaPassadaAoGatilho() {
+      return jest.mocked(useSincronizacaoAutomatica).mock.calls.at(-1)?.[1];
+    }
+
+    test('enquanto ninguém entrou, entrega conta nenhuma', async () => {
       await renderAuthentication();
 
-      expect(sincronizarTudo).not.toHaveBeenCalled();
+      expect(contaPassadaAoGatilho()).toBeNull();
     });
 
-    test('ao entrar com e-mail e senha, sincroniza o perfil dessa conta', async () => {
+    test('ao entrar com e-mail e senha, entrega a conta que entrou', async () => {
       mockUsuarios([criarUsuarioDeTeste(USUARIO_A, EMAIL_A)]);
       jest.mocked(entrarNoFirebase).mockResolvedValue(CONTA_A);
       const { result } = await renderAuthentication();
@@ -701,11 +705,10 @@ describe('AuthenticationProvider', () => {
         await result.current.loginComSenha('a@exemplo.com', 'Senha@123');
       });
 
-      expect(sincronizarTudo).toHaveBeenCalledTimes(1);
-      expect(sincronizarTudo).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
+      expect(contaPassadaAoGatilho()).toBe(USUARIO_A);
     });
 
-    test('ao desbloquear com a biometria, sincroniza o perfil da conta', async () => {
+    test('ao desbloquear com a biometria, entrega a conta da sessão', async () => {
       mockSettings(BIOMETRIA_DA_CONTA_A);
       mockUsuarios([criarUsuarioDeTeste(USUARIO_A, EMAIL_A)]);
       jest.mocked(authenticateDeviceOwner).mockResolvedValue({ type: 'authenticated' });
@@ -716,10 +719,10 @@ describe('AuthenticationProvider', () => {
         await result.current.unlock();
       });
 
-      expect(sincronizarTudo).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
+      expect(contaPassadaAoGatilho()).toBe(USUARIO_A);
     });
 
-    test('ao criar a conta, sincroniza o perfil novo', async () => {
+    test('ao criar a conta, entrega a conta nova', async () => {
       mockUsuarios([]);
       jest.mocked(cadastrarNoFirebase).mockResolvedValue({ uid: USUARIO_A, email: 'novo@exemplo.com' });
       const { result } = await renderAuthentication();
@@ -728,10 +731,10 @@ describe('AuthenticationProvider', () => {
         await result.current.cadastrar(CADASTRO);
       });
 
-      expect(sincronizarTudo).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
+      expect(contaPassadaAoGatilho()).toBe(USUARIO_A);
     });
 
-    test('ao sair da conta, não sincroniza de novo', async () => {
+    test('ao sair da conta, volta a não entregar conta nenhuma', async () => {
       mockUsuarios([criarUsuarioDeTeste(USUARIO_A, EMAIL_A)]);
       jest.mocked(entrarNoFirebase).mockResolvedValue(CONTA_A);
       const { result } = await renderAuthentication();
@@ -743,7 +746,7 @@ describe('AuthenticationProvider', () => {
         await result.current.sair();
       });
 
-      expect(sincronizarTudo).toHaveBeenCalledTimes(1);
+      expect(contaPassadaAoGatilho()).toBeNull();
     });
   });
 

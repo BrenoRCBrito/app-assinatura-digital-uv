@@ -25,9 +25,9 @@ import {
   type AuthenticationResult,
   type BiometricStatus,
 } from '../services/localAuthentication';
-import { sincronizarTudo } from '../services/sincronizacao';
 import { useRepositories } from '../storage/RepositoriesProvider';
 import { useSettings } from '../storage/SettingsProvider';
+import { useSincronizacaoAutomatica } from './useSincronizacaoAutomatica';
 
 export type ResultadoLoginComSenha = Readonly<{ ok: true }> | Readonly<{ ok: false; mensagem: string }>;
 
@@ -93,11 +93,7 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
   }, []);
 
 
-  useEffect(() => {
-    if (usuarioId !== null) {
-      void sincronizarTudo(repositorios, usuarioId);
-    }
-  }, [usuarioId, repositorios]);
+  useSincronizacaoAutomatica(repositorios, usuarioId);
 
   useEffect(() => {
     let active = true;

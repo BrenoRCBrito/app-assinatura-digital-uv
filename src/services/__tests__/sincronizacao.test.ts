@@ -108,8 +108,17 @@ describe('sincronizarTudo', () => {
     expect(resultado.falhou).toBe(true);
   });
 
-  test('duas chamadas ao mesmo tempo para a mesma conta aproveitam a mesma sincronização', async () => {
+  test('duas chamadas ao mesmo tempo para a mesma conta entregam o mesmo resultado, sem sincronizar em duas frentes', async () => {
     const repositorios = createRepositories('inMemory');
+    let emparalelo = 0;
+    let maximoEmparalelo = 0;
+    jest.mocked(sincronizarPerfil).mockImplementation(async () => {
+      emparalelo += 1;
+      maximoEmparalelo = Math.max(maximoEmparalelo, emparalelo);
+      await Promise.resolve();
+      emparalelo -= 1;
+      return resultadoDoPerfil();
+    });
 
     const [primeira, segunda] = await Promise.all([
       sincronizarTudo(repositorios, UID),
@@ -117,7 +126,52 @@ describe('sincronizarTudo', () => {
     ]);
 
     expect(primeira).toEqual(segunda);
-    expect(sincronizarPerfil).toHaveBeenCalledTimes(1);
+    expect(maximoEmparalelo).toBe(1);
+  });
+
+  test('um pedido no meio da sincronização faz ela rodar mais uma vez, para não perder o que mudou', async () => {
+    const repositorios = createRepositories('inMemory');
+
+    await Promise.all([sincronizarTudo(repositorios, UID), sincronizarTudo(repositorios, UID)]);
+
+    expect(sincronizarPerfil).toHaveBeenCalledTimes(2);
+  });
+
+  test('vários pedidos no meio da sincronização viram uma única repetição', async () => {
+    const repositorios = createRepositories('inMemory');
+
+    await Promise.all([
+      sincronizarTudo(repositorios, UID),
+      sincronizarTudo(repositorios, UID),
+      sincronizarTudo(repositorios, UID),
+      sincronizarTudo(repositorios, UID),
+    ]);
+
+    expect(sincronizarPerfil).toHaveBeenCalledTimes(2);
+  });
+
+  test('pedidos que continuam chegando não prendem a conta para sempre: a repetição tem limite', async () => {
+    const repositorios = createRepositories('inMemory');
+    jest.mocked(sincronizarPerfil).mockImplementation(async () => {
+      void sincronizarTudo(repositorios, UID);
+      return resultadoDoPerfil();
+    });
+
+    await sincronizarTudo(repositorios, UID);
+
+    expect(sincronizarPerfil).toHaveBeenCalledTimes(1 + 3);
+  });
+
+  test('o resultado é o da última rodada', async () => {
+    const repositorios = createRepositories('inMemory');
+    jest
+      .mocked(sincronizarPerfil)
+      .mockResolvedValueOnce(resultadoDoPerfil({ enviados: 1 }))
+      .mockResolvedValueOnce(resultadoDoPerfil({ enviados: 5 }));
+
+    const [primeira] = await Promise.all([sincronizarTudo(repositorios, UID), sincronizarTudo(repositorios, UID)]);
+
+    expect(primeira.enviados).toBe(5);
   });
 
   test('depois que termina, uma nova chamada sincroniza de novo', async () => {
