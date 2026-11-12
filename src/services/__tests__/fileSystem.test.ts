@@ -6,6 +6,7 @@ import {
   excluirArquivosDocumento,
   guardarPdfDocumento,
   lerFotoDocumentoBase64,
+  lerPdfDocumentoBase64,
   uriFotoDocumento,
   uriPdfDocumento,
 } from '../fileSystem';
@@ -106,6 +107,13 @@ describe('arquivos do documento', () => {
 
     await expect(lerFotoDocumentoBase64(DOCUMENTO)).resolves.toBe('/9j/4AAQ');
     expect(mockOperacoes).toEqual([['ler base64', `${PASTA}/foto.jpg`]]);
+  });
+
+  test('lê o PDF guardado em base64', async () => {
+    mockBase64 = 'JVBERi0xLjQK';
+
+    await expect(lerPdfDocumentoBase64(DOCUMENTO)).resolves.toBe('JVBERi0xLjQK');
+    expect(mockOperacoes).toEqual([['ler base64', `${PASTA}/documento.pdf`]]);
   });
 
   test('grava o PDF recebido em base64 na pasta do documento', async () => {

@@ -1,11 +1,13 @@
 import { criarUsuarioId } from '../../domain/usuario';
 import { createRepositories } from '../../storage/createRepositories';
 import { sincronizarTudo } from '../sincronizacao';
+import { sincronizarArquivos } from '../sincronizacaoDeArquivos';
 import { sincronizarColecao } from '../sincronizacaoDeColecao';
 import { sincronizarPerfil } from '../sincronizacaoDoPerfil';
 
 jest.mock('../sincronizacaoDoPerfil', () => ({ sincronizarPerfil: jest.fn() }));
 jest.mock('../sincronizacaoDeColecao', () => ({ sincronizarColecao: jest.fn() }));
+jest.mock('../sincronizacaoDeArquivos', () => ({ sincronizarArquivos: jest.fn() }));
 
 const UID = criarUsuarioId('uid-a');
 
@@ -24,6 +26,7 @@ describe('sincronizarTudo', () => {
     aviso = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     jest.mocked(sincronizarPerfil).mockReset().mockResolvedValue(resultadoDoPerfil());
     jest.mocked(sincronizarColecao).mockReset().mockResolvedValue(resultadoDaColecao());
+    jest.mocked(sincronizarArquivos).mockReset().mockResolvedValue({ enviados: 0, apagados: 0, falhas: 0 });
   });
 
   afterEach(() => {
@@ -48,6 +51,33 @@ describe('sincronizarTudo', () => {
     expect(jest.mocked(sincronizarColecao).mock.calls[0][2]).toBe(UID);
   });
 
+  test('depois dos dados, envia os arquivos dos documentos e soma no resultado', async () => {
+    const repositorios = createRepositories('inMemory');
+    jest.mocked(sincronizarArquivos).mockResolvedValue({ enviados: 2, apagados: 1, falhas: 0 });
+
+    const resultado = await sincronizarTudo(repositorios, UID);
+
+    expect(resultado).toEqual({ enviados: 2, baixados: 0, falhou: false });
+    expect(sincronizarArquivos).toHaveBeenCalledWith(repositorios.documentos, UID);
+  });
+
+  test('falha nos arquivos (banco não configurado) não anula o resto, mas o resultado diz que falhou', async () => {
+    jest.mocked(sincronizarArquivos).mockRejectedValue(new Error('não configurado'));
+    jest.mocked(sincronizarColecao).mockResolvedValue(resultadoDaColecao({ enviados: 1 }));
+
+    const resultado = await sincronizarTudo(createRepositories('inMemory'), UID);
+
+    expect(resultado).toEqual({ enviados: 2, baixados: 0, falhou: true });
+  });
+
+  test('arquivos que falharam contam como falha', async () => {
+    jest.mocked(sincronizarArquivos).mockResolvedValue({ enviados: 0, apagados: 0, falhas: 1 });
+
+    const resultado = await sincronizarTudo(createRepositories('inMemory'), UID);
+
+    expect(resultado.falhou).toBe(true);
+  });
+
   test('se o perfil falhar (sem internet), não tenta as coleções', async () => {
     jest.mocked(sincronizarPerfil).mockResolvedValue(resultadoDoPerfil({ falhou: true }));
 
@@ -55,6 +85,7 @@ describe('sincronizarTudo', () => {
 
     expect(resultado.falhou).toBe(true);
     expect(sincronizarColecao).not.toHaveBeenCalled();
+    expect(sincronizarArquivos).not.toHaveBeenCalled();
   });
 
   test('erro nas assinaturas não impede os documentos e o resultado diz que falhou', async () => {
