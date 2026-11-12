@@ -5,6 +5,7 @@ import { Alert } from 'react-native';
 
 import { DEFAULT_SETTINGS } from '../../domain/settings';
 import { useAuthentication } from '../../hooks/useAuthentication';
+import { excluirTodasAsPastasDeArquivos } from '../../services/fileSystem';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 import type { Repositories } from '../../storage/repositories';
 import { SettingsProvider } from '../../storage/SettingsProvider';
@@ -17,12 +18,14 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 jest.mock('../../hooks/useAuthentication', () => ({ useAuthentication: jest.fn() }));
 jest.mock('../../storage/RepositoriesProvider', () => ({ useRepositories: jest.fn() }));
+jest.mock('../../services/fileSystem', () => ({ excluirTodasAsPastasDeArquivos: jest.fn() }));
 
 type BotoesDoAlerta = NonNullable<Parameters<typeof Alert.alert>[2]>;
 
 const limparAssinaturas = jest.fn();
 const limparDocumentos = jest.fn();
 const limparUsuarios = jest.fn();
+const limparCursores = jest.fn();
 const sair = jest.fn();
 
 async function abrirConfiguracoes() {
@@ -46,13 +49,16 @@ describe('SettingsScreen', () => {
     limparAssinaturas.mockClear();
     limparDocumentos.mockClear();
     limparUsuarios.mockClear();
-    sair.mockClear();
+    limparCursores.mockClear();
+    sair.mockReset().mockResolvedValue(true);
+    jest.mocked(excluirTodasAsPastasDeArquivos).mockClear();
     alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     jest.mocked(useAuthentication).mockReturnValue({ sair } as unknown as ReturnType<typeof useAuthentication>);
     jest.mocked(useRepositories).mockReturnValue({
       assinaturas: { clear: limparAssinaturas },
       documentos: { clear: limparDocumentos },
       usuarios: { clear: limparUsuarios },
+      cursores: { clear: limparCursores },
     } as unknown as Repositories);
   });
 
@@ -71,16 +77,49 @@ describe('SettingsScreen', () => {
     expect(limparUsuarios).not.toHaveBeenCalled();
   });
 
-  test('confirmar apaga os três repositórios e sai da conta', async () => {
+  test('confirmar sai da conta e apaga os repositórios, o cursor de sincronização e as pastas de arquivos', async () => {
     const botao = await abrirConfiguracoes();
 
     await fireEvent.press(botao);
     await responderAlerta('Limpar');
 
+    expect(sair).toHaveBeenCalledTimes(1);
     expect(limparAssinaturas).toHaveBeenCalledTimes(1);
     expect(limparDocumentos).toHaveBeenCalledTimes(1);
     expect(limparUsuarios).toHaveBeenCalledTimes(1);
-    expect(sair).toHaveBeenCalledTimes(1);
+    expect(limparCursores).toHaveBeenCalledTimes(1);
+    expect(excluirTodasAsPastasDeArquivos).toHaveBeenCalledTimes(1);
+  });
+
+  test('sai da conta primeiro (que envia o que falta e pergunta) e só depois apaga o que sobrou', async () => {
+    const ordem: string[] = [];
+    sair.mockImplementation(async () => {
+      ordem.push('sair');
+      return true;
+    });
+    limparAssinaturas.mockImplementation(async () => {
+      ordem.push('apagar');
+    });
+    const botao = await abrirConfiguracoes();
+
+    await fireEvent.press(botao);
+    await responderAlerta('Limpar');
+
+    expect(ordem).toEqual(['sair', 'apagar']);
+  });
+
+  test('se a pessoa desiste de sair (havia dados sem enviar), nada é apagado', async () => {
+    sair.mockResolvedValue(false);
+    const botao = await abrirConfiguracoes();
+
+    await fireEvent.press(botao);
+    await responderAlerta('Limpar');
+
+    expect(limparAssinaturas).not.toHaveBeenCalled();
+    expect(limparDocumentos).not.toHaveBeenCalled();
+    expect(limparUsuarios).not.toHaveBeenCalled();
+    expect(limparCursores).not.toHaveBeenCalled();
+    expect(excluirTodasAsPastasDeArquivos).not.toHaveBeenCalled();
   });
 
   test('confirmar também desliga a entrada por biometria da conta apagada e mantém as preferências', async () => {

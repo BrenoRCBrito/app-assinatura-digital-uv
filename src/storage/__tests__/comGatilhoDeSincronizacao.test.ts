@@ -102,6 +102,10 @@ describe('comGatilhoDeSincronizacao', () => {
       });
       await repositorios.usuarios.aplicarFotoDaNuvem(ID, criarFotoPerfil('foto-da-nuvem'));
       await repositorios.cursores.gravar(ID, 'documentos', { segundos: 1, nanos: 0 });
+      await repositorios.assinaturas.apagarDaConta(ID);
+      await repositorios.documentos.apagarDaConta(ID);
+      await repositorios.usuarios.apagarDaConta(ID);
+      await repositorios.cursores.apagarDaConta(ID);
 
       expect(aoAlterar).not.toHaveBeenCalled();
     });

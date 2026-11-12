@@ -43,5 +43,9 @@ export function createSqliteCursorRepository({ db, pronto }: Banco): CursorRepos
       await pronto;
       await db.runAsync('DELETE FROM sync_cursores');
     },
+    async apagarDaConta(usuarioId) {
+      await pronto;
+      await db.runAsync('DELETE FROM sync_cursores WHERE usuario_id = ?', usuarioId);
+    },
   };
 }

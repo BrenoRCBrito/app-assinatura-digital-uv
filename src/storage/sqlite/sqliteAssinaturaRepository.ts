@@ -88,6 +88,10 @@ export function createSqliteAssinaturaRepository({ db, pronto }: Banco): Assinat
       await pronto;
       await db.runAsync('DELETE FROM assinaturas');
     },
+    async apagarDaConta(usuarioId) {
+      await pronto;
+      await db.runAsync('DELETE FROM assinaturas WHERE usuario_id = ?', usuarioId);
+    },
     async listarPendentes(usuarioId) {
       await pronto;
       const linhas = await db.getAllAsync<LinhaAssinatura>(

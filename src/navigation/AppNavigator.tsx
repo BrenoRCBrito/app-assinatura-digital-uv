@@ -6,6 +6,7 @@ import {
   type NativeStackScreenProps,
 } from '@react-navigation/native-stack';
 
+import { LoadingOverlay } from '../components';
 import { useAuthentication } from '../hooks/useAuthentication';
 import { AssinaturasScreen } from '../screens/AssinaturasScreen';
 import { CriarContaScreen } from '../screens/CriarContaScreen';
@@ -28,7 +29,7 @@ type AppNavigation = NativeStackNavigationProp<RootStackParamList, keyof RootSta
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function AppNavigator() {
-  const { isUnlocked } = useAuthentication();
+  const { isUnlocked, saindo } = useAuthentication();
   const { theme, themeName } = useAppTheme();
   const navigationTheme = useMemo(() => createNavigationTheme(theme, themeName), [theme, themeName]);
 
@@ -41,91 +42,94 @@ export function AppNavigator() {
   );
 
   return (
-    <NavigationContainer theme={navigationTheme}>
-      <Stack.Navigator>
-        {isUnlocked ? (
-          <>
-            <Stack.Screen name="Home" options={{ title: 'Início' }}>
-              {({ navigation }: { navigation: AppNavigation }) => (
-                <HomeScreen
-                  onDigitalizarDocumento={() => navigation.navigate('DigitalizarDocumento')}
-                  onOpenAssinaturas={() => navigation.navigate('Assinaturas')}
-                  onOpenHistorico={() => navigation.navigate('Historico')}
-                  onValidarDocumento={() => navigation.navigate('ValidarDocumento')}
-                  onOpenProfile={() => navigation.navigate('Profile')}
-                  onOpenSettings={() => navigation.navigate('Settings')}
-                />
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="Assinaturas" options={{ title: 'Minhas assinaturas' }}>
-              {({ navigation }: { navigation: AppNavigation }) => (
-                <AssinaturasScreen onNovaAssinatura={() => navigation.navigate('NovaAssinatura')} />
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="NovaAssinatura" options={{ title: 'Nova assinatura', gestureEnabled: false }}>
-              {({ navigation }: { navigation: AppNavigation }) => (
-                <NovaAssinaturaScreen onSalva={() => navigation.goBack()} />
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="DigitalizarDocumento" options={{ headerShown: false }}>
-              {({ navigation }: { navigation: AppNavigation }) => (
-                <DigitalizarDocumentoScreen
-                  onFechar={() => navigation.goBack()}
-                  onUsarFoto={(foto) => navigation.replace('PosicionarAssinatura', { foto })}
-                />
-              )}
-            </Stack.Screen>
-            <Stack.Screen
-              name="PosicionarAssinatura"
-              options={{ title: 'Posicionar assinatura', gestureEnabled: false }}
-            >
-              {({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'PosicionarAssinatura'>) => (
-                <PosicionarAssinaturaScreen
-                  foto={route.params.foto}
-                  onNovaAssinatura={() => navigation.navigate('NovaAssinatura')}
-                  onAssinado={(documentoId) => navigation.replace('Documento', { documentoId })}
-                />
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="Historico" options={{ title: 'Histórico' }}>
-              {({ navigation }: { navigation: AppNavigation }) => (
-                <HistoricoScreen
-                  onAbrirDocumento={(documentoId) => navigation.navigate('Documento', { documentoId })}
-                />
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="Documento" options={{ title: 'Documento assinado' }}>
-              {({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'Documento'>) => (
-                <DocumentoScreen
-                  documentoId={route.params.documentoId}
-                  onNaoEncontrado={() => navigation.goBack()}
-                  onExcluido={() => navigation.goBack()}
-                />
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configurações' }} />
-            {validarDocumento}
-            <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Perfil' }} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name="Login" options={{ headerShown: false }}>
-              {({ navigation }: { navigation: AppNavigation }) => (
-                <LoginScreen
-                  onCriarConta={() => navigation.navigate('CriarConta')}
-                  onValidarDocumento={() => navigation.navigate('ValidarDocumento')}
-                />
-              )}
-            </Stack.Screen>
-            <Stack.Screen name="CriarConta" options={{ headerShown: false }}>
-              {({ navigation }: { navigation: AppNavigation }) => (
-                <CriarContaScreen onJaTenhoConta={() => navigation.navigate('Login')} />
-              )}
-            </Stack.Screen>
-            {validarDocumento}
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <>
+      <NavigationContainer theme={navigationTheme}>
+        <Stack.Navigator>
+          {isUnlocked ? (
+            <>
+              <Stack.Screen name="Home" options={{ title: 'Início' }}>
+                {({ navigation }: { navigation: AppNavigation }) => (
+                  <HomeScreen
+                    onDigitalizarDocumento={() => navigation.navigate('DigitalizarDocumento')}
+                    onOpenAssinaturas={() => navigation.navigate('Assinaturas')}
+                    onOpenHistorico={() => navigation.navigate('Historico')}
+                    onValidarDocumento={() => navigation.navigate('ValidarDocumento')}
+                    onOpenProfile={() => navigation.navigate('Profile')}
+                    onOpenSettings={() => navigation.navigate('Settings')}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="Assinaturas" options={{ title: 'Minhas assinaturas' }}>
+                {({ navigation }: { navigation: AppNavigation }) => (
+                  <AssinaturasScreen onNovaAssinatura={() => navigation.navigate('NovaAssinatura')} />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="NovaAssinatura" options={{ title: 'Nova assinatura', gestureEnabled: false }}>
+                {({ navigation }: { navigation: AppNavigation }) => (
+                  <NovaAssinaturaScreen onSalva={() => navigation.goBack()} />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="DigitalizarDocumento" options={{ headerShown: false }}>
+                {({ navigation }: { navigation: AppNavigation }) => (
+                  <DigitalizarDocumentoScreen
+                    onFechar={() => navigation.goBack()}
+                    onUsarFoto={(foto) => navigation.replace('PosicionarAssinatura', { foto })}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen
+                name="PosicionarAssinatura"
+                options={{ title: 'Posicionar assinatura', gestureEnabled: false }}
+              >
+                {({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'PosicionarAssinatura'>) => (
+                  <PosicionarAssinaturaScreen
+                    foto={route.params.foto}
+                    onNovaAssinatura={() => navigation.navigate('NovaAssinatura')}
+                    onAssinado={(documentoId) => navigation.replace('Documento', { documentoId })}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="Historico" options={{ title: 'Histórico' }}>
+                {({ navigation }: { navigation: AppNavigation }) => (
+                  <HistoricoScreen
+                    onAbrirDocumento={(documentoId) => navigation.navigate('Documento', { documentoId })}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="Documento" options={{ title: 'Documento assinado' }}>
+                {({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'Documento'>) => (
+                  <DocumentoScreen
+                    documentoId={route.params.documentoId}
+                    onNaoEncontrado={() => navigation.goBack()}
+                    onExcluido={() => navigation.goBack()}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configurações' }} />
+              {validarDocumento}
+              <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Perfil' }} />
+            </>
+          ) : (
+            <>
+              <Stack.Screen name="Login" options={{ headerShown: false }}>
+                {({ navigation }: { navigation: AppNavigation }) => (
+                  <LoginScreen
+                    onCriarConta={() => navigation.navigate('CriarConta')}
+                    onValidarDocumento={() => navigation.navigate('ValidarDocumento')}
+                  />
+                )}
+              </Stack.Screen>
+              <Stack.Screen name="CriarConta" options={{ headerShown: false }}>
+                {({ navigation }: { navigation: AppNavigation }) => (
+                  <CriarContaScreen onJaTenhoConta={() => navigation.navigate('Login')} />
+                )}
+              </Stack.Screen>
+              {validarDocumento}
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+      <LoadingOverlay visible={saindo === true} message="Enviando seus dados…" />
+    </>
   );
 }

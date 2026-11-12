@@ -21,6 +21,7 @@ import {
 import type { Repositories } from '../../storage/repositories';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 import { useSettings } from '../../storage/SettingsProvider';
+import { apagarDadosDaConta, prepararSaida } from '../../services/saidaDaConta';
 import { useSincronizacaoAutomatica } from '../useSincronizacaoAutomatica';
 import {
   AuthenticationProvider,
@@ -41,6 +42,7 @@ jest.mock('../../services/autenticacaoFirebase', () => ({
   mensagemDoErroDeAutenticacao: jest.fn(),
 }));
 jest.mock('../useSincronizacaoAutomatica', () => ({ useSincronizacaoAutomatica: jest.fn() }));
+jest.mock('../../services/saidaDaConta', () => ({ prepararSaida: jest.fn(), apagarDadosDaConta: jest.fn() }));
 jest.mock('../../storage/RepositoriesProvider', () => ({ useRepositories: jest.fn() }));
 jest.mock('../../storage/SettingsProvider', () => ({ useSettings: jest.fn() }));
 
@@ -97,6 +99,7 @@ function mockUsuarios(usuarios: readonly Usuario[]) {
       lerPerfilLocal: jest.fn(),
       aplicarPerfilDaNuvem: jest.fn(),
       aplicarFotoDaNuvem: jest.fn(),
+      apagarDaConta: jest.fn(),
       marcarPerfilSincronizado: jest.fn(),
       clear: jest.fn(),
     },
@@ -146,6 +149,8 @@ describe('AuthenticationProvider', () => {
     jest.resetAllMocks();
     jest.mocked(getBiometricStatus).mockResolvedValue('enrolled');
     jest.mocked(sairDoFirebase).mockResolvedValue(undefined);
+    jest.mocked(prepararSaida).mockResolvedValue({ pendentes: 0 });
+    jest.mocked(apagarDadosDaConta).mockResolvedValue(undefined);
     jest
       .mocked(mensagemDoErroDeAutenticacao)
       .mockImplementation((erro) => MENSAGENS_DO_FIREBASE[(erro as { code?: string }).code ?? ''] ?? null);
@@ -335,6 +340,237 @@ describe('AuthenticationProvider', () => {
       } finally {
         consoleError.mockRestore();
       }
+    });
+  });
+
+  describe('sair: limpeza do aparelho', () => {
+    async function entrarComAConta() {
+      mockUsuarios([criarUsuarioDeTeste(USUARIO_A, EMAIL_A)]);
+      jest.mocked(entrarNoFirebase).mockResolvedValue(CONTA_A);
+      const rendered = await renderAuthentication();
+      await act(async () => {
+        await rendered.result.current.loginComSenha('a@exemplo.com', 'Senha@123');
+      });
+      alerta.mockClear();
+      return rendered;
+    }
+
+    function responderAoAvisoDeDadosNaoEnviados(botao: 'Cancelar' | 'Sair e apagar') {
+      const chamada = jest.mocked(Alert.alert).mock.calls.at(-1);
+      const botoes = (chamada?.[2] ?? []) as BotoesDoAlerta;
+      botoes.find((item) => item.text === botao)?.onPress?.();
+    }
+
+    test('sincroniza uma última vez, apaga os dados da conta e só depois encerra a sessão, nessa ordem', async () => {
+      const ordem: string[] = [];
+      jest.mocked(prepararSaida).mockImplementation(async () => {
+        ordem.push('sincronizar');
+        return { pendentes: 0 };
+      });
+      jest.mocked(apagarDadosDaConta).mockImplementation(async () => {
+        ordem.push('apagar dados');
+      });
+      jest.mocked(sairDoFirebase).mockImplementation(async () => {
+        ordem.push('encerrar sessão');
+      });
+      const { result } = await entrarComAConta();
+
+      await act(async () => {
+        await result.current.sair();
+      });
+
+      expect(ordem).toEqual(['sincronizar', 'apagar dados', 'encerrar sessão']);
+      expect(prepararSaida).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
+      expect(apagarDadosDaConta).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
+    });
+
+    test('com tudo enviado, sai sem perguntar nada e devolve true', async () => {
+      const { result } = await entrarComAConta();
+      let saiu: boolean | undefined;
+
+      await act(async () => {
+        saiu = await result.current.sair();
+      });
+
+      expect(saiu).toBe(true);
+      expect(alerta).not.toHaveBeenCalled();
+      expect(result.current.usuarioId).toBeNull();
+      expect(result.current.isUnlocked).toBe(false);
+    });
+
+    test('com dados que não subiram, avisa quantos são antes de apagar', async () => {
+      jest.mocked(prepararSaida).mockResolvedValue({ pendentes: 3 });
+      const { result } = await entrarComAConta();
+
+      await act(async () => {
+        void result.current.sair();
+      });
+      await waitFor(() => expect(alerta).toHaveBeenCalledTimes(1));
+
+      expect(alerta.mock.calls[0][0]).toBe('Dados ainda não enviados');
+      expect(alerta.mock.calls[0][1]).toContain('Há 3 itens');
+      expect(apagarDadosDaConta).not.toHaveBeenCalled();
+      await act(async () => responderAoAvisoDeDadosNaoEnviados('Cancelar'));
+    });
+
+    test('com um único item pendente, o aviso fala no singular', async () => {
+      jest.mocked(prepararSaida).mockResolvedValue({ pendentes: 1 });
+      const { result } = await entrarComAConta();
+
+      await act(async () => {
+        void result.current.sair();
+      });
+      await waitFor(() => expect(alerta).toHaveBeenCalledTimes(1));
+
+      expect(alerta.mock.calls[0][1]).toContain('Há 1 item ');
+      await act(async () => responderAoAvisoDeDadosNaoEnviados('Cancelar'));
+    });
+
+    test('cancelar no aviso mantém a conta, não apaga nada e devolve false', async () => {
+      jest.mocked(prepararSaida).mockResolvedValue({ pendentes: 2 });
+      const { result } = await entrarComAConta();
+      let resultado: Promise<boolean> | undefined;
+
+      await act(async () => {
+        resultado = result.current.sair();
+      });
+      await waitFor(() => expect(alerta).toHaveBeenCalledTimes(1));
+      await act(async () => responderAoAvisoDeDadosNaoEnviados('Cancelar'));
+
+      await expect(resultado).resolves.toBe(false);
+      expect(apagarDadosDaConta).not.toHaveBeenCalled();
+      expect(sairDoFirebase).not.toHaveBeenCalled();
+      expect(result.current.usuarioId).toBe(USUARIO_A);
+      expect(result.current.isUnlocked).toBe(true);
+      expect(result.current.saindo).toBe(false);
+    });
+
+    test('fechar o aviso sem escolher também conta como cancelar', async () => {
+      jest.mocked(prepararSaida).mockResolvedValue({ pendentes: 2 });
+      const { result } = await entrarComAConta();
+      let resultado: Promise<boolean> | undefined;
+
+      await act(async () => {
+        resultado = result.current.sair();
+      });
+      await waitFor(() => expect(alerta).toHaveBeenCalledTimes(1));
+      await act(async () => {
+        (alerta.mock.calls[0][3] as { onDismiss: () => void }).onDismiss();
+      });
+
+      await expect(resultado).resolves.toBe(false);
+      expect(apagarDadosDaConta).not.toHaveBeenCalled();
+      expect(result.current.usuarioId).toBe(USUARIO_A);
+    });
+
+    test('"Sair e apagar" apaga os dados mesmo com itens sem enviar e sai da conta', async () => {
+      jest.mocked(prepararSaida).mockResolvedValue({ pendentes: 2 });
+      const { result } = await entrarComAConta();
+      let resultado: Promise<boolean> | undefined;
+
+      await act(async () => {
+        resultado = result.current.sair();
+      });
+      await waitFor(() => expect(alerta).toHaveBeenCalledTimes(1));
+      await act(async () => responderAoAvisoDeDadosNaoEnviados('Sair e apagar'));
+
+      await expect(resultado).resolves.toBe(true);
+      expect(apagarDadosDaConta).toHaveBeenCalledWith(expect.anything(), USUARIO_A);
+      expect(sairDoFirebase).toHaveBeenCalledTimes(1);
+      expect(result.current.usuarioId).toBeNull();
+    });
+
+    test('enquanto envia e limpa, "saindo" é true, a sincronização automática para e, no fim, tudo volta ao normal', async () => {
+      let terminar: (valor: { pendentes: number }) => void = () => undefined;
+      jest.mocked(prepararSaida).mockReturnValue(
+        new Promise((resolver) => {
+          terminar = resolver;
+        }),
+      );
+      const { result } = await entrarComAConta();
+
+      await act(async () => {
+        void result.current.sair();
+      });
+
+      await waitFor(() => expect(result.current.saindo).toBe(true));
+      expect(jest.mocked(useSincronizacaoAutomatica).mock.calls.at(-1)?.[1]).toBeNull();
+      await act(async () => terminar({ pendentes: 0 }));
+      await waitFor(() => expect(result.current.saindo).toBe(false));
+      expect(result.current.usuarioId).toBeNull();
+    });
+
+    test('um segundo toque em "Sair da conta" enquanto já está saindo é ignorado', async () => {
+      let terminar: (valor: { pendentes: number }) => void = () => undefined;
+      jest.mocked(prepararSaida).mockReturnValue(
+        new Promise((resolver) => {
+          terminar = resolver;
+        }),
+      );
+      const { result } = await entrarComAConta();
+      let segundo: Promise<boolean> | undefined;
+
+      await act(async () => {
+        void result.current.sair();
+        segundo = result.current.sair();
+      });
+      await act(async () => terminar({ pendentes: 0 }));
+
+      await expect(segundo).resolves.toBe(false);
+      expect(prepararSaida).toHaveBeenCalledTimes(1);
+      expect(sairDoFirebase).toHaveBeenCalledTimes(1);
+    });
+
+    test('se apagar os dados do aparelho falhar, avisa mas a pessoa sai da conta mesmo assim', async () => {
+      const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      jest.mocked(apagarDadosDaConta).mockRejectedValue(new Error('sem permissão'));
+      const { result } = await entrarComAConta();
+      let saiu: boolean | undefined;
+
+      await act(async () => {
+        saiu = await result.current.sair();
+      });
+
+      expect(saiu).toBe(true);
+      expect(alerta).toHaveBeenCalledWith(
+        'Atenção',
+        'Você saiu da conta, mas não foi possível apagar todos os dados deste aparelho.',
+      );
+      expect(sairDoFirebase).toHaveBeenCalledTimes(1);
+      expect(result.current.usuarioId).toBeNull();
+      expect(erro).toHaveBeenCalledTimes(1);
+      erro.mockRestore();
+    });
+
+    test('se não for possível nem conferir o que falta enviar, não apaga nada, avisa e continua na conta', async () => {
+      const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      jest.mocked(prepararSaida).mockRejectedValue(new Error('banco indisponível'));
+      const { result } = await entrarComAConta();
+      let saiu: boolean | undefined;
+
+      await act(async () => {
+        saiu = await result.current.sair();
+      });
+
+      expect(saiu).toBe(false);
+      expect(alerta).toHaveBeenCalledWith('Não foi possível sair', 'Tente de novo em instantes.');
+      expect(apagarDadosDaConta).not.toHaveBeenCalled();
+      expect(sairDoFirebase).not.toHaveBeenCalled();
+      expect(result.current.usuarioId).toBe(USUARIO_A);
+      expect(result.current.saindo).toBe(false);
+      erro.mockRestore();
+    });
+
+    test('sem conta logada, só encerra a sessão: não sincroniza nem apaga nada', async () => {
+      const { result } = await renderAuthentication();
+
+      await act(async () => {
+        await result.current.sair();
+      });
+
+      expect(prepararSaida).not.toHaveBeenCalled();
+      expect(apagarDadosDaConta).not.toHaveBeenCalled();
+      expect(sairDoFirebase).toHaveBeenCalledTimes(1);
     });
   });
 

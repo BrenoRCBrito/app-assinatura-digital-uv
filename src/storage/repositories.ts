@@ -32,6 +32,8 @@ export interface AssinaturaRepository extends Sincronizavel<Assinatura> {
   save(assinatura: Assinatura): Promise<void>;
   delete(id: AssinaturaId): Promise<void>;
   clear(): Promise<void>;
+  // Apaga de verdade as assinaturas desta conta (ao sair da conta, depois de enviar tudo para a nuvem).
+  apagarDaConta(usuarioId: UsuarioId): Promise<void>;
 }
 
 export type TipoDeArquivo = 'foto' | 'pdf';
@@ -44,6 +46,8 @@ export interface DocumentoAssinadoRepository extends Sincronizavel<DocumentoAssi
   save(documento: DocumentoAssinado): Promise<void>;
   delete(id: DocumentoId): Promise<void>;
   clear(): Promise<void>;
+  // Apaga de verdade os documentos desta conta, inclusive os já excluídos.
+  apagarDaConta(usuarioId: UsuarioId): Promise<void>;
   listarArquivosParaEnviar(usuarioId: UsuarioId): Promise<readonly ArquivoDoDocumento[]>;
   definirArquivoNaNuvem(id: string, tipo: TipoDeArquivo, naNuvem: boolean): Promise<void>;
   marcarArquivoBaixado(id: string, tipo: TipoDeArquivo): Promise<void>;
@@ -69,6 +73,8 @@ export interface UsuarioRepository {
   aplicarFotoDaNuvem(id: UsuarioId, foto: FotoPerfil | null): Promise<void>;
   marcarPerfilSincronizado(id: UsuarioId, updatedAt: string): Promise<void>;
   clear(): Promise<void>;
+  // Apaga de verdade o perfil desta conta deste aparelho.
+  apagarDaConta(id: UsuarioId): Promise<void>;
 }
 
 export type ColecaoSincronizada = 'assinaturas' | 'documentos';
@@ -79,6 +85,8 @@ export interface CursorRepository {
   ler(usuarioId: UsuarioId, colecao: ColecaoSincronizada): Promise<CursorDeSincronizacao | null>;
   gravar(usuarioId: UsuarioId, colecao: ColecaoSincronizada, cursor: CursorDeSincronizacao): Promise<void>;
   clear(): Promise<void>;
+  // Sem o cursor, o próximo login desta conta baixa tudo de novo da nuvem.
+  apagarDaConta(usuarioId: UsuarioId): Promise<void>;
 }
 
 export type Repositories = Readonly<{

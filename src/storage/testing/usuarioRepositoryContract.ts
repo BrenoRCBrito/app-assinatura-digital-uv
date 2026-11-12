@@ -88,6 +88,35 @@ export function testarContratoUsuarioRepository(
       await expect(repositorio.findByEmail(EMAIL_A)).resolves.toEqual(nova);
     });
 
+    describe('apagarDaConta', () => {
+      test('apaga de verdade o perfil da conta e deixa os das outras', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({ id: ID_A, email: EMAIL_A, nome: criarNome('Ana Souza') });
+        const outro = await repositorio.create({ id: ID_B, email: EMAIL_B });
+
+        await repositorio.apagarDaConta(ID_A);
+
+        await expect(repositorio.findById(ID_A)).resolves.toBeNull();
+        await expect(repositorio.findByEmail(EMAIL_A)).resolves.toBeNull();
+        await expect(repositorio.lerPerfilLocal(ID_A)).resolves.toBeNull();
+        await expect(repositorio.findById(ID_B)).resolves.toEqual(outro);
+      });
+
+      test('depois de apagada, a mesma conta pode ser criada de novo (outro login no aparelho)', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.create({ id: ID_A, email: EMAIL_A });
+        await repositorio.apagarDaConta(ID_A);
+
+        const nova = await repositorio.create({ id: ID_A, email: EMAIL_A });
+
+        await expect(repositorio.findById(ID_A)).resolves.toEqual(nova);
+      });
+
+      test('conta que não existe não dá erro', async () => {
+        await expect(criarRepositorio().apagarDaConta(ID_A)).resolves.toBeUndefined();
+      });
+    });
+
     describe('perfis pendentes de sincronização', () => {
       beforeEach(() => {
         jest.useFakeTimers({ now: new Date('2026-10-01T10:00:00.000Z') });

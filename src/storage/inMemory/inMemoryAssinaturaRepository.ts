@@ -18,6 +18,9 @@ export function createInMemoryAssinaturaRepository(): AssinaturaRepository {
     async clear() {
       armazenamento.limpar();
     },
+    async apagarDaConta(usuarioId) {
+      armazenamento.removerDaConta(usuarioId);
+    },
     async listarPendentes(usuarioId) {
       return armazenamento.listarPendentes(usuarioId);
     },

@@ -166,6 +166,43 @@ export function testarContratoDocumentoAssinadoRepository(
       });
     }
 
+    describe('apagarDaConta', () => {
+      test('apaga de verdade os documentos da conta, inclusive os excluídos, e deixa os de outras contas', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.save(criarDocumentoDeTeste('1', 'Meu', '2026-09-10T10:00:00.000Z', USUARIO_DE_TESTE));
+        await repositorio.save(criarDocumentoDeTeste('2', 'Excluído', '2026-09-11T10:00:00.000Z', USUARIO_DE_TESTE));
+        await repositorio.delete(criarDocumentoId('2'));
+        const alheio = criarDocumentoDeTeste('3', 'Alheio', '2026-09-12T10:00:00.000Z', OUTRO_USUARIO_DE_TESTE);
+        await repositorio.save(alheio);
+
+        await repositorio.apagarDaConta(USUARIO_DE_TESTE);
+
+        await expect(repositorio.list(USUARIO_DE_TESTE)).resolves.toEqual([]);
+        await expect(repositorio.lerParaSincronizar('1')).resolves.toBeNull();
+        await expect(repositorio.lerParaSincronizar('2')).resolves.toBeNull();
+        await expect(repositorio.listarPendentes(USUARIO_DE_TESTE)).resolves.toEqual([]);
+        await expect(repositorio.listarArquivosParaEnviar(USUARIO_DE_TESTE)).resolves.toEqual([]);
+        await expect(repositorio.list(OUTRO_USUARIO_DE_TESTE)).resolves.toEqual([alheio]);
+      });
+
+      test('a marca de que um arquivo já estava na nuvem não sobrevive: o mesmo id, de novo, volta para envio', async () => {
+        const repositorio = criarRepositorio();
+        const documento = criarDocumentoDeTeste('1', 'Meu', '2026-09-10T10:00:00.000Z', USUARIO_DE_TESTE);
+        await repositorio.save(documento);
+        await repositorio.definirArquivoNaNuvem('1', 'foto', true);
+        await repositorio.apagarDaConta(USUARIO_DE_TESTE);
+
+        await repositorio.save(documento);
+
+        const arquivos = await repositorio.listarArquivosParaEnviar(USUARIO_DE_TESTE);
+        expect(arquivos.map(({ tipo }) => tipo).sort()).toEqual(['foto', 'pdf']);
+      });
+
+      test('conta sem documentos não dá erro', async () => {
+        await expect(criarRepositorio().apagarDaConta(USUARIO_DE_TESTE)).resolves.toBeUndefined();
+      });
+    });
+
     testarSincronizacaoDoRepositorio({
       criarRepositorio,
       criarItem: (id, usuarioId) => criarDocumentoDeTeste(id, 'Contrato', '2026-09-12T10:00:00.000Z', usuarioId),

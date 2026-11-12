@@ -4,6 +4,8 @@ import { createCapturedPhoto, createFileUri } from '../../domain/photo';
 import {
   copiarFotoDocumento,
   excluirArquivosDocumento,
+  excluirPastaDaConta,
+  excluirTodasAsPastasDeArquivos,
   guardarFotoDocumento,
   guardarPdfDocumento,
   lerFotoDocumentoBase64,
@@ -141,6 +143,48 @@ describe('arquivos do documento', () => {
     excluirArquivosDocumento(DOCUMENTO);
 
     expect(mockOperacoes).toEqual([['apagar pasta', PASTA]]);
+  });
+
+  describe('limpeza ao sair da conta', () => {
+    test('apaga a pasta inteira da conta (todos os documentos dela) quando ela existe', () => {
+      mockExistentes.add('file:///app/usuarios/42');
+
+      excluirPastaDaConta(criarUsuarioId('42'));
+
+      expect(mockOperacoes).toEqual([['apagar pasta', 'file:///app/usuarios/42']]);
+    });
+
+    test('conta sem pasta: não faz nada', () => {
+      excluirPastaDaConta(criarUsuarioId('42'));
+
+      expect(mockOperacoes).toEqual([]);
+    });
+
+    test('não mexe na pasta de outra conta', () => {
+      mockExistentes.add('file:///app/usuarios/43');
+
+      excluirPastaDaConta(criarUsuarioId('42'));
+
+      expect(mockOperacoes).toEqual([]);
+    });
+
+    test('limpar tudo apaga a pasta de todas as contas e a antiga, só as que existem', () => {
+      mockExistentes.add('file:///app/usuarios');
+      mockExistentes.add('file:///app/documentos');
+
+      excluirTodasAsPastasDeArquivos();
+
+      expect(mockOperacoes).toEqual([
+        ['apagar pasta', 'file:///app/usuarios'],
+        ['apagar pasta', 'file:///app/documentos'],
+      ]);
+    });
+
+    test('limpar tudo sem nenhuma pasta não faz nada', () => {
+      excluirTodasAsPastasDeArquivos();
+
+      expect(mockOperacoes).toEqual([]);
+    });
   });
 
   describe('documentos assinados antes de cada conta ter a própria pasta', () => {

@@ -124,6 +124,29 @@ export function testarContratoAssinaturaRepository(
       });
     }
 
+    describe('apagarDaConta', () => {
+      test('apaga de verdade as assinaturas da conta, inclusive as já excluídas, e deixa as de outras contas', async () => {
+        const repositorio = criarRepositorio();
+        await repositorio.save(criarAssinaturaDeTeste('1', 'Minha', '2026-09-10T10:00:00.000Z', USUARIO_DE_TESTE));
+        await repositorio.save(criarAssinaturaDeTeste('2', 'Excluída', '2026-09-11T10:00:00.000Z', USUARIO_DE_TESTE));
+        await repositorio.delete(criarAssinaturaId('2'));
+        const alheia = criarAssinaturaDeTeste('3', 'Alheia', '2026-09-12T10:00:00.000Z', OUTRO_USUARIO_DE_TESTE);
+        await repositorio.save(alheia);
+
+        await repositorio.apagarDaConta(USUARIO_DE_TESTE);
+
+        await expect(repositorio.list(USUARIO_DE_TESTE)).resolves.toEqual([]);
+        await expect(repositorio.lerParaSincronizar('1')).resolves.toBeNull();
+        await expect(repositorio.lerParaSincronizar('2')).resolves.toBeNull();
+        await expect(repositorio.listarPendentes(USUARIO_DE_TESTE)).resolves.toEqual([]);
+        await expect(repositorio.list(OUTRO_USUARIO_DE_TESTE)).resolves.toEqual([alheia]);
+      });
+
+      test('conta sem assinaturas não dá erro', async () => {
+        await expect(criarRepositorio().apagarDaConta(USUARIO_DE_TESTE)).resolves.toBeUndefined();
+      });
+    });
+
     testarSincronizacaoDoRepositorio({
       criarRepositorio,
       criarItem: (id, usuarioId) => criarAssinaturaDeTeste(id, 'Rubrica', '2026-09-12T10:00:00.000Z', usuarioId),

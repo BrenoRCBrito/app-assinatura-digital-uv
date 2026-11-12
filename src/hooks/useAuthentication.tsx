@@ -25,6 +25,7 @@ import {
   type AuthenticationResult,
   type BiometricStatus,
 } from '../services/localAuthentication';
+import { apagarDadosDaConta, prepararSaida } from '../services/saidaDaConta';
 import { useRepositories } from '../storage/RepositoriesProvider';
 import { useSettings } from '../storage/SettingsProvider';
 import { useSincronizacaoAutomatica } from './useSincronizacaoAutomatica';
@@ -42,6 +43,8 @@ export type DadosDoCadastro = Readonly<{
 type AuthenticationContextValue = Readonly<{
   isUnlocked: boolean;
   authenticating: boolean;
+  // true enquanto o app envia os últimos dados e limpa o aparelho, ao sair da conta.
+  saindo: boolean;
   biometricStatus: BiometricStatus | null;
   usuarioId: UsuarioId | null;
   mostrarEntrarComBiometria: boolean;
@@ -49,7 +52,8 @@ type AuthenticationContextValue = Readonly<{
   loginComSenha: (email: string, senha: string) => Promise<ResultadoLoginComSenha>;
   cadastrar: (dados: DadosDoCadastro) => Promise<ResultadoLoginComSenha>;
   unlock: () => Promise<void>;
-  sair: () => Promise<void>;
+  // Devolve false quando a pessoa desistiu de sair (ou não foi possível), e true quando saiu.
+  sair: () => Promise<boolean>;
 }>;
 
 type AuthenticationErrorType = Exclude<AuthenticationResult['type'], 'authenticated' | 'cancelled'>;
@@ -72,9 +76,13 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
   const [authenticating, setAuthenticating] = useState(false);
   const [biometricStatus, setBiometricStatus] = useState<BiometricStatus | null>(null);
   const [usuarioId, setUsuarioId] = useState<UsuarioId | null>(null);
+  const [saindo, setSaindo] = useState(false);
   const [usuarioBiometria, setUsuarioBiometria] = useState<Usuario | null>(null);
   // O state só chega à tela no próximo render; a ref barra o segundo toque antes disso.
   const authenticatingRef = useRef(false);
+  const saindoRef = useRef(false);
+  const usuarioIdRef = useRef(usuarioId);
+  usuarioIdRef.current = usuarioId;
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
 
@@ -93,7 +101,8 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
   }, []);
 
 
-  useSincronizacaoAutomatica(repositorios, usuarioId);
+  // Ao sair, a sincronização automática para: quem sincroniza a última vez é o próprio sair.
+  useSincronizacaoAutomatica(repositorios, saindo ? null : usuarioId);
 
   useEffect(() => {
     let active = true;
@@ -255,21 +264,67 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
     }
   }, [garantirUsuarioLocal, updateSettings]);
 
-  // Fechar o app só bloqueia (a sessão fica guardada e a biometria destrava). Sair da conta é o logout de verdade.
-  const sair = useCallback(async () => {
-    try {
-      await sairDoFirebase();
-    } catch (error) {
-      console.error('Falha ao encerrar a sessão do Firebase:', error);
+  const confirmarPerdaDeDados = useCallback(
+    (pendentes: number) =>
+      new Promise<boolean>((resolver) => {
+        const itens = pendentes === 1 ? 'Há 1 item' : `Há ${pendentes} itens`;
+        Alert.alert(
+          'Dados ainda não enviados',
+          `${itens} que ainda não foram enviados para a nuvem (talvez falte internet). Se sair agora, eles serão apagados deste aparelho e perdidos.`,
+          [
+            { text: 'Cancelar', style: 'cancel', onPress: () => resolver(false) },
+            { text: 'Sair e apagar', style: 'destructive', onPress: () => resolver(true) },
+          ],
+          { cancelable: true, onDismiss: () => resolver(false) },
+        );
+      }),
+    [],
+  );
+
+  // Fechar o app só bloqueia (a sessão fica guardada e a biometria destrava). Sair da conta é o logout de verdade:
+  // envia o que falta para a nuvem, pergunta se algo não subiu e apaga os dados da conta deste aparelho.
+  const sair = useCallback(async (): Promise<boolean> => {
+    if (saindoRef.current) {
+      return false;
     }
-    setIsUnlocked(false);
-    setUsuarioId(null);
-    updateSettings({
-      loginBiometricoAtivado: false,
-      perguntaBiometriaRespondida: false,
-      ultimoUsuarioIdBiometria: null,
-    });
-  }, [updateSettings]);
+    saindoRef.current = true;
+    setSaindo(true);
+    try {
+      const atual = usuarioIdRef.current;
+      if (atual !== null) {
+        const { pendentes } = await prepararSaida(repositorios, atual);
+        if (pendentes > 0 && !(await confirmarPerdaDeDados(pendentes))) {
+          return false;
+        }
+        try {
+          await apagarDadosDaConta(repositorios, atual);
+        } catch (error) {
+          console.error('Falha ao apagar os dados da conta deste aparelho:', error);
+          Alert.alert('Atenção', 'Você saiu da conta, mas não foi possível apagar todos os dados deste aparelho.');
+        }
+      }
+      try {
+        await sairDoFirebase();
+      } catch (error) {
+        console.error('Falha ao encerrar a sessão do Firebase:', error);
+      }
+      setIsUnlocked(false);
+      setUsuarioId(null);
+      updateSettings({
+        loginBiometricoAtivado: false,
+        perguntaBiometriaRespondida: false,
+        ultimoUsuarioIdBiometria: null,
+      });
+      return true;
+    } catch (error) {
+      console.error('Falha ao preparar a saída da conta:', error);
+      Alert.alert('Não foi possível sair', 'Tente de novo em instantes.');
+      return false;
+    } finally {
+      saindoRef.current = false;
+      setSaindo(false);
+    }
+  }, [confirmarPerdaDeDados, repositorios, updateSettings]);
 
   const mostrarEntrarComBiometria = settings.loginBiometricoAtivado && biometricStatus === 'enrolled';
 
@@ -277,6 +332,7 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
   () => ({
     isUnlocked,
     authenticating,
+    saindo,
     biometricStatus,
     usuarioId,
     mostrarEntrarComBiometria,
@@ -289,6 +345,7 @@ export function AuthenticationProvider({ children }: Readonly<{ children: React.
   [
     isUnlocked,
     authenticating,
+    saindo,
     biometricStatus,
     usuarioId,
     mostrarEntrarComBiometria,

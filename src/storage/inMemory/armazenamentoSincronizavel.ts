@@ -65,6 +65,12 @@ export function criarArmazenamentoSincronizavel<T extends ComIdentidade>(
     limpar(): void {
       entradas.clear();
     },
+    // Remove de verdade os itens da conta e devolve os ids removidos.
+    removerDaConta(usuarioId: string): readonly string[] {
+      const ids = [...entradas.values()].filter((entrada) => entrada.item.usuarioId === usuarioId).map((entrada) => entrada.item.id);
+      ids.forEach((id) => entradas.delete(id));
+      return ids;
+    },
     listarPendentes(usuarioId: string): readonly RegistroSincronizavel<T>[] {
       return [...entradas.values()]
         .filter((entrada) => entrada.pendente && entrada.item.usuarioId === usuarioId)

@@ -28,6 +28,13 @@ export function createInMemoryDocumentoAssinadoRepository(): DocumentoAssinadoRe
       armazenamento.limpar();
       naNuvem.clear();
     },
+    async apagarDaConta(usuarioId) {
+      for (const id of armazenamento.removerDaConta(usuarioId)) {
+        for (const tipo of TIPOS) {
+          naNuvem.delete(chave(id, tipo));
+        }
+      }
+    },
     async listarArquivosParaEnviar(usuarioId) {
       return armazenamento.todos(usuarioId).flatMap(({ item, deletedAt }): ArquivoDoDocumento[] =>
         deletedAt !== null

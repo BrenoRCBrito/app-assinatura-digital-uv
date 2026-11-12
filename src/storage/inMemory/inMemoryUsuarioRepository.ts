@@ -132,5 +132,9 @@ export function createInMemoryUsuarioRepository(): UsuarioRepository {
       usuarios = [];
       controles.clear();
     },
+    async apagarDaConta(id) {
+      usuarios = usuarios.filter((usuario) => usuario.id !== id);
+      controles.delete(id);
+    },
   };
 }

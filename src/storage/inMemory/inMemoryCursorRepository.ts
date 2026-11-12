@@ -14,5 +14,12 @@ export function createInMemoryCursorRepository(): CursorRepository {
     async clear() {
       cursores.clear();
     },
+    async apagarDaConta(usuarioId) {
+      for (const chaveDoCursor of [...cursores.keys()]) {
+        if (chaveDoCursor.startsWith(`${usuarioId}/`)) {
+          cursores.delete(chaveDoCursor);
+        }
+      }
+    },
   };
 }

@@ -58,6 +58,26 @@ export async function guardarPdfDocumento(documento: ArquivosDoDocumento, pdf: B
   pdfDoDocumento(documento).write(pdf, { encoding: 'base64' });
 }
 
+// Todas as pastas de arquivos de uma conta (foto e PDF de cada documento).
+export function excluirPastaDaConta(usuarioId: string): void {
+  const pasta = new Directory(Paths.document, PASTA_DOS_USUARIOS, usuarioId);
+  if (pasta.exists) {
+    pasta.delete();
+  }
+}
+
+// Todos os arquivos de documentos deste aparelho, de qualquer conta, inclusive os de antes de cada conta ter pasta.
+export function excluirTodasAsPastasDeArquivos(): void {
+  for (const pasta of [
+    new Directory(Paths.document, PASTA_DOS_USUARIOS),
+    new Directory(Paths.document, PASTA_DOS_DOCUMENTOS),
+  ]) {
+    if (pasta.exists) {
+      pasta.delete();
+    }
+  }
+}
+
 export function excluirArquivosDocumento(documento: ArquivosDoDocumento): void {
   const pasta = pastaDoDocumento(documento);
   if (pasta.exists) {

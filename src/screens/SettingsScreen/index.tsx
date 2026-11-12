@@ -15,6 +15,7 @@ import {
 } from '../../components';
 import type { GestureEngine, ThemeName } from '../../domain/settings';
 import { useAuthentication } from '../../hooks/useAuthentication';
+import { excluirTodasAsPastasDeArquivos } from '../../services/fileSystem';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 import { useSettings } from '../../storage/SettingsProvider';
 
@@ -30,21 +31,27 @@ const GESTURE_ENGINE_OPTIONS: readonly SegmentOption<GestureEngine>[] = [
 
 export function SettingsScreen() {
   const { settings, updateSettings } = useSettings();
-  const { assinaturas, documentos, usuarios } = useRepositories();
+  const { assinaturas, cursores, documentos, usuarios } = useRepositories();
   const { sair } = useAuthentication();
 
   async function limparDados() {
     try {
+      // Primeiro sai da conta (que envia o que falta e pergunta se algo não subiu); se a pessoa desistir, nada é apagado.
+      if (!(await sair())) {
+        return;
+      }
+      // Depois limpa o que sobrou, inclusive de outras contas e o cursor de sincronização.
       await assinaturas.clear();
       await documentos.clear();
       await usuarios.clear();
+      await cursores.clear();
+      excluirTodasAsPastasDeArquivos();
       updateSettings({
         loginBiometricoAtivado: false,
         perguntaBiometriaRespondida: false,
         ultimoUsuarioIdBiometria: null,
       });
       showSuccess('Dados do app apagados.');
-      await sair();
     } catch (error) {
       console.error('Falha ao limpar os dados do app:', error);
       showError('Erro', 'Não foi possível limpar os dados.');

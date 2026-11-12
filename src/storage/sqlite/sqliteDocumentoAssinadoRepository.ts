@@ -141,6 +141,10 @@ export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): 
       await pronto;
       await db.runAsync('DELETE FROM documentos');
     },
+    async apagarDaConta(usuarioId) {
+      await pronto;
+      await db.runAsync('DELETE FROM documentos WHERE usuario_id = ?', usuarioId);
+    },
     async listarPendentes(usuarioId) {
       await pronto;
       const linhas = await db.getAllAsync<LinhaDocumento>(

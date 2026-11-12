@@ -201,5 +201,9 @@ export function createSqliteUsuarioRepository(banco: Banco = abrirBanco()): Usua
       await pronto;
       await db.runAsync('DELETE FROM usuarios');
     },
+    async apagarDaConta(id: UsuarioId) {
+      await pronto;
+      await db.runAsync('DELETE FROM usuarios WHERE id = ?', id);
+    },
   };
 }
