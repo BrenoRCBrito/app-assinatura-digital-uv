@@ -44,6 +44,14 @@ async function prepararBanco(db: SQLiteDatabase): Promise<void> {
       sync_status TEXT NOT NULL DEFAULT 'pending'
     );
     CREATE INDEX IF NOT EXISTS idx_documentos_usuario ON documentos (usuario_id, deleted_at);
+
+    CREATE TABLE IF NOT EXISTS sync_cursores (
+      usuario_id TEXT NOT NULL,
+      colecao TEXT NOT NULL,
+      segundos INTEGER NOT NULL,
+      nanos INTEGER NOT NULL,
+      PRIMARY KEY (usuario_id, colecao)
+    );
   `);
   await adicionarColunaSeFaltar(db, 'documentos', 'codigo TEXT');
   await adicionarColunaSeFaltar(db, 'documentos', 'foto_sha256 TEXT');

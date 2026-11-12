@@ -4,6 +4,7 @@ import { criarDesenho, criarTraco } from '../../domain/desenho';
 import { createSize } from '../../domain/geometry';
 import { criarUsuarioId, type UsuarioId } from '../../domain/usuario';
 import type { AssinaturaRepository } from '../repositories';
+import { testarSincronizacaoDoRepositorio } from './sincronizacaoDoRepositorioContract';
 
 type OpcoesDoContrato = Readonly<{
   antesDeCada?: () => Promise<void>;
@@ -122,5 +123,14 @@ export function testarContratoAssinaturaRepository(
         await expect(criarRepositorio().list(USUARIO_DE_TESTE)).rejects.toThrow();
       });
     }
+
+    testarSincronizacaoDoRepositorio({
+      criarRepositorio,
+      criarItem: (id, usuarioId) => criarAssinaturaDeTeste(id, 'Rubrica', '2026-09-12T10:00:00.000Z', usuarioId),
+      alterar: (assinatura) => ({ ...assinatura, nome: criarNomeAssinatura('Outra') }),
+      criadoEmEsperado: (assinatura) => assinatura.criadaEm,
+      usuario: USUARIO_DE_TESTE,
+      outroUsuario: OUTRO_USUARIO_DE_TESTE,
+    });
   });
 }

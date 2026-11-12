@@ -3,7 +3,7 @@ import {
   paraDocumentoAssinado,
   type DocumentoAssinado,
 } from '../../domain/documento';
-import type { DocumentoAssinadoRepository } from '../repositories';
+import type { DocumentoAssinadoRepository, RegistroSincronizavel } from '../repositories';
 import type { Banco } from './banco';
 
 type LinhaDocumento = Readonly<{
@@ -19,7 +19,10 @@ type LinhaDocumento = Readonly<{
   foto_sha256: string | null;
   foto_status: string;
   pdf_status: string;
-
+  created_at: string;
+  updated_at: string | null;
+  deleted_at: string | null;
+  sync_status: string;
 }>;
 
 function paraDocumentoDaLinha(linha: LinhaDocumento): DocumentoAssinado {
@@ -36,8 +39,30 @@ function paraDocumentoDaLinha(linha: LinhaDocumento): DocumentoAssinado {
     fotoSha256: linha.foto_sha256,
     fotoStatus: linha.foto_status,
     pdfStatus: linha.pdf_status,
-
   });
+}
+
+function paraRegistro(linha: LinhaDocumento): RegistroSincronizavel<DocumentoAssinado> {
+  return {
+    item: paraDocumentoDaLinha(linha),
+    createdAt: linha.created_at,
+    updatedAt: linha.updated_at ?? linha.created_at,
+    deletedAt: linha.deleted_at,
+  };
+}
+
+function valoresDoDocumento(documento: DocumentoAssinado) {
+  return [
+    documento.usuarioId,
+    documento.titulo,
+    JSON.stringify(documento.assinaturaUsada),
+    JSON.stringify(documento.tamanhoFoto),
+    JSON.stringify(documento.selo),
+    JSON.stringify(documento.local),
+    documento.assinadoEm,
+    documento.codigo,
+    documento.fotoSha256,
+  ];
 }
 
 export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): DocumentoAssinadoRepository {
@@ -59,25 +84,10 @@ export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): 
       );
       return linha === null ? null : paraDocumentoDaLinha(linha);
     },
-
-
-    
     async save(documento) {
       await pronto;
       const agora = new Date().toISOString();
-      const valores = [
-        documento.usuarioId,
-        documento.titulo,
-        JSON.stringify(documento.assinaturaUsada),
-        JSON.stringify(documento.tamanhoFoto),
-        JSON.stringify(documento.selo),
-        JSON.stringify(documento.local),
-        documento.assinadoEm,
-        documento.codigo,
-        documento.fotoSha256,
-        documento.fotoStatus,
-        documento.pdfStatus,
-      ];
+      const valores = [...valoresDoDocumento(documento), documento.fotoStatus, documento.pdfStatus];
 
       const existente = await db.getFirstAsync<LinhaDocumento>('SELECT * FROM documentos WHERE id = ?', documento.id);
       if (existente === null) {
@@ -115,6 +125,57 @@ export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): 
     async clear() {
       await pronto;
       await db.runAsync('DELETE FROM documentos');
+    },
+    async listarPendentes(usuarioId) {
+      await pronto;
+      const linhas = await db.getAllAsync<LinhaDocumento>(
+        'SELECT * FROM documentos WHERE usuario_id = ? AND sync_status = ?',
+        usuarioId,
+        'pending',
+      );
+      return linhas.map(paraRegistro);
+    },
+    async lerParaSincronizar(id) {
+      await pronto;
+      const linha = await db.getFirstAsync<LinhaDocumento>('SELECT * FROM documentos WHERE id = ?', id);
+      return linha === null ? null : { registro: paraRegistro(linha), pendente: linha.sync_status === 'pending' };
+    },
+    async aplicarDaNuvem({ item, createdAt, updatedAt, deletedAt }) {
+      await pronto;
+      const valores = valoresDoDocumento(item);
+      const existente = await db.getFirstAsync<LinhaDocumento>('SELECT * FROM documentos WHERE id = ?', item.id);
+      if (existente === null) {
+        await db.runAsync(
+          'INSERT INTO documentos (id, usuario_id, titulo, assinatura_usada, tamanho_foto, selo, local_assinatura, assinado_em, codigo, foto_sha256, foto_status, pdf_status, created_at, updated_at, deleted_at, sync_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          item.id,
+          ...valores,
+          item.fotoStatus,
+          item.pdfStatus,
+          createdAt,
+          updatedAt,
+          deletedAt,
+          'synced',
+        );
+        return;
+      }
+      await db.runAsync(
+        'UPDATE documentos SET usuario_id = ?, titulo = ?, assinatura_usada = ?, tamanho_foto = ?, selo = ?, local_assinatura = ?, assinado_em = ?, codigo = ?, foto_sha256 = ?, created_at = ?, updated_at = ?, deleted_at = ?, sync_status = ? WHERE id = ?',
+        ...valores,
+        createdAt,
+        updatedAt,
+        deletedAt,
+        'synced',
+        item.id,
+      );
+    },
+    async marcarSincronizado(id, updatedAt) {
+      await pronto;
+      await db.runAsync(
+        'UPDATE documentos SET sync_status = ? WHERE id = ? AND updated_at = ?',
+        'synced',
+        id,
+        updatedAt,
+      );
     },
   };
 }

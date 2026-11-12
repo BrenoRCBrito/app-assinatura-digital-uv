@@ -12,6 +12,7 @@ import {
 import { createFraction, createSize } from '../../domain/geometry';
 import { criarUsuarioId, type UsuarioId } from '../../domain/usuario';
 import type { DocumentoAssinadoRepository } from '../repositories';
+import { testarSincronizacaoDoRepositorio } from './sincronizacaoDoRepositorioContract';
 
 type OpcoesDoContrato = Readonly<{
   antesDeCada?: () => Promise<void>;
@@ -164,5 +165,64 @@ export function testarContratoDocumentoAssinadoRepository(
         await expect(criarRepositorio().list(USUARIO_DE_TESTE)).rejects.toThrow();
       });
     }
+
+    testarSincronizacaoDoRepositorio({
+      criarRepositorio,
+      criarItem: (id, usuarioId) => criarDocumentoDeTeste(id, 'Contrato', '2026-09-12T10:00:00.000Z', usuarioId),
+      alterar: (documento) => ({ ...documento, titulo: criarTituloDocumento('Outro título') }),
+      criadoEmEsperado: (_documento, agora) => agora,
+      usuario: USUARIO_DE_TESTE,
+      outroUsuario: OUTRO_USUARIO_DE_TESTE,
+    });
+
+    describe('sincronização dos arquivos', () => {
+      beforeEach(() => {
+        jest.useFakeTimers({ now: new Date('2026-10-01T10:00:00.000Z') });
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      test('documento que veio da nuvem entra com foto e PDF "remote"', async () => {
+        const repositorio = criarRepositorio();
+        const documento = {
+          ...criarDocumentoDeTeste('n1', 'Da nuvem', '2026-09-12T10:00:00.000Z'),
+          fotoStatus: 'remote' as const,
+          pdfStatus: 'remote' as const,
+        };
+
+        await repositorio.aplicarDaNuvem({
+          item: documento,
+          createdAt: '2026-10-01T10:00:00.000Z',
+          updatedAt: '2026-10-05T09:00:00.000Z',
+          deletedAt: null,
+        });
+
+        await expect(repositorio.findById(documento.id, USUARIO_DE_TESTE)).resolves.toMatchObject({
+          fotoStatus: 'remote',
+          pdfStatus: 'remote',
+        });
+      });
+
+      test('atualização que vem da nuvem não mexe no estado da foto e do PDF que já estão neste aparelho', async () => {
+        const repositorio = criarRepositorio();
+        const local = criarDocumentoDeTeste('1', 'Contrato', '2026-09-12T10:00:00.000Z');
+        await repositorio.save(local);
+
+        await repositorio.aplicarDaNuvem({
+          item: { ...local, titulo: criarTituloDocumento('Título novo'), fotoStatus: 'remote', pdfStatus: 'remote' },
+          createdAt: '2026-10-01T10:00:00.000Z',
+          updatedAt: '2026-10-05T09:00:00.000Z',
+          deletedAt: null,
+        });
+
+        await expect(repositorio.findById(local.id, USUARIO_DE_TESTE)).resolves.toMatchObject({
+          titulo: 'Título novo',
+          fotoStatus: 'local',
+          pdfStatus: 'local',
+        });
+      });
+    });
   });
 }

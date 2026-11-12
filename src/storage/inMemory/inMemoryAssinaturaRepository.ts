@@ -1,22 +1,34 @@
 import { ordenarAssinaturasMaisNovasPrimeiro, type Assinatura } from '../../domain/assinatura';
 import type { AssinaturaRepository } from '../repositories';
+import { criarArmazenamentoSincronizavel } from './armazenamentoSincronizavel';
 
 export function createInMemoryAssinaturaRepository(): AssinaturaRepository {
-  let assinaturas: readonly Assinatura[] = [];
+  const armazenamento = criarArmazenamentoSincronizavel<Assinatura>((assinatura) => assinatura.criadaEm);
 
   return {
     async list(usuarioId) {
-      return ordenarAssinaturasMaisNovasPrimeiro(assinaturas.filter((a) => a.usuarioId === usuarioId));
+      return ordenarAssinaturasMaisNovasPrimeiro(armazenamento.ativos(usuarioId));
     },
     async save(assinatura) {
-      assinaturas = [...assinaturas.filter((atual) => atual.id !== assinatura.id), assinatura];
+      armazenamento.salvar(assinatura);
     },
     async delete(id) {
-      assinaturas = assinaturas.filter((atual) => atual.id !== id);
+      armazenamento.apagar(id);
     },
     async clear() {
-      assinaturas = [];
+      armazenamento.limpar();
+    },
+    async listarPendentes(usuarioId) {
+      return armazenamento.listarPendentes(usuarioId);
+    },
+    async lerParaSincronizar(id) {
+      return armazenamento.lerParaSincronizar(id);
+    },
+    async aplicarDaNuvem(registro) {
+      armazenamento.aplicarDaNuvem(registro, (_existente, novo) => novo);
+    },
+    async marcarSincronizado(id, updatedAt) {
+      armazenamento.marcarSincronizado(id, updatedAt);
     },
   };
 }
-

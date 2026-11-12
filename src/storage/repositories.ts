@@ -11,14 +11,30 @@ import type {
   UsuarioId,
 } from '../domain/usuario';
 
-export interface AssinaturaRepository {
+export type RegistroSincronizavel<T> = Readonly<{
+  item: T;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}>;
+
+export type EstadoLocal<T> = Readonly<{ registro: RegistroSincronizavel<T>; pendente: boolean }>;
+
+export interface Sincronizavel<T> {
+  listarPendentes(usuarioId: UsuarioId): Promise<readonly RegistroSincronizavel<T>[]>;
+  lerParaSincronizar(id: string): Promise<EstadoLocal<T> | null>;
+  aplicarDaNuvem(registro: RegistroSincronizavel<T>): Promise<void>;
+  marcarSincronizado(id: string, updatedAt: string): Promise<void>;
+}
+
+export interface AssinaturaRepository extends Sincronizavel<Assinatura> {
   list(usuarioId: UsuarioId): Promise<readonly Assinatura[]>;
   save(assinatura: Assinatura): Promise<void>;
   delete(id: AssinaturaId): Promise<void>;
   clear(): Promise<void>;
 }
 
-export interface DocumentoAssinadoRepository {
+export interface DocumentoAssinadoRepository extends Sincronizavel<DocumentoAssinado> {
   list(usuarioId: UsuarioId): Promise<readonly DocumentoAssinado[]>;
   findById(id: DocumentoId, usuarioId: UsuarioId): Promise<DocumentoAssinado | null>;
   save(documento: DocumentoAssinado): Promise<void>;
@@ -46,9 +62,18 @@ export interface UsuarioRepository {
   clear(): Promise<void>;
 }
 
+export type ColecaoSincronizada = 'assinaturas' | 'documentos';
 
+export type CursorDeSincronizacao = Readonly<{ segundos: number; nanos: number }>;
+
+export interface CursorRepository {
+  ler(usuarioId: UsuarioId, colecao: ColecaoSincronizada): Promise<CursorDeSincronizacao | null>;
+  gravar(usuarioId: UsuarioId, colecao: ColecaoSincronizada, cursor: CursorDeSincronizacao): Promise<void>;
+  clear(): Promise<void>;
+}
 
 export type Repositories = Readonly<{
+  cursores: CursorRepository;
   assinaturas: AssinaturaRepository;
   documentos: DocumentoAssinadoRepository;
   usuarios: UsuarioRepository;

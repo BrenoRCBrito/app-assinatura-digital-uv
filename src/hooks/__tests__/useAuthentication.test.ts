@@ -83,6 +83,7 @@ function mockUsuarios(usuarios: readonly Usuario[]) {
   jest.mocked(useRepositories).mockReturnValue({
     assinaturas: {} as never,
     documentos: {} as never,
+    cursores: {} as never,
     usuarios: {
       findByEmail: jest.fn(),
       findById,
