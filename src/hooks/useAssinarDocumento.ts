@@ -9,7 +9,7 @@ import {
   guardarPdfDocumento,
   lerFotoDocumentoBase64,
 } from '../services/fileSystem';
-import { resumirSha256 } from '../services/hmac';
+import { resumirSha256 } from '../services/crypto';
 import { authenticateDeviceOwner } from '../services/localAuthentication';
 import { obterLocalAssinatura } from '../services/location';
 import { gerarPdf, montarHtmlDocumento } from '../services/print';
