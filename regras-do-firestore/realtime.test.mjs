@@ -60,32 +60,67 @@ for (const tipo of ['foto', 'pdf']) {
     });
   });
 
-  describe(`o arquivo não é alterado, só criado ou apagado (${tipo})`, () => {
+  describe(`criar e atualizar sim, apagar nunca (${tipo})`, () => {
     const caminho = `arquivos/ana/d1/${tipo}`;
 
-    test('não sobrescreve um arquivo que já existe', async () => {
+    test('o dono atualiza o arquivo com um conteúdo novo', async () => {
       await assertSucceeds(set(ref(como('ana'), caminho), arquivo()));
 
-      await assertFails(set(ref(como('ana'), caminho), arquivo({ dados: 'outro' })));
+      await assertSucceeds(set(ref(como('ana'), caminho), arquivo({ dados: 'novo', sha256: 'b'.repeat(64) })));
+
+      const lido = await get(ref(como('ana'), caminho));
+      if (lido.val().dados !== 'novo') throw new Error('a atualização não foi gravada');
     });
 
-    test('não altera só um campo de um arquivo que já existe', async () => {
+    test('o dono atualiza só um campo', async () => {
       await assertSucceeds(set(ref(como('ana'), caminho), arquivo()));
 
-      await assertFails(set(ref(como('ana'), `${caminho}/dados`), 'trocado'));
-      await assertFails(update(ref(como('ana'), caminho), { sha256: 'b'.repeat(64) }));
+      await assertSucceeds(set(ref(como('ana'), `${caminho}/dados`), 'trocado'));
+      await assertSucceeds(update(ref(como('ana'), caminho), { sha256: 'b'.repeat(64) }));
     });
 
-    test('o dono apaga o arquivo, e depois pode gravá-lo de novo', async () => {
+    test('atualização com formato inválido continua recusada', async () => {
       await assertSucceeds(set(ref(como('ana'), caminho), arquivo()));
 
-      await assertSucceeds(remove(ref(como('ana'), caminho)));
-
-      await assertSucceeds(set(ref(como('ana'), caminho), arquivo()));
+      await assertFails(set(ref(como('ana'), caminho), arquivo({ sha256: 'curto' })));
+      await assertFails(set(ref(como('ana'), `${caminho}/dados`), ''));
     });
 
-    test('apagar um arquivo que não existe não dá erro', async () => {
-      await assertSucceeds(remove(ref(como('ana'), `arquivos/ana/nao-existe/${tipo}`)));
+    test('outra pessoa não atualiza o arquivo alheio', async () => {
+      await assertSucceeds(set(ref(como('ana'), caminho), arquivo()));
+
+      await assertFails(set(ref(como('beto'), caminho), arquivo({ dados: 'invasor' })));
+    });
+
+    test('ninguém apaga o arquivo, nem o dono, e ele continua lá', async () => {
+      await assertSucceeds(set(ref(como('ana'), caminho), arquivo()));
+
+      await assertFails(remove(ref(como('ana'), caminho)));
+      await assertFails(remove(ref(como('beto'), caminho)));
+
+      const lido = await assertSucceeds(get(ref(como('ana'), caminho)));
+      if (lido.val().sha256 !== SHA) throw new Error('o arquivo sumiu');
+    });
+
+    test('apagar escrevendo vazio (null), no arquivo ou em um campo, também é recusado', async () => {
+      await assertSucceeds(set(ref(como('ana'), caminho), arquivo()));
+
+      await assertFails(set(ref(como('ana'), caminho), null));
+      await assertFails(set(ref(como('ana'), `${caminho}/dados`), null));
+      await assertFails(update(ref(como('ana'), caminho), { dados: null }));
+    });
+
+    test('apagar uma pasta acima, do documento, da conta ou de tudo, também é recusado', async () => {
+      await assertSucceeds(set(ref(como('ana'), caminho), arquivo()));
+
+      await assertFails(remove(ref(como('ana'), 'arquivos/ana/d1')));
+      await assertFails(remove(ref(como('ana'), 'arquivos/ana')));
+      await assertFails(remove(ref(como('ana'), 'arquivos')));
+      await assertFails(remove(ref(como('ana'), '/')));
+    });
+
+    test('apagar um arquivo que não existe também é recusado', async () => {
+      await assertFails(remove(ref(como('ana'), `arquivos/ana/nao-existe/${tipo}`)));
     });
   });
 }
@@ -100,13 +135,15 @@ describe('foto e PDF do mesmo documento', () => {
     if (foto.val() !== 'foto' || pdf.val() !== 'pdf') throw new Error('foto e PDF se misturaram');
   });
 
-  test('apagar um não apaga o outro', async () => {
+  test('nenhum dos dois pode ser apagado, e os dois continuam lá', async () => {
     await assertSucceeds(set(ref(como('ana'), 'arquivos/ana/d1/foto'), arquivo()));
     await assertSucceeds(set(ref(como('ana'), 'arquivos/ana/d1/pdf'), arquivo()));
 
-    await assertSucceeds(remove(ref(como('ana'), 'arquivos/ana/d1/pdf')));
+    await assertFails(remove(ref(como('ana'), 'arquivos/ana/d1/pdf')));
+    await assertFails(remove(ref(como('ana'), 'arquivos/ana/d1/foto')));
 
     await assertSucceeds(get(ref(como('ana'), 'arquivos/ana/d1/foto')));
+    await assertSucceeds(get(ref(como('ana'), 'arquivos/ana/d1/pdf')));
   });
 });
 
