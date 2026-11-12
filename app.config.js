@@ -27,6 +27,11 @@ const VARIAVEIS_DO_FIREBASE = {
   appId: 'FIREBASE_APP_ID',
 };
 
+const VARIAVEIS_OPCIONAIS_DO_FIREBASE = {
+  storageBucket: 'FIREBASE_STORAGE_BUCKET',
+  databaseURL: 'FIREBASE_DATABASE_URL',
+};
+
 // Sem as variáveis obrigatórias o app abre normalmente, só que sem Firebase.
 function lerConfiguracaoDoFirebase() {
   const config = Object.fromEntries(
@@ -35,8 +40,10 @@ function lerConfiguracaoDoFirebase() {
   if (Object.values(config).some((valor) => valor === undefined || valor === '')) {
     return undefined;
   }
-  const storageBucket = lerVariavel('FIREBASE_STORAGE_BUCKET');
-  return storageBucket === undefined || storageBucket === '' ? config : { ...config, storageBucket };
+  const opcionais = Object.entries(VARIAVEIS_OPCIONAIS_DO_FIREBASE)
+    .map(([campo, variavel]) => [campo, lerVariavel(variavel)])
+    .filter(([, valor]) => valor !== undefined && valor !== '');
+  return { ...config, ...Object.fromEntries(opcionais) };
 }
 
 module.exports = ({ config }) => {

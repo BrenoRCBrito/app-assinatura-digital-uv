@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth, getReactNativePersistence, initializeAuth } from 'firebase/auth';
+import { getDatabase } from 'firebase/database';
 import { getFirestore } from 'firebase/firestore';
 
 type ModuloDoFirebase = typeof import('../firebase');
@@ -11,6 +12,7 @@ jest.mock('firebase/auth', () => ({
   getReactNativePersistence: jest.fn(),
   initializeAuth: jest.fn(),
 }));
+jest.mock('firebase/database', () => ({ getDatabase: jest.fn() }));
 jest.mock('firebase/firestore', () => ({ getFirestore: jest.fn() }));
 jest.mock('expo-constants', () => ({
   __esModule: true,
@@ -123,6 +125,35 @@ describe('firebase', () => {
       expect(carregar().obterFirestore()).toBe(FIRESTORE);
 
       expect(getFirestore).toHaveBeenCalledWith(APP);
+    });
+  });
+
+  describe('obterBancoDeArquivos', () => {
+    function appComEndereco(databaseURL: unknown) {
+      const app = { name: '[DEFAULT]', options: { databaseURL } };
+      jest.mocked(getApps).mockReturnValue([app as never]);
+      jest.mocked(getApp).mockReturnValue(app as never);
+      return app;
+    }
+
+    test('abre o Realtime Database do app quando o endereço está configurado', () => {
+      const app = appComEndereco('https://projeto-default-rtdb.firebaseio.com');
+      const BANCO = { nome: 'realtime' };
+      jest.mocked(getDatabase).mockReturnValue(BANCO as never);
+
+      expect(carregar().obterBancoDeArquivos()).toBe(BANCO);
+
+      expect(getDatabase).toHaveBeenCalledWith(app);
+    });
+
+    test.each([
+      ['sem endereço', undefined],
+      ['com endereço em branco', '   '],
+    ])('%s, recusa e explica como configurar', (_nome, databaseURL) => {
+      appComEndereco(databaseURL);
+
+      expect(() => carregar().obterBancoDeArquivos()).toThrow('FIREBASE_DATABASE_URL');
+      expect(getDatabase).not.toHaveBeenCalled();
     });
   });
 });

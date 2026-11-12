@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "firebase emulators:exec --config ../firebase.json --only firestore --project assinaaqui-regras \"node --test rules.test.mjs\""
+    "test": "firebase emulators:exec --config ../firebase.json --only firestore,database --project assinaaqui-regras \"node --test rules.test.mjs realtime.test.mjs\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^6.0.0",

@@ -18,6 +18,7 @@ export function lerConfiguracaoDoFirebase(): FirebaseOptions {
   }
   const origem = configurada as Readonly<Record<string, unknown>>;
   const storageBucket = origem.storageBucket;
+  const databaseURL = origem.databaseURL;
 
   return {
     apiKey: campo(origem, 'apiKey'),
@@ -27,5 +28,6 @@ export function lerConfiguracaoDoFirebase(): FirebaseOptions {
     appId: campo(origem, 'appId'),
     // O bucket só existe depois de ativar o Storage, então é opcional até lá.
     ...(typeof storageBucket === 'string' && storageBucket.trim() !== '' ? { storageBucket } : {}),
+    ...(typeof databaseURL === 'string' && databaseURL.trim() !== '' ? { databaseURL } : {}),
   };
 }

@@ -29,6 +29,21 @@ describe('lerConfiguracaoDoFirebase', () => {
     expect(lerConfiguracaoDoFirebase()).toEqual({ ...COMPLETA, storageBucket: 'projeto.firebasestorage.app' });
   });
 
+  test('o endereço do Realtime Database é opcional, mas entra quando existe', () => {
+    extra.firebase = { ...COMPLETA, databaseURL: 'https://projeto-default-rtdb.firebaseio.com' };
+
+    expect(lerConfiguracaoDoFirebase()).toEqual({
+      ...COMPLETA,
+      databaseURL: 'https://projeto-default-rtdb.firebaseio.com',
+    });
+  });
+
+  test('endereço do Realtime Database em branco é ignorado', () => {
+    extra.firebase = { ...COMPLETA, databaseURL: '  ' };
+
+    expect(lerConfiguracaoDoFirebase()).toEqual(COMPLETA);
+  });
+
   test('bucket vazio é ignorado', () => {
     extra.firebase = { ...COMPLETA, storageBucket: '  ' };
 
