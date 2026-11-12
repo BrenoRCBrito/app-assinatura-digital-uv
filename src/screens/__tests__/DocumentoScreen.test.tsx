@@ -4,13 +4,13 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { Alert } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-import { createBase64, criarDocumentoId, type DocumentoId } from '../../domain/documento';
+import { criarCodigoCurto } from '../../domain/codigoCurto';
+import { criarDocumentoId, type DocumentoId } from '../../domain/documento';
 import { formatDateTime } from '../../domain/format';
 import { baixarArquivosDoDocumento } from '../../services/baixarArquivosDoDocumento';
-import { excluirArquivosDocumento, lerFotoDocumentoBase64 } from '../../services/fileSystem';
+import { excluirArquivosDocumento } from '../../services/fileSystem';
 import { compartilharPdf } from '../../services/sharing';
 import { setStringAsync } from 'expo-clipboard';
-import { emitirCodigoDoDocumento } from '../../useCases/emitirCodigoDoDocumento';
 
 import { createRepositories } from '../../storage/createRepositories';
 import { RepositoriesProvider } from '../../storage/RepositoriesProvider';
@@ -35,15 +35,12 @@ jest.mock('../../services/fileSystem', () => ({
   uriFotoDocumento: ({ id, usuarioId }: { id: string; usuarioId: string }) =>
     `file:///app/usuarios/${usuarioId}/documentos/${id}/foto.jpg`,
   excluirArquivosDocumento: jest.fn(),
-  lerFotoDocumentoBase64: jest.fn(),
 }));
 jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn() }));
-jest.mock('../../services/carimbo', () => ({ carimbarComOSegredoDoApp: jest.fn() }));
-jest.mock('../../services/hmac', () => ({ resumirSha256: jest.fn() }));
-jest.mock('../../useCases/emitirCodigoDoDocumento', () => ({ emitirCodigoDoDocumento: jest.fn() }));
 jest.mock('../../hooks/useAuthentication', () => ({ useAuthentication: jest.fn() }));
 
 const DOCUMENTO = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z');
+const COM_CODIGO = { ...DOCUMENTO, codigo: criarCodigoCurto('7K3F9QXZM2P4') };
 
 function Provedores({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -74,8 +71,6 @@ describe('DocumentoScreen', () => {
     jest.mocked(excluirArquivosDocumento).mockReset();
     alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     jest.mocked(setStringAsync).mockReset();
-    jest.mocked(emitirCodigoDoDocumento).mockReset();
-    jest.mocked(lerFotoDocumentoBase64).mockReset();
     jest.mocked(baixarArquivosDoDocumento).mockReset();
   });
 
@@ -202,30 +197,13 @@ describe('DocumentoScreen', () => {
     expect(compartilharPdf).not.toHaveBeenCalled();
   });
 
-  test('documento antigo, sem código gravado e com a foto na nuvem, não consegue copiar o código', async () => {
-    await createRepositories('sqlite').documentos.save({ ...DOCUMENTO, fotoStatus: 'remote' });
-    await abrirDocumento();
-
-    await fireEvent.press(await screen.findByText('Copiar código'));
-
-    expect(alerta).toHaveBeenCalledWith('Erro', 'A foto deste documento ainda não está neste aparelho.');
-    expect(emitirCodigoDoDocumento).not.toHaveBeenCalled();
-    expect(setStringAsync).not.toHaveBeenCalled();
-  });
-
   test('com o código gravado, copia mesmo que a foto esteja só na nuvem', async () => {
-    const gravado = {
-      ...DOCUMENTO,
-      codigo: 'AA1;id=1757680000000#gravado' as never,
-      fotoSha256: 'a'.repeat(64),
-      fotoStatus: 'remote' as const,
-    };
-    await createRepositories('sqlite').documentos.save(gravado);
+    await createRepositories('sqlite').documentos.save({ ...COM_CODIGO, fotoStatus: 'remote' });
     await abrirDocumento();
 
     await fireEvent.press(await screen.findByText('Copiar código'));
 
-    await waitFor(() => expect(setStringAsync).toHaveBeenCalledWith('AA1;id=1757680000000#gravado'));
+    await waitFor(() => expect(setStringAsync).toHaveBeenCalledWith('7K3F-9QXZ-M2P4'));
     expect(alerta).not.toHaveBeenCalled();
   });
 
@@ -426,51 +404,37 @@ describe('DocumentoScreen', () => {
     erro.mockRestore();
   });
 
-  test('Copiar código copia o código gravado na assinatura, sem refazer nada', async () => {
+  test('Copiar código copia o código curto guardado no documento, formatado', async () => {
     const toast = jest.spyOn(Toast, 'show').mockImplementation(() => undefined);
-    const gravado = { ...DOCUMENTO, codigo: 'AA1;id=1757680000000#gravado' as never, fotoSha256: 'a'.repeat(64) };
-    await createRepositories('sqlite').documentos.save(gravado);
+    await createRepositories('sqlite').documentos.save(COM_CODIGO);
     await abrirDocumento();
 
     await fireEvent.press(await screen.findByText('Copiar código'));
 
-    await waitFor(() => expect(setStringAsync).toHaveBeenCalledWith('AA1;id=1757680000000#gravado'));
-    expect(emitirCodigoDoDocumento).not.toHaveBeenCalled();
-    expect(lerFotoDocumentoBase64).not.toHaveBeenCalled();
-    expect(toast).toHaveBeenCalledWith({ type: 'success', text1: 'Código copiado' });
-    toast.mockRestore();
-  });
-
-  test('documento antigo, sem código gravado, refaz o código e copia', async () => {
-    const toast = jest.spyOn(Toast, 'show').mockImplementation(() => undefined);
-    jest.mocked(lerFotoDocumentoBase64).mockResolvedValue(createBase64('Zm90bw=='));
-    jest
-      .mocked(emitirCodigoDoDocumento)
-      .mockResolvedValue({ codigo: 'AA1;id=1757680000000#carimbo' as never, fotoSha256: 'b'.repeat(64) });
-    await createRepositories('sqlite').documentos.save(DOCUMENTO);
-    await abrirDocumento();
-
-    await fireEvent.press(await screen.findByText('Copiar código'));
-
-    await waitFor(() => expect(setStringAsync).toHaveBeenCalledWith('AA1;id=1757680000000#carimbo'));
-    expect(emitirCodigoDoDocumento).toHaveBeenCalledWith(expect.anything(), DOCUMENTO, 'Zm90bw==');
+    await waitFor(() => expect(setStringAsync).toHaveBeenCalledWith('7K3F-9QXZ-M2P4'));
     expect(toast).toHaveBeenCalledWith({ type: 'success', text1: 'Código copiado' });
     toast.mockRestore();
   });
 
   test('quando copiar o código falha, avisa', async () => {
     const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    jest.mocked(lerFotoDocumentoBase64).mockResolvedValue(createBase64('Zm90bw=='));
-    jest.mocked(emitirCodigoDoDocumento).mockRejectedValue(new Error('Sem usuário'));
-    await createRepositories('sqlite').documentos.save(DOCUMENTO);
+    jest.mocked(setStringAsync).mockRejectedValue(new Error('Área de transferência indisponível'));
+    await createRepositories('sqlite').documentos.save(COM_CODIGO);
     await abrirDocumento();
 
     await fireEvent.press(await screen.findByText('Copiar código'));
 
     await waitFor(() => expect(alerta).toHaveBeenCalledWith('Erro', 'Não foi possível copiar o código.'));
-    expect(setStringAsync).not.toHaveBeenCalled();
     expect(erro).toHaveBeenCalledTimes(1);
     erro.mockRestore();
   });
 
+  test('documento assinado antes da API, sem código, não oferece Copiar código', async () => {
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
+    await abrirDocumento();
+
+    await screen.findByText('Contrato de locação');
+
+    expect(screen.queryByText('Copiar código')).toBeNull();
+  });
 });

@@ -1,13 +1,12 @@
 import { criarNomeAssinatura, type NomeAssinatura } from './assinatura';
 import { ValidationError, validarId, type Brand } from './brand';
-import type { CodigoDeAutenticidade } from './codigoDeAutenticidade';
+import { criarCodigoCurto, type CodigoCurto } from './codigoCurto';
 import { createIsoDateTime, type IsoDateTime } from './dateTime';
 import { paraDesenho, type Desenho } from './desenho';
 import { createFraction, paraSize, type Size } from './geometry';
 import { lerNumero, lerObjeto, lerTexto, lerTextoOuNulo } from './leitura';
 import type { PosicaoSelo } from './selo';
 import { criarUsuarioId, type UsuarioId } from './usuario';
-
 
 export type DocumentoId = Brand<string, 'DocumentoId'>;
 export type TituloDocumento = Brand<string, 'TituloDocumento'>;
@@ -35,7 +34,7 @@ export type DocumentoAssinado = Readonly<{
   local: LocalAssinatura;
   assinadoEm: IsoDateTime;
   // Gravados na hora da assinatura. Ficam null em documentos assinados antes de existirem.
-  codigo: CodigoDeAutenticidade | null;
+  codigo: CodigoCurto | null;
   fotoSha256: string | null;
   fotoStatus: StatusDoArquivo;
   pdfStatus: StatusDoArquivo;
@@ -151,8 +150,20 @@ function paraLocal(dado: unknown): LocalAssinatura {
   };
 }
 
-function paraCodigo(dado: unknown): CodigoDeAutenticidade | null {
-  return lerTextoOuNulo(dado, DOCUMENTO_INVALIDO) as CodigoDeAutenticidade | null;
+// Documentos assinados antes do código curto guardaram um código mais longo, que a API não conhece: ficam sem código.
+function paraCodigo(dado: unknown): CodigoCurto | null {
+  const codigo = lerTextoOuNulo(dado, DOCUMENTO_INVALIDO);
+  if (codigo === null) {
+    return null;
+  }
+  try {
+    return criarCodigoCurto(codigo);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 function paraFotoSha256(dado: unknown): string | null {
@@ -197,4 +208,3 @@ export function paraDocumentoAssinado(dado: unknown): DocumentoAssinado {
     pdfStatus: paraStatusDoArquivo('pdfStatus' in documento ? documento.pdfStatus : undefined),
   };
 }
-

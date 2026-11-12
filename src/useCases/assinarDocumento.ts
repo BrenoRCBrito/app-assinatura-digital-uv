@@ -1,5 +1,5 @@
 import type { Assinatura } from '../domain/assinatura';
-import type { CodigoDeAutenticidade } from '../domain/codigoDeAutenticidade';
+import type { CodigoCurto } from '../domain/codigoCurto';
 import type { IsoDateTime } from '../domain/dateTime';
 import type {
   ArquivosDoDocumento,
@@ -13,6 +13,7 @@ import type { Size } from '../domain/geometry';
 import type { CapturedPhoto } from '../domain/photo';
 import type { PosicaoSelo } from '../domain/selo';
 import type { UsuarioId } from '../domain/usuario';
+import { ServidorIndisponivel } from '../services/apiDeDocumentos';
 import type { AuthenticationPurpose, AuthenticationResult } from '../services/localAuthentication';
 import type { ResultadoLocalAssinatura } from '../services/location';
 import type { DocumentoHtml } from '../services/print';
@@ -32,6 +33,7 @@ export type MotivoFalhaAssinatura =
   | 'autenticacaoFalhou'
   | 'localSemPermissao'
   | 'localIndisponivel'
+  | 'servidorIndisponivel'
   | 'erroAoGerarDocumento';
 
 export type ResultadoAssinatura =
@@ -47,11 +49,7 @@ export type DependenciasAssinatura = Readonly<{
   emitirCodigo: (documento: DocumentoAssinado, fotoBase64: Base64) => Promise<CodigoEmitido>;
   guardarPdfDocumento: (documento: ArquivosDoDocumento, pdf: Base64) => Promise<void>;
   excluirArquivosDocumento: (documento: ArquivosDoDocumento) => void;
-  montarHtmlDocumento: (
-    documento: DocumentoAssinado,
-    fotoBase64: Base64,
-    codigo: CodigoDeAutenticidade,
-  ) => DocumentoHtml;
+  montarHtmlDocumento: (documento: DocumentoAssinado, fotoBase64: Base64, codigo: CodigoCurto) => DocumentoHtml;
   gerarPdf: (html: Html, tamanhoDaPagina: Size) => Promise<Base64>;
   documentos: DocumentoAssinadoRepository;
   agora: () => IsoDateTime;
@@ -124,6 +122,9 @@ export async function assinarDocumento(
   } catch (error) {
     console.error('Falha ao gerar o documento assinado:', error);
     apagarArquivos(dependencias, semCodigo);
-    return { tipo: 'falhou', motivo: 'erroAoGerarDocumento' };
+    return {
+      tipo: 'falhou',
+      motivo: error instanceof ServidorIndisponivel ? 'servidorIndisponivel' : 'erroAoGerarDocumento',
+    };
   }
 }

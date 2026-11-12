@@ -52,6 +52,9 @@ const MENSAGENS_DE_FALHA: Readonly<Record<MotivoFalhaAssinatura, string>> = {
   autenticacaoFalhou: 'Não foi possível autenticar. Tente de novo.',
   localSemPermissao: 'O local é obrigatório para assinar. Permita o acesso à localização.',
   localIndisponivel: 'Não foi possível obter o local. Tente em área aberta.',
+  servidorIndisponivel:
+    'Não foi possível falar com o servidor do AssinaAqui. ' +
+    'Confira se o celular está no mesmo wifi do servidor e tente de novo.',
   erroAoGerarDocumento: 'Não foi possível gerar o documento. Tente de novo.',
 };
 

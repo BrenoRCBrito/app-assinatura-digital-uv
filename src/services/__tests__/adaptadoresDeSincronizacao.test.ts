@@ -1,4 +1,5 @@
 import { criarAssinaturaId, criarNomeAssinatura } from '../../domain/assinatura';
+import { criarCodigoCurto } from '../../domain/codigoCurto';
 import { criarDocumentoId, criarTituloDocumento } from '../../domain/documento';
 import { criarUsuarioId } from '../../domain/usuario';
 import { createInMemoryAssinaturaRepository } from '../../storage/inMemory/inMemoryAssinaturaRepository';
@@ -33,7 +34,7 @@ function documentoDaNuvem(extra: Readonly<Record<string, unknown>> = {}) {
     selo: { x: 0.4, y: 0.65, largura: 0.35 },
     local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: 'Vassouras' },
     assinadoEm: CRIADO,
-    codigo: 'AA1;id=d1#carimbo',
+    codigo: '7K3F9QXZM2P4',
     fotoSha256: 'a'.repeat(64),
     createdAt: CRIADO,
     updatedAt: ATUALIZADO,
@@ -94,7 +95,7 @@ describe('adaptadorDeDocumentos', () => {
   const adaptador = adaptadorDeDocumentos(createInMemoryDocumentoAssinadoRepository());
   const item = {
     ...criarDocumentoDeTeste('d1', 'Contrato de locação', CRIADO, UID),
-    codigo: 'AA1;id=d1#carimbo' as never,
+    codigo: criarCodigoCurto('7K3F9QXZM2P4'),
     fotoSha256: 'a'.repeat(64),
   };
 

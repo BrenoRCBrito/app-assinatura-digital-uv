@@ -5,7 +5,7 @@ import type { UsuarioId } from '../domain/usuario';
 import type { ArquivoDoDocumento, DocumentoAssinadoRepository, TipoDeArquivo } from '../storage/repositories';
 import { lerFotoDocumentoBase64, lerPdfDocumentoBase64 } from './fileSystem';
 import { obterBancoDeArquivos } from './firebase';
-import { resumirSha256 } from './hmac';
+import { resumirSha256 } from './crypto';
 import { comTempoLimite } from './tempoLimite';
 
 export type ResultadoDosArquivos = Readonly<{ enviados: number; falhas: number }>;

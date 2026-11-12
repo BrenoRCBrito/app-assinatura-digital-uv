@@ -1,6 +1,6 @@
 import { openDatabaseSync } from 'expo-sqlite';
 
-import type { CodigoDeAutenticidade } from '../../domain/codigoDeAutenticidade';
+import { criarCodigoCurto } from '../../domain/codigoCurto';
 import { criarDocumentoId } from '../../domain/documento';
 import { abrirBanco, NOME_DO_BANCO } from '../sqlite/banco';
 import { createSqliteDocumentoAssinadoRepository } from '../sqlite/sqliteDocumentoAssinadoRepository';
@@ -103,13 +103,13 @@ describe('DocumentoAssinadoRepository (SQLite), colunas de sincronização', () 
   test('guarda o código e o resumo da foto gravados na assinatura e devolve o mesmo documento', async () => {
     const assinado = {
       ...DOCUMENTO,
-      codigo: 'AA1;id=1#carimbo' as CodigoDeAutenticidade,
+      codigo: criarCodigoCurto('7K3F9QXZM2P4'),
       fotoSha256: 'a'.repeat(64),
     };
 
     await criarRepositorio().save(assinado);
 
-    expect((await linhasSalvas())[0]).toMatchObject({ codigo: 'AA1;id=1#carimbo', foto_sha256: 'a'.repeat(64) });
+    expect((await linhasSalvas())[0]).toMatchObject({ codigo: '7K3F9QXZM2P4', foto_sha256: 'a'.repeat(64) });
     await expect(criarRepositorio().findById(assinado.id,USUARIO_DE_TESTE)).resolves.toEqual(assinado);
   });
 

@@ -1,6 +1,6 @@
 import { criarNomeAssinatura } from '../assinatura';
-import type { CodigoDeAutenticidade } from '../codigoDeAutenticidade';
 import { ValidationError } from '../brand';
+import { criarCodigoCurto } from '../codigoCurto';
 import { createIsoDateTime } from '../dateTime';
 import { criarDesenho, criarTraco } from '../desenho';
 import {
@@ -120,7 +120,7 @@ describe('paraDocumentoAssinado', () => {
   test('reconstrói um documento com o código e o resumo da foto gravados', () => {
     const documento = {
       ...documentoValido('1', '2026-09-12T10:00:00.000Z'),
-      codigo: 'AA1;id=1#carimbo' as CodigoDeAutenticidade,
+      codigo: criarCodigoCurto('7K3F9QXZM2P4'),
       fotoSha256: 'a'.repeat(64),
     };
 
@@ -189,5 +189,28 @@ describe('paraDocumentoAssinado', () => {
 
   test('lança erro quando o dado não é objeto', () => {
     expect(() => paraDocumentoAssinado('documento')).toThrow(ValidationError);
+  });
+});
+
+describe('código do documento', () => {
+  test('reconstrói o código curto guardado', () => {
+    const documento = {
+      ...documentoValido('1', '2026-09-12T10:00:00.000Z'),
+      codigo: criarCodigoCurto('7K3F9QXZM2P4'),
+    };
+
+    expect(paraDocumentoAssinado(JSON.parse(JSON.stringify(documento)))).toEqual(documento);
+  });
+
+  test('documento salvo antes da API, sem o campo, volta com código nulo', () => {
+    const { codigo: _semCodigo, ...antigo } = documentoValido('1', '2026-09-12T10:00:00.000Z');
+
+    expect(paraDocumentoAssinado(JSON.parse(JSON.stringify(antigo))).codigo).toBeNull();
+  });
+
+  test('código guardado fora do formato (como o código longo de antes da API) volta nulo, sem recusar o documento', () => {
+    expect(paraDocumentoAssinado({ ...documentoValido('1', '2026-09-12T10:00:00.000Z'), codigo: 'abc' })).toMatchObject({
+      codigo: null,
+    });
   });
 });

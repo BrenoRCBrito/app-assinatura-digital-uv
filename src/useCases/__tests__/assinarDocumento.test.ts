@@ -1,4 +1,4 @@
-import { emitirCodigo, type CodigoDeAutenticidade } from '../../domain/codigoDeAutenticidade';
+import { criarCodigoCurto } from '../../domain/codigoCurto';
 import { createIsoDateTime } from '../../domain/dateTime';
 import {
   createBase64,
@@ -12,6 +12,7 @@ import {
 import { createFraction, createSize } from '../../domain/geometry';
 import { createCapturedPhoto } from '../../domain/photo';
 import { criarUsuarioId } from '../../domain/usuario';
+import { ServidorIndisponivel } from '../../services/apiDeDocumentos';
 import { createInMemoryDocumentoAssinadoRepository } from '../../storage/inMemory/inMemoryDocumentoAssinadoRepository';
 import { criarAssinaturaDeTeste } from '../../storage/testing/assinaturaRepositoryContract';
 import { assinarDocumento, type DependenciasAssinatura, type PedidoAssinatura } from '../assinarDocumento';
@@ -32,11 +33,7 @@ const PEDIDO: PedidoAssinatura = {
 const FOTO_BASE64 = createBase64('/9j/4AAQ');
 const RESUMO_DA_FOTO = 'a'.repeat(64);
 const PDF = createBase64('JVBERi0xLjQK');
-let CODIGO: CodigoDeAutenticidade;
-
-beforeAll(async () => {
-  CODIGO = await emitirCodigo([{ chave: 'id', valor: ID }], async () => 'carimbo-de-teste');
-});
+const CODIGO = criarCodigoCurto('7K3F9QXZM2P4');
 
 function criarDependencias(sobrescrever: Partial<DependenciasAssinatura> = {}) {
   const passos: string[] = [];
@@ -137,10 +134,26 @@ describe('assinarDocumento', () => {
     expect(passos).toEqual(['autenticar confirmSignature']);
   });
 
-  test('quando emitir o código falha, apaga a pasta do documento e não salva o registro', async () => {
+  test('sem servidor, devolve servidorIndisponivel, apaga a pasta e não salva o registro', async () => {
     const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     const { dependencias, passos, registro } = criarDependencias({
-      emitirCodigo: jest.fn().mockRejectedValue(new Error('Segredo do carimbo ausente')),
+      emitirCodigo: jest.fn().mockRejectedValue(new ServidorIndisponivel()),
+    });
+
+    await expect(assinarDocumento(dependencias, PEDIDO)).resolves.toEqual({
+      tipo: 'falhou',
+      motivo: 'servidorIndisponivel',
+    });
+    expect(passos.at(-1)).toBe(`apagar pasta ${ID}`);
+    expect(dependencias.gerarPdf).not.toHaveBeenCalled();
+    await expect(registro.list(USUARIO_ID)).resolves.toEqual([]);
+    erro.mockRestore();
+  });
+
+  test('quando a API recusa o documento, apaga a pasta e não salva o registro', async () => {
+    const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { dependencias, passos, registro } = criarDependencias({
+      emitirCodigo: jest.fn().mockRejectedValue(new Error('A API recusou o documento (HTTP 400).')),
     });
 
     await expect(assinarDocumento(dependencias, PEDIDO)).resolves.toEqual({
@@ -199,12 +212,12 @@ describe('assinarDocumento', () => {
     expect(dependencias.guardarPdfDocumento).toHaveBeenCalledWith(dono, PDF);
   });
 
-  test('com sucesso, emite o código, grava a foto e o PDF antes do registro e devolve o documento', async () => {
+  test('com sucesso, registra na API, grava a foto e o PDF antes do registro e devolve o documento com o código', async () => {
     const { dependencias, passos, registro } = criarDependencias();
 
     const resultado = await assinarDocumento(dependencias, PEDIDO);
 
-    const documento = {
+    const semCodigo = {
       id: ID,
       usuarioId: USUARIO_ID,
       titulo: PEDIDO.titulo,
@@ -213,11 +226,12 @@ describe('assinarDocumento', () => {
       selo: PEDIDO.selo,
       local: LOCAL,
       assinadoEm: '2026-09-12T14:32:00.000Z',
-      codigo: CODIGO,
-      fotoSha256: RESUMO_DA_FOTO,
+      codigo: null,
+      fotoSha256: null,
       fotoStatus: 'local',
       pdfStatus: 'local',
     };
+    const documento = { ...semCodigo, codigo: CODIGO, fotoSha256: RESUMO_DA_FOTO };
     expect(resultado).toEqual({ tipo: 'assinado', documento });
     expect(passos).toEqual([
       'autenticar confirmSignature',
@@ -230,7 +244,7 @@ describe('assinarDocumento', () => {
       `guardar pdf ${ID} ${PDF}`,
       'salvar registro',
     ]);
-    expect(dependencias.emitirCodigo).toHaveBeenCalledWith({ ...documento, codigo: null, fotoSha256: null }, FOTO_BASE64);
+    expect(dependencias.emitirCodigo).toHaveBeenCalledWith(semCodigo, FOTO_BASE64);
     expect(dependencias.montarHtmlDocumento).toHaveBeenCalledWith(documento, FOTO_BASE64, CODIGO);
     await expect(registro.findById(ID, USUARIO_ID)).resolves.toEqual(documento);
   });

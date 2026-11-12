@@ -6,7 +6,7 @@ import { createInMemoryDocumentoAssinadoRepository } from '../../storage/inMemor
 import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
 import { lerFotoDocumentoBase64, lerPdfDocumentoBase64 } from '../fileSystem';
 import { obterBancoDeArquivos } from '../firebase';
-import { resumirSha256 } from '../hmac';
+import { resumirSha256 } from '../crypto';
 import {
   MAXIMO_DE_FALHAS_SEGUIDAS,
   sincronizarArquivos,
@@ -17,7 +17,7 @@ import {
 jest.mock('firebase/database', () => ({ get: jest.fn(), ref: jest.fn(), remove: jest.fn(), set: jest.fn() }));
 jest.mock('../fileSystem', () => ({ lerFotoDocumentoBase64: jest.fn(), lerPdfDocumentoBase64: jest.fn() }));
 jest.mock('../firebase', () => ({ obterBancoDeArquivos: jest.fn() }));
-jest.mock('../hmac', () => ({ resumirSha256: jest.fn() }));
+jest.mock('../crypto', () => ({ resumirSha256: jest.fn() }));
 
 const UID = criarUsuarioId('uid-a');
 const BANCO = { nome: 'realtime' };

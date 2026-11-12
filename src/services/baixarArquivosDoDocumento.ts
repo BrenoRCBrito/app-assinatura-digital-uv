@@ -5,7 +5,7 @@ import { lerObjeto, lerTexto } from '../domain/leitura';
 import type { DocumentoAssinadoRepository, TipoDeArquivo } from '../storage/repositories';
 import { guardarFotoDocumento, guardarPdfDocumento } from './fileSystem';
 import { obterBancoDeArquivos } from './firebase';
-import { resumirSha256 } from './hmac';
+import { resumirSha256 } from './crypto';
 import { comTempoLimite } from './tempoLimite';
 
 export type ResultadoDoDownload = Readonly<{ baixados: number; ausentes: number; falhas: number }>;

@@ -6,12 +6,12 @@ import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRe
 import { baixarArquivosDoDocumento, TEMPO_LIMITE_DO_DOWNLOAD } from '../baixarArquivosDoDocumento';
 import { guardarFotoDocumento, guardarPdfDocumento } from '../fileSystem';
 import { obterBancoDeArquivos } from '../firebase';
-import { resumirSha256 } from '../hmac';
+import { resumirSha256 } from '../crypto';
 
 jest.mock('firebase/database', () => ({ get: jest.fn(), ref: jest.fn() }));
 jest.mock('../fileSystem', () => ({ guardarFotoDocumento: jest.fn(), guardarPdfDocumento: jest.fn() }));
 jest.mock('../firebase', () => ({ obterBancoDeArquivos: jest.fn() }));
-jest.mock('../hmac', () => ({ resumirSha256: jest.fn() }));
+jest.mock('../crypto', () => ({ resumirSha256: jest.fn() }));
 
 const UID = criarUsuarioId('uid-a');
 const BANCO = { nome: 'realtime' };
