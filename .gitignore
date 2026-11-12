@@ -44,3 +44,6 @@ yarn-error.*
 
 # builds locais
 *.apk
+
+# banco local da API
+api/dados/
