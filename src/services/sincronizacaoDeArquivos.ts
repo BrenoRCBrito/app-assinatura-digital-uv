@@ -15,6 +15,8 @@ export const TEMPO_LIMITE_DA_LEITURA = 15000;
 export const TEMPO_LIMITE_DO_ENVIO = 60000;
 export const MAXIMO_DE_FALHAS_SEGUIDAS = 3;
 
+const TIPOS: readonly TipoDeArquivo[] = ['foto', 'pdf'];
+
 const LEITORES: Readonly<Record<TipoDeArquivo, (documento: ArquivosDoDocumento) => Promise<Base64>>> = {
   foto: lerFotoDocumentoBase64,
   pdf: lerPdfDocumentoBase64,
@@ -60,9 +62,9 @@ export async function sincronizarArquivos(
   documentos: DocumentoAssinadoRepository,
   usuarioId: UsuarioId,
 ): Promise<ResultadoDosArquivos> {
-  const paraApagar = await documentos.listarArquivosParaApagar(usuarioId);
+  const paraLimpar = await documentos.listarDocumentosParaLimparNaNuvem(usuarioId);
   const paraEnviar = await documentos.listarArquivosParaEnviar(usuarioId);
-  if (paraApagar.length === 0 && paraEnviar.length === 0) {
+  if (paraLimpar.length === 0 && paraEnviar.length === 0) {
     return { enviados: 0, apagados: 0, falhas: 0 };
   }
 
@@ -85,22 +87,21 @@ export async function sincronizarArquivos(
     }
   }
 
-  for (const arquivo of paraApagar) {
+  for (const documento of paraLimpar) {
     if (falhasSeguidas >= MAXIMO_DE_FALHAS_SEGUIDAS) {
       break;
     }
-    const apagou = await tentar(
-      `apagar da nuvem o arquivo (${arquivo.tipo}) do documento ${arquivo.documento.id}`,
-      async () => {
+    const limpou = await tentar(`apagar da nuvem os arquivos do documento ${documento.id}`, async () => {
+      for (const tipo of TIPOS) {
         await comTempoLimite(
-          remove(ref(banco, caminhoDoArquivo(usuarioId, arquivo))),
+          remove(ref(banco, caminhoDoArquivo(usuarioId, { documento, tipo }))),
           TEMPO_LIMITE_DA_LEITURA,
           'A remoção na nuvem demorou demais.',
         );
-        await documentos.definirArquivoNaNuvem(arquivo.documento.id, arquivo.tipo, false);
-      },
-    );
-    apagados += apagou ? 1 : 0;
+      }
+      await documentos.marcarNuvemLimpa(documento.id);
+    });
+    apagados += limpou ? 1 : 0;
   }
 
   for (const arquivo of paraEnviar) {

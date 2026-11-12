@@ -28,6 +28,14 @@ describe('banco', () => {
     expect(comandos).toContain('ALTER TABLE documentos ADD COLUMN pdf_na_nuvem INTEGER NOT NULL DEFAULT 0');
   });
 
+  test('ao abrir, garante em bancos antigos a coluna que diz se a nuvem do documento excluído já foi limpa', async () => {
+    const banco = abrirBanco();
+    await banco.pronto;
+
+    const comandos = (banco.db.execAsync as jest.Mock).mock.calls.map(([sql]) => String(sql));
+    expect(comandos).toContain('ALTER TABLE documentos ADD COLUMN nuvem_limpa INTEGER NOT NULL DEFAULT 0');
+  });
+
   describe('adicionarColunaSeFaltar', () => {
     test('manda acrescentar a coluna na tabela', async () => {
       const execAsync = jest.fn(async () => undefined);

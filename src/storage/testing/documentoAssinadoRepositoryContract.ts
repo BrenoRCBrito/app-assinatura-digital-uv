@@ -309,45 +309,81 @@ export function testarContratoDocumentoAssinadoRepository(
         await expect(repositorio.listarArquivosParaEnviar(USUARIO_DE_TESTE)).resolves.toEqual([]);
       });
 
-      test('documento excluído com arquivo na nuvem tem esse arquivo para apagar de lá', async () => {
-        const repositorio = criarRepositorio();
-        const documento = criarDocumentoDeTeste('d1', 'Contrato', ASSINADO);
-        await repositorio.save(documento);
-        await repositorio.definirArquivoNaNuvem('d1', 'foto', true);
-        await repositorio.definirArquivoNaNuvem('d1', 'pdf', true);
-        await apagarComoDeUsuario(repositorio, 'd1');
+      describe('limpeza da nuvem dos documentos excluídos', () => {
+        test('documento excluído entra na lista para limpar, mesmo que este aparelho não tenha enviado os arquivos', async () => {
+          const repositorio = criarRepositorio();
+          const documento = criarDocumentoDeTeste('d1', 'Contrato', ASSINADO);
+          await repositorio.save(documento);
+          await apagarComoDeUsuario(repositorio, 'd1');
 
-        const arquivos = await repositorio.listarArquivosParaApagar(USUARIO_DE_TESTE);
+          const paraLimpar = await repositorio.listarDocumentosParaLimparNaNuvem(USUARIO_DE_TESTE);
 
-        expect(arquivos.map(({ tipo }) => tipo).sort()).toEqual(['foto', 'pdf']);
-        expect(arquivos.every((arquivo) => arquivo.documento.id === documento.id)).toBe(true);
-      });
+          expect(paraLimpar.map(({ id }) => id)).toEqual([documento.id]);
+        });
 
-      test('depois de apagado da nuvem, o arquivo sai da lista de apagar', async () => {
-        const repositorio = criarRepositorio();
-        await repositorio.save(criarDocumentoDeTeste('d1', 'Contrato', ASSINADO));
-        await repositorio.definirArquivoNaNuvem('d1', 'foto', true);
-        await apagarComoDeUsuario(repositorio, 'd1');
+        test('depois de limpa a nuvem, o documento sai da lista', async () => {
+          const repositorio = criarRepositorio();
+          await repositorio.save(criarDocumentoDeTeste('d1', 'Contrato', ASSINADO));
+          await apagarComoDeUsuario(repositorio, 'd1');
 
-        await repositorio.definirArquivoNaNuvem('d1', 'foto', false);
+          await repositorio.marcarNuvemLimpa('d1');
 
-        await expect(repositorio.listarArquivosParaApagar(USUARIO_DE_TESTE)).resolves.toEqual([]);
-      });
+          await expect(repositorio.listarDocumentosParaLimparNaNuvem(USUARIO_DE_TESTE)).resolves.toEqual([]);
+        });
 
-      test('documento que não foi excluído nunca tem arquivo para apagar, mesmo com arquivo na nuvem', async () => {
-        const repositorio = criarRepositorio();
-        await repositorio.save(criarDocumentoDeTeste('d1', 'Contrato', ASSINADO));
-        await repositorio.definirArquivoNaNuvem('d1', 'foto', true);
+        test('documento que não foi excluído nunca é listado para limpar, mesmo com arquivo na nuvem', async () => {
+          const repositorio = criarRepositorio();
+          await repositorio.save(criarDocumentoDeTeste('d1', 'Contrato', ASSINADO));
+          await repositorio.definirArquivoNaNuvem('d1', 'foto', true);
+          await repositorio.definirArquivoNaNuvem('d1', 'pdf', true);
 
-        await expect(repositorio.listarArquivosParaApagar(USUARIO_DE_TESTE)).resolves.toEqual([]);
-      });
+          await expect(repositorio.listarDocumentosParaLimparNaNuvem(USUARIO_DE_TESTE)).resolves.toEqual([]);
+        });
 
-      test('excluído sem arquivo na nuvem não tem nada para apagar', async () => {
-        const repositorio = criarRepositorio();
-        await repositorio.save(criarDocumentoDeTeste('d1', 'Contrato', ASSINADO));
-        await apagarComoDeUsuario(repositorio, 'd1');
+        test('só lista os documentos excluídos do usuário pedido', async () => {
+          const repositorio = criarRepositorio();
+          await repositorio.save(criarDocumentoDeTeste('d1', 'Meu', ASSINADO, USUARIO_DE_TESTE));
+          await repositorio.save(criarDocumentoDeTeste('d2', 'De outra conta', ASSINADO, OUTRO_USUARIO_DE_TESTE));
+          await apagarComoDeUsuario(repositorio, 'd1');
+          await apagarComoDeUsuario(repositorio, 'd2');
 
-        await expect(repositorio.listarArquivosParaApagar(USUARIO_DE_TESTE)).resolves.toEqual([]);
+          const paraLimpar = await repositorio.listarDocumentosParaLimparNaNuvem(USUARIO_DE_TESTE);
+
+          expect(paraLimpar.map(({ id }) => id)).toEqual(['d1']);
+        });
+
+        test('documento excluído em outro aparelho (veio da nuvem já excluído) também é listado para limpar', async () => {
+          const repositorio = criarRepositorio();
+          const documento = criarDocumentoDeTeste('n1', 'Excluído lá', ASSINADO);
+          await repositorio.aplicarDaNuvem({
+            item: { ...documento, fotoStatus: 'remote', pdfStatus: 'remote' },
+            createdAt: ASSINADO,
+            updatedAt: ASSINADO,
+            deletedAt: ASSINADO,
+          });
+
+          const paraLimpar = await repositorio.listarDocumentosParaLimparNaNuvem(USUARIO_DE_TESTE);
+
+          expect(paraLimpar.map(({ id }) => id)).toEqual(['n1']);
+        });
+
+        test('excluir de novo depois de limpo volta a pedir a limpeza', async () => {
+          const repositorio = criarRepositorio();
+          const documento = criarDocumentoDeTeste('d1', 'Contrato', ASSINADO);
+          await repositorio.save(documento);
+          await apagarComoDeUsuario(repositorio, 'd1');
+          await repositorio.marcarNuvemLimpa('d1');
+          await repositorio.save(documento);
+
+          await apagarComoDeUsuario(repositorio, 'd1');
+
+          const paraLimpar = await repositorio.listarDocumentosParaLimparNaNuvem(USUARIO_DE_TESTE);
+          expect(paraLimpar.map(({ id }) => id)).toEqual(['d1']);
+        });
+
+        test('marcar um documento que não existe não lança erro', async () => {
+          await expect(criarRepositorio().marcarNuvemLimpa('nao-existe')).resolves.toBeUndefined();
+        });
       });
 
       describe('arquivo baixado da nuvem', () => {
@@ -411,15 +447,15 @@ export function testarContratoDocumentoAssinadoRepository(
           await expect(repositorio.listarArquivosParaEnviar(USUARIO_DE_TESTE)).resolves.toEqual([]);
         });
 
-        test('se o documento for excluído depois, os arquivos baixados entram na lista para apagar da nuvem', async () => {
+        test('se o documento for excluído depois, entra na lista para limpar a nuvem', async () => {
           const repositorio = criarRepositorio();
           await documentoSoNaNuvem(repositorio);
           await repositorio.marcarArquivoBaixado('n1', 'foto');
           await apagarComoDeUsuario(repositorio, 'n1');
 
-          const arquivos = await repositorio.listarArquivosParaApagar(USUARIO_DE_TESTE);
+          const paraLimpar = await repositorio.listarDocumentosParaLimparNaNuvem(USUARIO_DE_TESTE);
 
-          expect(arquivos.map(({ tipo }) => tipo)).toEqual(['foto']);
+          expect(paraLimpar.map(({ id }) => id)).toEqual(['n1']);
         });
 
         test('documento que não existe não lança erro', async () => {

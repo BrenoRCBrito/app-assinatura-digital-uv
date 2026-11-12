@@ -247,41 +247,74 @@ describe('sincronizarArquivos', () => {
   });
 
   describe('apagar', () => {
-    async function repositorioComDocumentoExcluidoNaNuvem() {
+    async function repositorioComDocumentoExcluido(arquivosJaMarcadosNaNuvem: boolean) {
       const { repositorio, documento } = await repositorioComDocumento();
-      await repositorio.definirArquivoNaNuvem('d1', 'foto', true);
-      await repositorio.definirArquivoNaNuvem('d1', 'pdf', true);
+      if (arquivosJaMarcadosNaNuvem) {
+        await repositorio.definirArquivoNaNuvem('d1', 'foto', true);
+        await repositorio.definirArquivoNaNuvem('d1', 'pdf', true);
+      }
       await repositorio.delete(criarDocumentoId('d1'));
       return { repositorio, documento };
     }
 
-    test('documento excluído: tira a foto e o PDF da nuvem e marca que não estão mais lá', async () => {
-      const { repositorio } = await repositorioComDocumentoExcluidoNaNuvem();
+    test('documento excluído: tira a foto e o PDF da nuvem e marca a limpeza como feita', async () => {
+      const { repositorio } = await repositorioComDocumentoExcluido(true);
 
       const resultado = await sincronizarArquivos(repositorio, UID);
 
-      expect(resultado).toEqual({ enviados: 0, apagados: 2, falhas: 0 });
+      expect(resultado).toEqual({ enviados: 0, apagados: 1, falhas: 0 });
       expect(remove).toHaveBeenCalledWith({ caminho: 'arquivos/uid-a/d1/foto' });
       expect(remove).toHaveBeenCalledWith({ caminho: 'arquivos/uid-a/d1/pdf' });
-      await expect(repositorio.listarArquivosParaApagar(UID)).resolves.toEqual([]);
+      await expect(repositorio.listarDocumentosParaLimparNaNuvem(UID)).resolves.toEqual([]);
+    });
+
+    test('limpa a nuvem mesmo que este aparelho não saiba se enviou os arquivos (envio que chegou sem o app ficar sabendo, outro aparelho)', async () => {
+      const { repositorio } = await repositorioComDocumentoExcluido(false);
+
+      const resultado = await sincronizarArquivos(repositorio, UID);
+
+      expect(resultado).toEqual({ enviados: 0, apagados: 1, falhas: 0 });
+      expect(remove).toHaveBeenCalledTimes(2);
+    });
+
+    test('só limpa uma vez: a próxima sincronização não remove de novo', async () => {
+      const { repositorio } = await repositorioComDocumentoExcluido(true);
+      await sincronizarArquivos(repositorio, UID);
+      jest.mocked(remove).mockClear();
+
+      const resultado = await sincronizarArquivos(repositorio, UID);
+
+      expect(resultado).toEqual({ enviados: 0, apagados: 0, falhas: 0 });
+      expect(remove).not.toHaveBeenCalled();
     });
 
     test('documento excluído não manda arquivo nenhum para a nuvem', async () => {
-      const { repositorio } = await repositorioComDocumentoExcluidoNaNuvem();
+      const { repositorio } = await repositorioComDocumentoExcluido(true);
 
       await sincronizarArquivos(repositorio, UID);
 
       expect(set).not.toHaveBeenCalled();
     });
 
-    test('se a remoção falha, o arquivo continua marcado para apagar na próxima vez', async () => {
-      const { repositorio } = await repositorioComDocumentoExcluidoNaNuvem();
+    test('se a remoção falha, o documento continua para a próxima vez', async () => {
+      const { repositorio } = await repositorioComDocumentoExcluido(true);
       jest.mocked(remove).mockRejectedValueOnce(new Error('sem internet')).mockResolvedValue(undefined);
 
       const resultado = await sincronizarArquivos(repositorio, UID);
 
-      expect(resultado).toEqual({ enviados: 0, apagados: 1, falhas: 1 });
-      await expect(repositorio.listarArquivosParaApagar(UID)).resolves.toHaveLength(1);
+      expect(resultado).toEqual({ enviados: 0, apagados: 0, falhas: 1 });
+      await expect(repositorio.listarDocumentosParaLimparNaNuvem(UID)).resolves.toHaveLength(1);
+    });
+
+    test('depois de uma falha, a tentativa seguinte limpa', async () => {
+      const { repositorio } = await repositorioComDocumentoExcluido(true);
+      jest.mocked(remove).mockRejectedValueOnce(new Error('sem internet')).mockResolvedValue(undefined);
+      await sincronizarArquivos(repositorio, UID);
+
+      const resultado = await sincronizarArquivos(repositorio, UID);
+
+      expect(resultado).toEqual({ enviados: 0, apagados: 1, falhas: 0 });
+      await expect(repositorio.listarDocumentosParaLimparNaNuvem(UID)).resolves.toEqual([]);
     });
 
     test('documento que não foi excluído não tem arquivo apagado da nuvem', async () => {
@@ -292,6 +325,16 @@ describe('sincronizarArquivos', () => {
       await sincronizarArquivos(repositorio, UID);
 
       expect(remove).not.toHaveBeenCalled();
+    });
+
+    test('só limpa os documentos excluídos da conta logada', async () => {
+      const { repositorio } = await repositorioComDocumentoExcluido(true);
+      await repositorio.save(criarDocumentoDeTeste('x1', 'De outra conta', ASSINADO, criarUsuarioId('uid-b')));
+      await repositorio.delete(criarDocumentoId('x1'));
+
+      await sincronizarArquivos(repositorio, UID);
+
+      expect(ref).not.toHaveBeenCalledWith(BANCO, expect.stringContaining('x1'));
     });
   });
 });

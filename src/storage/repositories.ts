@@ -45,7 +45,8 @@ export interface DocumentoAssinadoRepository extends Sincronizavel<DocumentoAssi
   delete(id: DocumentoId): Promise<void>;
   clear(): Promise<void>;
   listarArquivosParaEnviar(usuarioId: UsuarioId): Promise<readonly ArquivoDoDocumento[]>;
-  listarArquivosParaApagar(usuarioId: UsuarioId): Promise<readonly ArquivoDoDocumento[]>;
+  listarDocumentosParaLimparNaNuvem(usuarioId: UsuarioId): Promise<readonly DocumentoAssinado[]>;
+  marcarNuvemLimpa(id: string): Promise<void>;
   definirArquivoNaNuvem(id: string, tipo: TipoDeArquivo, naNuvem: boolean): Promise<void>;
   marcarArquivoBaixado(id: string, tipo: TipoDeArquivo): Promise<void>;
 }
