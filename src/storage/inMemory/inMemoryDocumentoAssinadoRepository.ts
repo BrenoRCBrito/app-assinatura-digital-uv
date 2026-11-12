@@ -5,7 +5,6 @@ import { criarArmazenamentoSincronizavel } from './armazenamentoSincronizavel';
 export function createInMemoryDocumentoAssinadoRepository(): DocumentoAssinadoRepository {
   const armazenamento = criarArmazenamentoSincronizavel<DocumentoAssinado>((_documento, agora) => agora);
   const naNuvem = new Set<string>();
-  const nuvemLimpa = new Set<string>();
   const chave = (id: string, tipo: TipoDeArquivo) => `${id}/${tipo}`;
   const TIPOS: readonly TipoDeArquivo[] = ['foto', 'pdf'];
   const statusDoArquivo = (documento: DocumentoAssinado, tipo: TipoDeArquivo) =>
@@ -24,12 +23,10 @@ export function createInMemoryDocumentoAssinadoRepository(): DocumentoAssinadoRe
     },
     async delete(id) {
       armazenamento.apagar(id);
-      nuvemLimpa.delete(id);
     },
     async clear() {
       armazenamento.limpar();
       naNuvem.clear();
-      nuvemLimpa.clear();
     },
     async listarArquivosParaEnviar(usuarioId) {
       return armazenamento.todos(usuarioId).flatMap(({ item, deletedAt }): ArquivoDoDocumento[] =>
@@ -39,15 +36,6 @@ export function createInMemoryDocumentoAssinadoRepository(): DocumentoAssinadoRe
               (tipo) => ({ documento: item, tipo }),
             ),
       );
-    },
-    async listarDocumentosParaLimparNaNuvem(usuarioId) {
-      return armazenamento
-        .todos(usuarioId)
-        .filter(({ deletedAt, item }) => deletedAt !== null && !nuvemLimpa.has(item.id))
-        .map(({ item }) => item);
-    },
-    async marcarNuvemLimpa(id) {
-      nuvemLimpa.add(id);
     },
     async definirArquivoNaNuvem(id, tipo, estaNaNuvem) {
       if (estaNaNuvem) {

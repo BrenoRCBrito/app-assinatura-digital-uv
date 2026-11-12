@@ -32,7 +32,7 @@ async function sincronizarArquivosSemLancar(
     return await sincronizarArquivos(documentos, usuarioId);
   } catch (error) {
     console.warn('Falha ao sincronizar os arquivos com a nuvem:', error);
-    return { enviados: 0, apagados: 0, falhas: 1 };
+    return { enviados: 0, falhas: 1 };
   }
 }
 

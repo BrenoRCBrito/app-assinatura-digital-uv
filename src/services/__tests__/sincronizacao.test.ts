@@ -26,7 +26,7 @@ describe('sincronizarTudo', () => {
     aviso = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     jest.mocked(sincronizarPerfil).mockReset().mockResolvedValue(resultadoDoPerfil());
     jest.mocked(sincronizarColecao).mockReset().mockResolvedValue(resultadoDaColecao());
-    jest.mocked(sincronizarArquivos).mockReset().mockResolvedValue({ enviados: 0, apagados: 0, falhas: 0 });
+    jest.mocked(sincronizarArquivos).mockReset().mockResolvedValue({ enviados: 0, falhas: 0 });
   });
 
   afterEach(() => {
@@ -53,7 +53,7 @@ describe('sincronizarTudo', () => {
 
   test('depois dos dados, envia os arquivos dos documentos e soma no resultado', async () => {
     const repositorios = createRepositories('inMemory');
-    jest.mocked(sincronizarArquivos).mockResolvedValue({ enviados: 2, apagados: 1, falhas: 0 });
+    jest.mocked(sincronizarArquivos).mockResolvedValue({ enviados: 2, falhas: 0 });
 
     const resultado = await sincronizarTudo(repositorios, UID);
 
@@ -71,7 +71,7 @@ describe('sincronizarTudo', () => {
   });
 
   test('arquivos que falharam contam como falha', async () => {
-    jest.mocked(sincronizarArquivos).mockResolvedValue({ enviados: 0, apagados: 0, falhas: 1 });
+    jest.mocked(sincronizarArquivos).mockResolvedValue({ enviados: 0, falhas: 1 });
 
     const resultado = await sincronizarTudo(createRepositories('inMemory'), UID);
 

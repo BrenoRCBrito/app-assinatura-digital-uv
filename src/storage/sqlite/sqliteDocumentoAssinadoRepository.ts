@@ -30,7 +30,6 @@ type LinhaDocumento = Readonly<{
   sync_status: string;
   foto_na_nuvem: number;
   pdf_na_nuvem: number;
-  nuvem_limpa: number;
 }>;
 
 const COLUNAS_DOS_ARQUIVOS: Readonly<Record<TipoDeArquivo, Readonly<{ status: string; naNuvem: string }>>> = {
@@ -106,14 +105,13 @@ export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): 
       const existente = await db.getFirstAsync<LinhaDocumento>('SELECT * FROM documentos WHERE id = ?', documento.id);
       if (existente === null) {
         await db.runAsync(
-          'INSERT INTO documentos (id, usuario_id, titulo, assinatura_usada, tamanho_foto, selo, local_assinatura, assinado_em, codigo, foto_sha256, foto_status, pdf_status, created_at, updated_at, deleted_at, sync_status, foto_na_nuvem, pdf_na_nuvem, nuvem_limpa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO documentos (id, usuario_id, titulo, assinatura_usada, tamanho_foto, selo, local_assinatura, assinado_em, codigo, foto_sha256, foto_status, pdf_status, created_at, updated_at, deleted_at, sync_status, foto_na_nuvem, pdf_na_nuvem) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           documento.id,
           ...valores,
           agora,
           agora,
           null,
           'pending',
-          0,
           0,
           0,
         );
@@ -132,11 +130,10 @@ export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): 
       await pronto;
       const agora = new Date().toISOString();
       await db.runAsync(
-        'UPDATE documentos SET deleted_at = ?, updated_at = ?, sync_status = ?, nuvem_limpa = ? WHERE id = ?',
+        'UPDATE documentos SET deleted_at = ?, updated_at = ?, sync_status = ? WHERE id = ?',
         agora,
         agora,
         'pending',
-        0,
         id,
       );
     },
@@ -164,7 +161,7 @@ export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): 
       const existente = await db.getFirstAsync<LinhaDocumento>('SELECT * FROM documentos WHERE id = ?', item.id);
       if (existente === null) {
         await db.runAsync(
-          'INSERT INTO documentos (id, usuario_id, titulo, assinatura_usada, tamanho_foto, selo, local_assinatura, assinado_em, codigo, foto_sha256, foto_status, pdf_status, created_at, updated_at, deleted_at, sync_status, foto_na_nuvem, pdf_na_nuvem, nuvem_limpa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO documentos (id, usuario_id, titulo, assinatura_usada, tamanho_foto, selo, local_assinatura, assinado_em, codigo, foto_sha256, foto_status, pdf_status, created_at, updated_at, deleted_at, sync_status, foto_na_nuvem, pdf_na_nuvem) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           item.id,
           ...valores,
           item.fotoStatus,
@@ -173,7 +170,6 @@ export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): 
           updatedAt,
           deletedAt,
           'synced',
-          0,
           0,
           0,
         );
@@ -203,19 +199,6 @@ export function createSqliteDocumentoAssinadoRepository({ db, pronto }: Banco): 
         arquivos.push(...linhas.map((linha) => ({ documento: paraDocumentoDaLinha(linha), tipo })));
       }
       return arquivos;
-    },
-    async listarDocumentosParaLimparNaNuvem(usuarioId) {
-      await pronto;
-      const linhas = await db.getAllAsync<LinhaDocumento>(
-        'SELECT * FROM documentos WHERE usuario_id = ? AND deleted_at IS NOT NULL AND nuvem_limpa = ?',
-        usuarioId,
-        0,
-      );
-      return linhas.map(paraDocumentoDaLinha);
-    },
-    async marcarNuvemLimpa(id) {
-      await pronto;
-      await db.runAsync('UPDATE documentos SET nuvem_limpa = ? WHERE id = ?', 1, id);
     },
     async definirArquivoNaNuvem(id, tipo, naNuvem) {
       await pronto;

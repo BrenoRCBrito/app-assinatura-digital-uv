@@ -89,7 +89,6 @@ describe('comGatilhoDeSincronizacao', () => {
       await repositorios.documentos.marcarSincronizado('d1', DATA);
       await repositorios.documentos.definirArquivoNaNuvem('d1', 'foto', true);
       await repositorios.documentos.marcarArquivoBaixado('d1', 'pdf');
-      await repositorios.documentos.marcarNuvemLimpa('d1');
       await base.usuarios.create({ id: ID, email: EMAIL });
       await repositorios.usuarios.aplicarPerfilDaNuvem({
         id: ID,
@@ -112,7 +111,6 @@ describe('comGatilhoDeSincronizacao', () => {
       await repositorios.assinaturas.listarPendentes(USUARIO_DE_TESTE);
       await repositorios.documentos.listarPendentes(USUARIO_DE_TESTE);
       await repositorios.documentos.listarArquivosParaEnviar(USUARIO_DE_TESTE);
-      await repositorios.documentos.listarDocumentosParaLimparNaNuvem(USUARIO_DE_TESTE);
       await repositorios.usuarios.listarPerfisPendentes();
       await repositorios.usuarios.lerPerfilLocal(ID);
 
