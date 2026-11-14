@@ -34,6 +34,7 @@ import {
   podeAumentarSelo,
   podeDiminuirSelo,
   seloNaFoto,
+  type CorDoSelo,
   type PosicaoSelo,
 } from '../../domain/selo';
 import { useAssinarDocumento } from '../../hooks/useAssinarDocumento';
@@ -58,6 +59,11 @@ const MENSAGENS_DE_FALHA: Readonly<Record<MotivoFalhaAssinatura, string>> = {
   erroAoGerarDocumento: 'Não foi possível gerar o documento. Tente de novo.',
 };
 
+const OPCOES_DE_COR: readonly { value: CorDoSelo; label: string }[] = [
+  { value: 'escura', label: 'Escura' },
+  { value: 'clara', label: 'Branca' },
+];
+
 function lerTitulo(texto: string): TituloDocumento | null {
   try {
     return criarTituloDocumento(texto);
@@ -80,6 +86,7 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura, onAssinado 
   const [assinaturaId, setAssinaturaId] = useState<AssinaturaId | null>(null);
   const [largura, setLargura] = useState(larguraInicialDoSelo);
   const [posicao, setPosicao] = useState<PosicaoSelo | null>(null);
+  const [cor, setCor] = useState<CorDoSelo>('escura');
   const [agora] = useState(() => createIsoDateTime(new Date().toISOString()));
   const perguntouRef = useRef(false);
 
@@ -143,7 +150,7 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura, onAssinado 
       titulo: tituloDoDocumento,
       assinatura: assinaturaEscolhida,
       foto,
-      selo: seloNaFoto(posicao, larguraDoSelo, foto.size, assinaturaEscolhida.desenho.quadro),
+      selo: { ...seloNaFoto(posicao, larguraDoSelo, foto.size, assinaturaEscolhida.desenho.quadro), cor },
     });
     if (resultado === null || resultado.tipo === 'cancelado') {
       return;
@@ -218,6 +225,7 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura, onAssinado 
                 desenho={selo.assinatura.desenho}
                 largura={selo.largura}
                 linhas={[formatDateTime(agora), 'Local ao assinar']}
+                cor={cor}
                 posicao={posicao}
                 onMudarPosicao={setPosicao}
               />
@@ -232,6 +240,16 @@ export function PosicionarAssinaturaScreen({ foto, onNovaAssinatura, onAssinado 
                 onDecrease={() => setLargura(diminuirSelo(selo.largura))}
                 onIncrease={() => setLargura(aumentarSelo(selo.largura, selo.larguraMaxima))}
               />
+              <Stack gap="label">
+                <Text preset="sectionLabel">Cor da assinatura</Text>
+                <ChoiceChips
+                  options={OPCOES_DE_COR}
+                  selected={cor}
+                  onSelect={setCor}
+                  accessibilityLabel="Cor da assinatura"
+                />
+                <Text preset="supporting">Use a branca quando o fundo da foto for escuro.</Text>
+              </Stack>
             </>
           )}
         </Stack>

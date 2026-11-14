@@ -32,6 +32,7 @@ async function mostrarPalco(posicao: PosicaoSelo | null) {
       desenho={ASSINATURA.desenho}
       largura={LARGURA}
       linhas={['12/09/2026 14:32', 'Local ao assinar']}
+      cor="escura"
       posicao={posicao}
       onMudarPosicao={() => undefined}
     />,

@@ -5,7 +5,7 @@ import { createIsoDateTime, type IsoDateTime } from './dateTime';
 import { paraDesenho, type Desenho } from './desenho';
 import { createFraction, paraSize, type Size } from './geometry';
 import { lerNumero, lerObjeto, lerTexto, lerTextoOuNulo } from './leitura';
-import type { PosicaoSelo } from './selo';
+import { ehCorDoSelo, type CorDoSelo, type SeloDoDocumento } from './selo';
 import { criarUsuarioId, type UsuarioId } from './usuario';
 
 export type DocumentoId = Brand<string, 'DocumentoId'>;
@@ -30,7 +30,7 @@ export type DocumentoAssinado = Readonly<{
   titulo: TituloDocumento;
   assinaturaUsada: AssinaturaUsada;
   tamanhoFoto: Size;
-  selo: PosicaoSelo;
+  selo: SeloDoDocumento;
   local: LocalAssinatura;
   assinadoEm: IsoDateTime;
   // Gravados na hora da assinatura. Ficam null em documentos assinados antes de existirem.
@@ -122,13 +122,25 @@ function paraAssinaturaUsada(dado: unknown): AssinaturaUsada {
   };
 }
 
-function paraSelo(dado: unknown): PosicaoSelo {
+// Documentos assinados antes de existir a escolha da cor não têm o campo: o selo deles sempre foi escuro.
+function paraCorDoSelo(dado: unknown): CorDoSelo {
+  if (dado === undefined) {
+    return 'escura';
+  }
+  if (!ehCorDoSelo(dado)) {
+    throw new ValidationError(DOCUMENTO_INVALIDO);
+  }
+  return dado;
+}
+
+function paraSelo(dado: unknown): SeloDoDocumento {
   const selo = lerObjeto(dado, DOCUMENTO_INVALIDO);
 
   return {
     x: createFraction(lerNumero('x' in selo ? selo.x : undefined, DOCUMENTO_INVALIDO)),
     y: createFraction(lerNumero('y' in selo ? selo.y : undefined, DOCUMENTO_INVALIDO)),
     largura: createFraction(lerNumero('largura' in selo ? selo.largura : undefined, DOCUMENTO_INVALIDO)),
+    cor: paraCorDoSelo('cor' in selo ? selo.cor : undefined),
   };
 }
 

@@ -37,7 +37,7 @@ export function criarDocumentoDeTeste(
       desenho: criarDesenho([criarTraco('M10,20 L30,40')], createSize(300, 150)),
     },
     tamanhoFoto: createSize(3024, 4032),
-    selo: { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35) },
+    selo: { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35), cor: 'escura' },
     local: {
       coordenadas: { latitude: createLatitude(-22.40418), longitude: createLongitude(-43.66283) },
       cidade: createCity('Vassouras'),

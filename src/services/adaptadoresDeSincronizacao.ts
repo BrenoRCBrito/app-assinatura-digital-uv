@@ -55,7 +55,7 @@ export function adaptadorDeDocumentos(repositorio: DocumentoAssinadoRepository):
       titulo: item.titulo,
       assinaturaUsada: { nome: item.assinaturaUsada.nome, desenho: desenhoParaNuvem(item.assinaturaUsada.desenho) },
       tamanhoFoto: { width: item.tamanhoFoto.width, height: item.tamanhoFoto.height },
-      selo: { x: item.selo.x, y: item.selo.y, largura: item.selo.largura },
+      selo: { x: item.selo.x, y: item.selo.y, largura: item.selo.largura, cor: item.selo.cor },
       local: {
         coordenadas: { latitude: item.local.coordenadas.latitude, longitude: item.local.coordenadas.longitude },
         cidade: item.local.cidade,

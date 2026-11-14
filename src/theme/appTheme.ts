@@ -89,6 +89,7 @@ export const FIXED_COLORS = {
   paperBorder: createColorToken('rgba(65, 90, 119, 0.22)'),
   paperGuide: createColorToken('#778DA9'),
   ink: createColorToken('#1B263B'),
+  inkLight: createColorToken('#FFFFFF'),
   cameraBackground: createColorToken('#0A141F'),
   cameraControl: createColorToken('rgba(224, 225, 221, 0.14)'),
   cameraHint: createColorToken('rgba(13, 27, 42, 0.72)'),
@@ -99,3 +100,6 @@ export const FIXED_COLORS = {
   stampHandleIcon: createColorToken('#E0E1DD'),
   scrim: createColorToken('rgba(13, 27, 42, 0.48)'),
 } as const;
+
+// Tinta do selo da assinatura (desenho e faixa), pela cor escolhida ao assinar: clara para fotos de fundo escuro.
+export const TINTAS_DO_SELO = { escura: FIXED_COLORS.ink, clara: FIXED_COLORS.inkLight } as const;

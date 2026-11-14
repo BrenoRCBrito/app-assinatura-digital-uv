@@ -29,7 +29,12 @@ describe('SeloDocumento', () => {
     const layout = layoutDoSelo(createFraction(0.5), createSize(400, 600), assinatura.desenho.quadro);
 
     await render(
-      <SeloDocumento desenho={assinatura.desenho} layout={layout} linhas={['12/09/2026 14:32', 'Local ao assinar']} />,
+      <SeloDocumento
+        desenho={assinatura.desenho}
+        layout={layout}
+        linhas={['12/09/2026 14:32', 'Local ao assinar']}
+        cor="escura"
+      />,
       { wrapper: SettingsProvider },
     );
 
@@ -48,5 +53,29 @@ describe('SeloDocumento', () => {
     expect(
       [primeiraLinha, screen.getByText('Local ao assinar')].map((linha) => linha.props.numberOfLines),
     ).toEqual([1, 1]);
+  });
+
+  test('o selo claro pinta o traço e a faixa de branco, para fotos de fundo escuro', async () => {
+    const assinatura = criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T12:00:00.000Z');
+    const layout = layoutDoSelo(createFraction(0.5), createSize(400, 600), assinatura.desenho.quadro);
+
+    await render(
+      <SeloDocumento
+        desenho={assinatura.desenho}
+        layout={layout}
+        linhas={['12/09/2026 14:32', 'Local ao assinar']}
+        cor="clara"
+      />,
+      { wrapper: SettingsProvider },
+    );
+
+    const selo = await screen.findByLabelText('Selo da assinatura');
+    const tracos = descendentes(selo).filter((no) => no.type === 'RNSVGPath');
+
+    expect(tracos.length).toBeGreaterThan(0);
+    expect(JSON.stringify(tracos.map((traco) => traco.props.stroke))).toContain(String(0xffffffff));
+    for (const linha of [screen.getByText('12/09/2026 14:32'), screen.getByText('Local ao assinar')]) {
+      expect(StyleSheet.flatten(linha.props.style)).toMatchObject({ color: FIXED_COLORS.inkLight });
+    }
   });
 });

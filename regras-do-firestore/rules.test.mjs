@@ -236,6 +236,16 @@ describe('formato dos dados', () => {
       () => documento({ local: { coordenadas: { latitude: 91, longitude: 0 }, cidade: null } }),
     ],
     ['documento com resumo da foto inválido', 'usuarios/ana/documentos/d1', () => documento({ fotoSha256: 'ABC' })],
+    [
+      'documento com cor do selo fora da lista',
+      'usuarios/ana/documentos/d1',
+      () => documento({ selo: { x: 0.4, y: 0.65, largura: 0.35, cor: 'vermelha' } }),
+    ],
+    [
+      'documento com campo a mais no selo',
+      'usuarios/ana/documentos/d1',
+      () => documento({ selo: { x: 0.4, y: 0.65, largura: 0.35, rotacao: 90 } }),
+    ],
     ['documento com id inválido', 'usuarios/ana/documentos/d 1', () => documento()],
   ];
 
@@ -252,6 +262,17 @@ describe('formato dos dados', () => {
         documento({ local: { coordenadas: { latitude: 0, longitude: 0 }, cidade: null }, codigo: null, fotoSha256: null }),
       ),
     );
+  });
+
+  test('aceita: documento com o selo escuro ou branco', async () => {
+    for (const cor of ['escura', 'clara']) {
+      await assertSucceeds(
+        setDoc(
+          doc(como('ana'), `usuarios/ana/documentos/d-${cor}`),
+          documento({ selo: { x: 0.4, y: 0.65, largura: 0.35, cor } }),
+        ),
+      );
+    }
   });
 
   test('aceita: perfil com o resumo da foto (a foto em si fica no Realtime Database)', async () => {

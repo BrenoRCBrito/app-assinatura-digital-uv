@@ -28,7 +28,7 @@ const PEDIDO: PedidoAssinatura = {
   titulo: criarTituloDocumento('Contrato de locação'),
   assinatura: ASSINATURA,
   foto: createCapturedPhoto('file:///cache/foto.jpg', 3024, 4032),
-  selo: { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35) },
+  selo: { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35), cor: 'escura' },
 };
 const FOTO_BASE64 = createBase64('/9j/4AAQ');
 const RESUMO_DA_FOTO = 'a'.repeat(64);

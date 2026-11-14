@@ -11,6 +11,17 @@ import {
 
 export type PosicaoSelo = Readonly<{ x: Fraction; y: Fraction; largura: Fraction }>;
 
+// Escura é a tinta de sempre; clara (branca) aparece sobre fotos de fundo escuro.
+export type CorDoSelo = 'escura' | 'clara';
+
+export const CORES_DO_SELO: readonly CorDoSelo[] = ['escura', 'clara'];
+
+export type SeloDoDocumento = PosicaoSelo & Readonly<{ cor: CorDoSelo }>;
+
+export function ehCorDoSelo(valor: unknown): valor is CorDoSelo {
+  return CORES_DO_SELO.some((cor) => cor === valor);
+}
+
 export type LayoutDoSelo = Readonly<{
   tamanho: Size;
   alturaDoDesenho: Pixels;

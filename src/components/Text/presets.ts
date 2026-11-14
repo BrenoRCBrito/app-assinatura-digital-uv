@@ -52,6 +52,7 @@ export const textPresets = {
     color: FIXED_COLORS.paperGuide,
   }),
   stamp: () => ({ fontWeight: '600', fontVariant: ['tabular-nums'], color: FIXED_COLORS.ink }),
+  stampLight: () => ({ fontWeight: '600', fontVariant: ['tabular-nums'], color: FIXED_COLORS.inkLight }),
   featureTitle: (theme: Theme) => ({ ...theme.typography.screenTitle, color: theme.onPrimary }),
   featureDescription: (theme: Theme) => ({ ...theme.typography.supporting, color: theme.onPrimaryMuted }),
   cameraHint: (theme: Theme) => ({ ...theme.typography.hint, color: theme.textPrimary }),

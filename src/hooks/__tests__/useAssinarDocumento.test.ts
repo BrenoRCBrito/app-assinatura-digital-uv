@@ -32,7 +32,7 @@ const PEDIDO: PedidoAssinatura = {
   titulo: criarTituloDocumento('Contrato de locação'),
   assinatura: criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T10:00:00.000Z'),
   foto: createCapturedPhoto('file:///cache/foto.jpg', 3024, 4032),
-  selo: { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35) },
+  selo: { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35), cor: 'escura' },
 };
 
 function useAssinarComRepositorios() {

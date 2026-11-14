@@ -5,7 +5,7 @@ import type { Desenho } from '../../domain/desenho';
 import { createPixels, type Size } from '../../domain/geometry';
 import { layoutDaPagina } from '../../domain/pagina';
 import type { FileUri } from '../../domain/photo';
-import { layoutDoSelo, type PosicaoSelo } from '../../domain/selo';
+import { layoutDoSelo, type SeloDoDocumento } from '../../domain/selo';
 import { useAppTheme } from '../../theme';
 import { SeloDocumento } from '../SeloDocumento';
 import { previaDocumentoPresets } from './presets';
@@ -14,7 +14,7 @@ type PreviaDocumentoProps = Readonly<{
   foto: FileUri;
   tamanhoFoto: Size;
   desenho: Desenho;
-  selo: PosicaoSelo;
+  selo: SeloDoDocumento;
   linhas: readonly [string, string];
   largura?: number;
   onAmpliar?: () => void;
@@ -43,7 +43,7 @@ export function PreviaDocumento({foto,tamanhoFoto,desenho,selo,linhas,largura,on
           style={styles.imagem}
         />
         <View style={[styles.selo, medidas.selo]}>
-          <SeloDocumento desenho={desenho} layout={medidas.layout} linhas={linhas} />
+          <SeloDocumento desenho={desenho} layout={medidas.layout} linhas={linhas} cor={selo.cor} />
         </View>
       </View>
     </View>

@@ -115,11 +115,13 @@ service cloud.firestore {
         && numero(dados.tamanhoFoto.width)
         && numero(dados.tamanhoFoto.height)
         && dados.selo is map
-        && dados.selo.keys().hasOnly(['x', 'y', 'largura'])
+        && dados.selo.keys().hasOnly(['x', 'y', 'largura', 'cor'])
         && dados.selo.keys().hasAll(['x', 'y', 'largura'])
         && numero(dados.selo.x)
         && numero(dados.selo.y)
         && numero(dados.selo.largura)
+        // A cor é opcional: documentos e versões do app de antes dela sobem sem o campo.
+        && dados.selo.get('cor', 'escura') in ['escura', 'clara']
         && localValido(dados.local)
         && dataIso(dados.assinadoEm)
         && textoOuNulo(dados.codigo, 4000)

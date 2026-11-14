@@ -17,6 +17,7 @@ import {
   paraPontoNaArea,
   paraPosicaoSelo,
   posicaoInicialDoSelo,
+  type CorDoSelo,
   type PosicaoSelo,
 } from '../../domain/selo';
 import { useSeloArrastavel } from '../../gestures/SeloArrastavel';
@@ -30,11 +31,12 @@ type PalcoDoSeloProps = Readonly<{
   desenho: Desenho;
   largura: Fraction;
   linhas: readonly [string, string];
+  cor: CorDoSelo;
   posicao: PosicaoSelo | null;
   onMudarPosicao: (posicao: PosicaoSelo) => void;
 }>;
 
-export function PalcoDoSelo({ foto, desenho, largura, linhas, posicao, onMudarPosicao }: PalcoDoSeloProps) {
+export function PalcoDoSelo({ foto, desenho, largura, linhas, cor, posicao, onMudarPosicao }: PalcoDoSeloProps) {
   const { theme } = useAppTheme();
   const styles = useMemo(() => palcoDoSeloPresets.default(theme), [theme]);
   const SeloArrastavel = useSeloArrastavel();
@@ -85,7 +87,7 @@ export function PalcoDoSelo({ foto, desenho, largura, linhas, posicao, onMudarPo
             aoSoltar={soltar}
           >
             <View style={styles.moldura}>
-              <SeloDocumento desenho={desenho} layout={cena.layout} linhas={linhas} />
+              <SeloDocumento desenho={desenho} layout={cena.layout} linhas={linhas} cor={cor} />
               <View style={styles.borda} />
               <View style={styles.alca}>
                 <Icon name="move" size="handle" color={styles.iconColor} />

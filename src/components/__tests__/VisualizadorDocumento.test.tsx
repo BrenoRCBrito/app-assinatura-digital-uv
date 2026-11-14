@@ -15,7 +15,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 
-const SELO = { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35) };
+const SELO = { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35), cor: 'escura' as const };
 const DESENHO = criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T12:00:00.000Z').desenho;
 
 function renderizar(visible: boolean, onClose: () => void = jest.fn(), onCompartilhar: () => void = jest.fn()) {

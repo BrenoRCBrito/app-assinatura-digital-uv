@@ -31,7 +31,7 @@ function documentoDaNuvem(extra: Readonly<Record<string, unknown>> = {}) {
     titulo: 'Contrato de locação',
     assinaturaUsada: { nome: 'Rubrica', desenho: DESENHO_NA_NUVEM },
     tamanhoFoto: { width: 3024, height: 4032 },
-    selo: { x: 0.4, y: 0.65, largura: 0.35 },
+    selo: { x: 0.4, y: 0.65, largura: 0.35, cor: 'escura' },
     local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: 'Vassouras' },
     assinadoEm: CRIADO,
     codigo: '7K3F9QXZM2P4',
@@ -143,6 +143,22 @@ describe('adaptadorDeDocumentos', () => {
     const volta = adaptador.daNuvem('d1', UID, adaptador.paraNuvem(registro));
 
     expect(volta).toEqual({ ...registro, item: { ...item, fotoStatus: 'remote', pdfStatus: 'remote' } });
+  });
+
+  test('a cor branca do selo sobe e volta', () => {
+    const claro = { ...item, selo: { ...item.selo, cor: 'clara' as const } };
+    const registro = { item: claro, createdAt: CRIADO, updatedAt: ATUALIZADO, deletedAt: null };
+
+    const dados = adaptador.paraNuvem(registro);
+
+    expect(dados.selo).toEqual({ x: 0.4, y: 0.65, largura: 0.35, cor: 'clara' });
+    expect(adaptador.daNuvem('d1', UID, dados).item.selo.cor).toBe('clara');
+  });
+
+  test('documento que subiu antes de existir a cor do selo volta com o selo escuro', () => {
+    const volta = adaptador.daNuvem('d1', UID, documentoDaNuvem({ selo: { x: 0.4, y: 0.65, largura: 0.35 } }));
+
+    expect(volta.item.selo.cor).toBe('escura');
   });
 
   test('daNuvem monta o documento com o id do caminho e o dono da conta', () => {

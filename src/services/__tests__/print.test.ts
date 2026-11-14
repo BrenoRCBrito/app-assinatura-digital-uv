@@ -47,6 +47,26 @@ describe('montarHtmlDocumento', () => {
     expect(LEGENDA_DO_QR).toContain('leia o QR ou digite o código');
   });
 
+  test('o selo claro sai branco no PDF, no traço e na faixa; o QR e a legenda continuam escuros', () => {
+    const claro = { ...DOCUMENTO, selo: { ...DOCUMENTO.selo, cor: 'clara' as const } };
+    const { html } = montarHtmlDocumento(claro, FOTO, CODIGO, 'android');
+    const faixa = /\.faixa \{[^}]*\}/.exec(html)?.[0] ?? '';
+    const legenda = /\.legenda \{[^}]*\}/.exec(html)?.[0] ?? '';
+
+    expect(html).toContain(`stroke="${FIXED_COLORS.inkLight}"`);
+    expect(faixa).toContain(`color: ${FIXED_COLORS.inkLight};`);
+    expect(legenda).toContain(`color: ${FIXED_COLORS.ink};`);
+  });
+
+  test('o selo escuro, o de sempre, sai na tinta escura', () => {
+    const { html } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO, 'android');
+    const faixa = /\.faixa \{[^}]*\}/.exec(html)?.[0] ?? '';
+
+    expect(DOCUMENTO.selo.cor).toBe('escura');
+    expect(html).not.toContain(FIXED_COLORS.inkLight);
+    expect(faixa).toContain(`color: ${FIXED_COLORS.ink};`);
+  });
+
   test('sem cidade, mostra as coordenadas na faixa', () => {
     const semCidade = { ...DOCUMENTO, local: { ...DOCUMENTO.local, cidade: null } };
 

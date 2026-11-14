@@ -4,7 +4,7 @@ import { Row } from '../Layout';
 import type { Desenho } from '../../domain/desenho';
 import type { Size } from '../../domain/geometry';
 import type { FileUri } from '../../domain/photo';
-import type { PosicaoSelo } from '../../domain/selo';
+import type { SeloDoDocumento } from '../../domain/selo';
 import { useAppTheme } from '../../theme';
 import { Button } from '../Button';
 import { PreviaDocumento } from '../PreviaDocumento';
@@ -18,7 +18,7 @@ type VisualizadorDocumentoProps = Readonly<{
   foto: FileUri;
   tamanhoFoto: Size;
   desenho: Desenho;
-  selo: PosicaoSelo;
+  selo: SeloDoDocumento;
   linhas: readonly [string, string];
   onClose: () => void;
   onCompartilhar: () => void;

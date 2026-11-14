@@ -28,7 +28,7 @@ function documentoValido(id: string, assinadoEm: string, cidade: string | null =
       desenho: criarDesenho([criarTraco('M10,20 L30,40')], createSize(300, 150)),
     },
     tamanhoFoto: createSize(3024, 4032),
-    selo: { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35) },
+    selo: { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35), cor: 'escura' },
     local: {
       coordenadas: { latitude: createLatitude(-22.40418), longitude: createLongitude(-43.66283) },
       cidade: cidade === null ? null : createCity(cidade),
@@ -165,6 +165,31 @@ describe('paraDocumentoAssinado', () => {
     const documento = { ...documentoValido('1', '2026-09-12T10:00:00.000Z'), pdfStatus: status };
 
     expect(() => paraDocumentoAssinado(JSON.parse(JSON.stringify(documento)))).toThrow('Documento salvo inválido.');
+  });
+
+  test('guarda o selo branco, para fotos de fundo escuro', () => {
+    const base = documentoValido('1', '2026-09-12T10:00:00.000Z');
+    const documento = { ...base, selo: { ...base.selo, cor: 'clara' as const } };
+
+    expect(paraDocumentoAssinado(JSON.parse(JSON.stringify(documento)))).toEqual(documento);
+  });
+
+  test('documento salvo antes de existir a cor do selo volta com o selo escuro', () => {
+    const documento = documentoValido('1', '2026-09-12T10:00:00.000Z');
+    const { cor, ...seloAntigo } = documento.selo;
+
+    expect(cor).toBe('escura');
+    expect(paraDocumentoAssinado(JSON.parse(JSON.stringify({ ...documento, selo: seloAntigo }))).selo.cor).toBe(
+      'escura',
+    );
+  });
+
+  test.each(['branca', 'ESCURA', '', 1])('recusa a cor de selo inválida %p', (cor) => {
+    const documento = documentoValido('1', '2026-09-12T10:00:00.000Z');
+
+    expect(() => paraDocumentoAssinado({ ...documento, selo: { ...documento.selo, cor } })).toThrow(
+      'Documento salvo inválido.',
+    );
   });
 
   test('reconstrói um documento sem cidade', () => {

@@ -6,7 +6,7 @@ import { formatDateTime, formatLocal } from '../domain/format';
 import { createPixels, createSize, type Size } from '../domain/geometry';
 import { LARGURA_DA_FOLHA_A4, layoutDaPagina } from '../domain/pagina';
 import { layoutDoSelo } from '../domain/selo';
-import { FIXED_COLORS } from '../theme/appTheme';
+import { FIXED_COLORS, TINTAS_DO_SELO } from '../theme/appTheme';
 import { tokens } from '../theme/tokens';
 import { plataformaDoAparelho, type Plataforma } from './plataforma';
 import { desenharQrSvg, gerarMatrizQr } from './qrCode';
@@ -44,6 +44,7 @@ export function montarHtmlDocumento(
   const tamanhoDoCodigo = tamanhoDaLegenda * PROPORCAO_DO_CODIGO;
   const { desenho } = documento.assinaturaUsada;
   const selo = layoutDoSelo(documento.selo.largura, foto, desenho.quadro);
+  const tinta = TINTAS_DO_SELO[documento.selo.cor];
   const local = formatLocal(documento.local);
   const tracos = desenho.tracos.map((traco) => `<path d="${traco}" />`).join('');
   const codigoImpresso = formatarCodigoCurto(codigo);
@@ -84,7 +85,7 @@ export function montarHtmlDocumento(
     font-weight: 600;
     font-size: ${selo.tamanhoDaFonte}px;
     line-height: ${selo.alturaDaLinha}px;
-    color: ${FIXED_COLORS.ink};
+    color: ${tinta};
     white-space: nowrap;
     overflow: hidden;
   }
@@ -127,7 +128,7 @@ export function montarHtmlDocumento(
       <svg viewBox="0 0 ${desenho.quadro.width} ${desenho.quadro.height}" preserveAspectRatio="xMidYMid meet">
         <g
           fill="none"
-          stroke="${FIXED_COLORS.ink}"
+          stroke="${tinta}"
           stroke-width="${tokens.lineWidth.drawing * reducao}"
           stroke-linecap="round"
           stroke-linejoin="round"

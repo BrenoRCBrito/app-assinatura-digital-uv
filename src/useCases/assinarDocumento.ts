@@ -11,7 +11,7 @@ import type {
 } from '../domain/documento';
 import type { Size } from '../domain/geometry';
 import type { CapturedPhoto } from '../domain/photo';
-import type { PosicaoSelo } from '../domain/selo';
+import type { SeloDoDocumento } from '../domain/selo';
 import type { UsuarioId } from '../domain/usuario';
 import { ServidorIndisponivel } from '../services/apiDeDocumentos';
 import type { AuthenticationPurpose, AuthenticationResult } from '../services/localAuthentication';
@@ -24,7 +24,7 @@ export type PedidoAssinatura = Readonly<{
   titulo: TituloDocumento;
   assinatura: Assinatura;
   foto: CapturedPhoto;
-  selo: PosicaoSelo;
+  selo: SeloDoDocumento;
 }>;
 
 export type MotivoFalhaAssinatura =

@@ -17,7 +17,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 const TAMANHO_FOTO = createSize(3024, 4032);
-const SELO = { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35) };
+const SELO = { x: createFraction(0.4), y: createFraction(0.65), largura: createFraction(0.35), cor: 'escura' as const };
 const DESENHO = criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T12:00:00.000Z').desenho;
 
 describe('PreviaDocumento', () => {

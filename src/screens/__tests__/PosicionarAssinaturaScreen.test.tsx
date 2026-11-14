@@ -1,6 +1,6 @@
 import React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { Alert, StyleSheet } from 'react-native';
 
 import { criarDesenho, criarTraco } from '../../domain/desenho';
@@ -15,6 +15,7 @@ import { SettingsProvider } from '../../storage/SettingsProvider';
 import { criarAssinaturaDeTeste, USUARIO_DE_TESTE } from '../../storage/testing/assinaturaRepositoryContract';
 import { corromperAssinaturaNoBanco, reiniciarBancoDeTeste } from '../../storage/testing/bancoDeTeste';
 import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
+import { FIXED_COLORS } from '../../theme';
 import { PosicionarAssinaturaScreen } from '../PosicionarAssinaturaScreen';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -203,9 +204,29 @@ describe('PosicionarAssinaturaScreen', () => {
       titulo: 'Contrato de locação',
       assinatura: RUBRICA,
       foto: FOTO,
-      selo: seloNaFoto(null, createFraction(0.4), FOTO.size, RUBRICA.desenho.quadro),
+      selo: { ...seloNaFoto(null, createFraction(0.4), FOTO.size, RUBRICA.desenho.quadro), cor: 'escura' },
     });
     await waitFor(() => expect(onAssinado).toHaveBeenCalledWith('1757680000000'));
+  });
+
+  test('a cor Branca pinta o selo no palco e vai no pedido, para fotos de fundo escuro', async () => {
+    assinar.mockResolvedValue({
+      tipo: 'assinado',
+      documento: criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z'),
+    });
+    await salvarAssinaturas();
+    await abrirTela();
+
+    await fireEvent.press(await screen.findByRole('radio', { name: 'Branca' }));
+    await fireEvent(screen.getByLabelText('Palco do documento'), 'layout', PALCO_MEDIDO);
+    const faixa = within(await screen.findByLabelText('Selo da assinatura')).getByText('Local ao assinar');
+    expect(StyleSheet.flatten(faixa.props.style)).toMatchObject({ color: FIXED_COLORS.inkLight });
+
+    await darTituloEAssinar();
+
+    expect(assinar).toHaveBeenCalledWith(
+      expect.objectContaining({ selo: expect.objectContaining({ cor: 'clara' }) }),
+    );
   });
 
   test('sem permissão de local, oferece abrir as configurações', async () => {
