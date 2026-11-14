@@ -33,4 +33,21 @@ resposta="$(curl --silent --fail -X POST -H 'Content-Type: application/json' \
 CODIGO="$(node -e 'console.log(JSON.parse(process.argv[1]).codigo)' "$resposta")"
 
 echo "Documento de teste registrado com o código $CODIGO. O app vai usar a API em $API_URL."
-"$MAESTRO" test -e API_URL="$API_URL" -e CODIGO="$CODIGO" "$@" .maestro
+
+# A conta de teste fica no .env.local de fora do Git. O Maestro lê sozinho as variáveis com prefixo MAESTRO_,
+# então a senha não passa pela linha de comando.
+ler_segredo() {
+  [ -f ../.env.local ] || return 0
+  sed -n "s/^[[:space:]]*$1=//p" ../.env.local | tail -n 1 | sed -E "s/^['\"]|['\"]$//g"
+}
+MAESTRO_EMAIL="${MAESTRO_EMAIL:-$(ler_segredo MAESTRO_EMAIL)}"
+MAESTRO_SENHA="${MAESTRO_SENHA:-$(ler_segredo MAESTRO_SENHA)}"
+filtro=()
+if [ -n "$MAESTRO_EMAIL" ] && [ -n "$MAESTRO_SENHA" ]; then
+  export MAESTRO_EMAIL MAESTRO_SENHA
+else
+  echo "Sem MAESTRO_EMAIL e MAESTRO_SENHA no ../.env.local: os fluxos que entram na conta ficam de fora." >&2
+  filtro=(--exclude-tags conta)
+fi
+
+"$MAESTRO" test -e API_URL="$API_URL" -e CODIGO="$CODIGO" "${filtro[@]}" "$@" .maestro
