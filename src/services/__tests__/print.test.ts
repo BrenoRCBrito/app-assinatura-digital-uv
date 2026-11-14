@@ -19,7 +19,7 @@ const CODIGO = criarCodigoCurto('7K3F9QXZM2P4');
 
 describe('montarHtmlDocumento', () => {
   test('monta a página com a foto preenchendo a largura, o desenho em SVG e o selo em porcentagem', () => {
-    const { html } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
+    const { html } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO, 'android');
     const { foto } = layoutDaPagina(DOCUMENTO.tamanhoFoto, createPixels(595));
     const selo = layoutDoSelo(DOCUMENTO.selo.largura, foto, DOCUMENTO.assinaturaUsada.desenho.quadro);
 
@@ -36,7 +36,7 @@ describe('montarHtmlDocumento', () => {
   });
 
   test('põe no rodapé o QR do código curto formatado e a legenda, abaixo da foto', () => {
-    const { html } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
+    const { html } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO, 'android');
     const { rodape, ladoDoQr } = layoutDaPagina(DOCUMENTO.tamanhoFoto, createPixels(595));
     const qr = desenharQrSvg(gerarMatrizQr('7K3F-9QXZ-M2P4'), { tinta: FIXED_COLORS.ink, fundo: FIXED_COLORS.paper });
 
@@ -67,6 +67,37 @@ describe('montarHtmlDocumento', () => {
 
     expect(escrito).toBe(formatarCodigoCurto(CODIGO));
     expect(criarCodigoCurto(escrito)).toBe(CODIGO);
+  });
+
+  test('no Android, o HTML e a página têm a mesma medida', () => {
+    const { html, tamanhoDaPagina } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO, 'android');
+    const { pagina } = layoutDaPagina(DOCUMENTO.tamanhoFoto, createPixels(595));
+
+    expect(html).toContain('width: 595px;');
+    expect(html).toContain('stroke-width="2"');
+    expect(tamanhoDaPagina.width).toBe(595);
+    expect(tamanhoDaPagina.height).toBeCloseTo(pagina.height, 6);
+  });
+
+  test('no iOS, desenha 1,25× maior para compensar a redução que o WebKit aplica ao imprimir', () => {
+    const { html, tamanhoDaPagina } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO, 'ios');
+    const noIos = layoutDaPagina(DOCUMENTO.tamanhoFoto, createPixels(595 * 1.25));
+    const noAndroid = layoutDaPagina(DOCUMENTO.tamanhoFoto, createPixels(595));
+
+    expect(html).toContain('width: 743.75px;');
+    expect(html).toContain(`height: ${noIos.foto.height}px;`);
+    expect(html).toContain(`top: ${noIos.rodape.topo}px;`);
+    // O traço não escala com o SVG: engrossa junto para sair com a mesma espessura do Android.
+    expect(html).toContain('stroke-width="2.5"');
+    // A página do PDF continua em pontos de A4: o WebKit encolhe o desenho de volta para caber nela sem sobra.
+    expect(tamanhoDaPagina.width).toBeCloseTo(595, 6);
+    expect(tamanhoDaPagina.height).toBeCloseTo(noAndroid.pagina.height, 6);
+  });
+
+  test('sem a plataforma, usa a do aparelho', () => {
+    const { tamanhoDaPagina } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
+
+    expect(tamanhoDaPagina.width).toBeCloseTo(595, 6);
   });
 });
 

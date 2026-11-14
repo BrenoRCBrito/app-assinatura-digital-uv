@@ -3,11 +3,12 @@ import { printToFileAsync } from 'expo-print';
 import { formatarCodigoCurto, type CodigoCurto } from '../domain/codigoCurto';
 import { createBase64, createHtml, type Base64, type DocumentoAssinado, type Html } from '../domain/documento';
 import { formatDateTime, formatLocal } from '../domain/format';
-import { createPixels, type Size } from '../domain/geometry';
+import { createPixels, createSize, type Size } from '../domain/geometry';
 import { LARGURA_DA_FOLHA_A4, layoutDaPagina } from '../domain/pagina';
 import { layoutDoSelo } from '../domain/selo';
 import { FIXED_COLORS } from '../theme/appTheme';
 import { tokens } from '../theme/tokens';
+import { plataformaDoAparelho, type Plataforma } from './plataforma';
 import { desenharQrSvg, gerarMatrizQr } from './qrCode';
 
 const FONTE_DO_SELO = '-apple-system, Helvetica, Arial, sans-serif';
@@ -17,6 +18,14 @@ export const LEGENDA_DO_QR =
 
 export type DocumentoHtml = Readonly<{ html: Html; tamanhoDaPagina: Size }>;
 
+// O WebKit do iOS imprime com redução mínima de 1,25×: monta o HTML como se a folha tivesse 1,25× a largura e
+// encolhe tudo para 80%, deixando faixas brancas à direita e embaixo. Desenhar 1,25× maior anula essa redução.
+const REDUCAO_DA_IMPRESSAO_NO_IOS = 1.25;
+
+function reducaoDaImpressao(plataforma: Plataforma): number {
+  return plataforma === 'ios' ? REDUCAO_DA_IMPRESSAO_NO_IOS : 1;
+}
+
 function escaparHtml(texto: string): string {
   return texto.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
@@ -25,10 +34,12 @@ export function montarHtmlDocumento(
   documento: DocumentoAssinado,
   fotoBase64: Base64,
   codigo: CodigoCurto,
+  plataforma: Plataforma = plataformaDoAparelho(),
 ): DocumentoHtml {
+  const reducao = reducaoDaImpressao(plataforma);
   const { pagina, foto, esquerda, topo, rodape, ladoDoQr, tamanhoDaLegenda } = layoutDaPagina(
     documento.tamanhoFoto,
-    LARGURA_DA_FOLHA_A4,
+    createPixels(LARGURA_DA_FOLHA_A4 * reducao),
   );
   const tamanhoDoCodigo = tamanhoDaLegenda * PROPORCAO_DO_CODIGO;
   const { desenho } = documento.assinaturaUsada;
@@ -117,7 +128,7 @@ export function montarHtmlDocumento(
         <g
           fill="none"
           stroke="${FIXED_COLORS.ink}"
-          stroke-width="${tokens.lineWidth.drawing}"
+          stroke-width="${tokens.lineWidth.drawing * reducao}"
           stroke-linecap="round"
           stroke-linejoin="round"
           vector-effect="non-scaling-stroke"
@@ -137,7 +148,8 @@ export function montarHtmlDocumento(
 </body>
 </html>`);
 
-  return { html, tamanhoDaPagina: pagina };
+  // A folha do PDF continua com a largura de A4; só o desenho em HTML é que fica maior no iOS.
+  return { html, tamanhoDaPagina: createSize(pagina.width / reducao, pagina.height / reducao) };
 }
 
 export async function gerarPdf(html: Html, tamanhoDaPagina: Size): Promise<Base64> {
