@@ -19,6 +19,7 @@ describe('parseSettings', () => {
       loginBiometricoAtivado: true,
       perguntaBiometriaRespondida: true,
       ultimoUsuarioIdBiometria: '1',
+      enderecoDaApi: 'http://192.168.0.10:3000',
     };
 
     expect(parseSettings(salvo)).toEqual(salvo);
@@ -41,10 +42,23 @@ describe('parseSettings', () => {
       loginBiometricoAtivado: true,
       perguntaBiometriaRespondida: true,
       ultimoUsuarioIdBiometria: '1',
+      enderecoDaApi: null,
     });
   });
 
   test('completa com o padrão os campos ausentes', () => {
     expect(parseSettings({ salvarCopiaNaGaleria: true })).toEqual({ ...DEFAULT_SETTINGS, salvarCopiaNaGaleria: true });
+  });
+});
+
+describe('endereço da API nas configurações', () => {
+  test('começa vazio, e o app usa o endereço automático', () => {
+    expect(DEFAULT_SETTINGS.enderecoDaApi).toBeNull();
+  });
+
+  test('normaliza o endereço salvo e descarta o que não é endereço', () => {
+    expect(parseSettings({ enderecoDaApi: 'http://192.168.0.10:3000/' }).enderecoDaApi).toBe('http://192.168.0.10:3000');
+    expect(parseSettings({ enderecoDaApi: '192.168.0.10' }).enderecoDaApi).toBeNull();
+    expect(parseSettings({ enderecoDaApi: 3000 }).enderecoDaApi).toBeNull();
   });
 });

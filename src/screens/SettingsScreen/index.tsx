@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import {
   Button,
@@ -10,11 +10,15 @@ import {
   showError,
   showSuccess,
   Stack,
+  TextField,
   ToggleRow,
   type SegmentOption,
 } from '../../components';
+import { ValidationError } from '../../domain/brand';
+import { criarEnderecoDaApi } from '../../domain/enderecoDaApi';
 import type { GestureEngine, ThemeName } from '../../domain/settings';
 import { useAuthentication } from '../../hooks/useAuthentication';
+import { enderecoAutomatico } from '../../services/apiDeDocumentos';
 import { excluirTodasAsPastasDeArquivos } from '../../services/fileSystem';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 import { useSettings } from '../../storage/SettingsProvider';
@@ -23,6 +27,8 @@ const THEME_OPTIONS: readonly SegmentOption<ThemeName>[] = [
   { value: 'light', label: 'Claro' },
   { value: 'dark', label: 'Escuro' },
 ];
+
+const EXEMPLO_DE_ENDERECO = 'http://192.168.0.10:3000';
 
 const GESTURE_ENGINE_OPTIONS: readonly SegmentOption<GestureEngine>[] = [
   { value: 'panResponder', label: 'PanResponder' },
@@ -33,6 +39,24 @@ export function SettingsScreen() {
   const { settings, updateSettings } = useSettings();
   const { assinaturas, cursores, documentos, usuarios } = useRepositories();
   const { sair } = useAuthentication();
+  const [endereco, setEndereco] = useState(settings.enderecoDaApi ?? '');
+
+  function salvarEndereco() {
+    if (endereco.trim() === '') {
+      updateSettings({ enderecoDaApi: null });
+      showSuccess('Endereço da API salvo.');
+      return;
+    }
+    try {
+      updateSettings({ enderecoDaApi: criarEnderecoDaApi(endereco) });
+      showSuccess('Endereço da API salvo.');
+    } catch (error) {
+      if (!(error instanceof ValidationError)) {
+        throw error;
+      }
+      showError('Endereço inválido', error.message);
+    }
+  }
 
   async function limparDados() {
     try {
@@ -99,6 +123,26 @@ export function SettingsScreen() {
             value={settings.salvarCopiaNaGaleria}
             onValueChange={(salvarCopiaNaGaleria) => updateSettings({ salvarCopiaNaGaleria })}
           />
+        </Section>
+
+        <Section label="Servidor">
+          <Card
+            title="API de documentos"
+            description="Em branco, o app usa o PC que roda o Metro. No APK de entrega, digite o endereço que o npm run api:up mostra."
+          >
+            <Stack gap="label">
+              <TextField
+                label="Endereço da API"
+                accessibilityLabel="Endereço da API"
+                value={endereco}
+                onChangeText={setEndereco}
+                placeholder={enderecoAutomatico() ?? EXEMPLO_DE_ENDERECO}
+                keyboardType="url"
+                autoCapitalize="none"
+              />
+              <Button label="Salvar endereço" preset="secondary" onPress={salvarEndereco} />
+            </Stack>
+          </Card>
         </Section>
 
         <Section label="Dados">

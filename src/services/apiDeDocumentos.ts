@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 
 import { criarCodigoCurto, formatarCodigoCurto, type CodigoCurto } from '../domain/codigoCurto';
 import type { CampoDoCodigo, ResultadoDaValidacao } from '../domain/codigoDeAutenticidade';
+import type { EnderecoDaApi } from '../domain/enderecoDaApi';
 import { lerLista, lerObjeto, lerTexto } from '../domain/leitura';
 
 const PORTA_DA_API = 3000;
@@ -15,16 +16,28 @@ export class ServidorIndisponivel extends Error {
   }
 }
 
-export function enderecoDaApi(): string {
-  const configurado: unknown = Constants.expoConfig?.extra?.apiUrl;
-  if (typeof configurado === 'string' && configurado.trim() !== '') {
-    return configurado.trim().replace(/\/+$/, '');
+// O endereço das Configurações vence o do build e o do Metro; o hook useEnderecoDaApi mantém esta variável em dia.
+let enderecoConfigurado: EnderecoDaApi | null = null;
+
+export function definirEnderecoConfigurado(endereco: EnderecoDaApi | null): void {
+  enderecoConfigurado = endereco;
+}
+
+export function enderecoAutomatico(): string | null {
+  const doBuild: unknown = Constants.expoConfig?.extra?.apiUrl;
+  if (typeof doBuild === 'string' && doBuild.trim() !== '') {
+    return doBuild.trim().replace(/\/+$/, '');
   }
   const host = Constants.expoConfig?.hostUri?.split(':')[0];
-  if (host === undefined || host === '') {
+  return host === undefined || host === '' ? null : `http://${host}:${PORTA_DA_API}`;
+}
+
+export function enderecoDaApi(): string {
+  const endereco = enderecoConfigurado ?? enderecoAutomatico();
+  if (endereco === null) {
     throw new ServidorIndisponivel();
   }
-  return `http://${host}:${PORTA_DA_API}`;
+  return endereco;
 }
 
 async function requisitar(caminho: string, opcoes: RequestInit = {}): Promise<Response> {

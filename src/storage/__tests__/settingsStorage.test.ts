@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { criarEnderecoDaApi } from '../../domain/enderecoDaApi';
 import { DEFAULT_SETTINGS, type Settings } from '../../domain/settings';
 import { SETTINGS_STORAGE_KEY, loadSettings, saveSettings } from '../settingsStorage';
 
@@ -41,6 +42,7 @@ describe('settingsStorage', () => {
       loginBiometricoAtivado: true,
       perguntaBiometriaRespondida: true,
       ultimoUsuarioIdBiometria: '1',
+      enderecoDaApi: criarEnderecoDaApi('http://192.168.0.10:3000'),
     };
 
     await saveSettings(settings);
