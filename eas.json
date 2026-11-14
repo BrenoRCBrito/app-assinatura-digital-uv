@@ -13,10 +13,16 @@
       "credentialsSource": "local",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "ASSINAAQUI_API_URL": "https://app-assinatura-digital-uv.onrender.com"
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "ASSINAAQUI_API_URL": "https://app-assinatura-digital-uv.onrender.com"
+      }
     }
   },
   "submit": {

@@ -275,7 +275,7 @@ describe('PosicionarAssinaturaScreen', () => {
     await waitFor(() =>
       expect(alerta).toHaveBeenCalledWith(
         'Não foi possível assinar',
-        'Não foi possível falar com o servidor do AssinaAqui. Confira se o celular está no mesmo wifi do servidor e tente de novo.',
+        'Não foi possível falar com o servidor do AssinaAqui. Confira a conexão com a internet e tente de novo.',
       ),
     );
     alerta.mockRestore();

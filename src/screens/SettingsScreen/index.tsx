@@ -19,6 +19,7 @@ import { useAuthentication } from '../../hooks/useAuthentication';
 import { useSalvarEnderecoDaApi } from '../../hooks/useEnderecoDaApi';
 import { enderecoAutomatico } from '../../services/apiDeDocumentos';
 import { excluirTodasAsPastasDeArquivos } from '../../services/fileSystem';
+import { ehModoDesenvolvedor } from '../../services/modoDesenvolvedor';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 import { useSettings } from '../../storage/SettingsProvider';
 
@@ -40,6 +41,7 @@ export function SettingsScreen() {
   const { sair } = useAuthentication();
   const [endereco, setEndereco] = useState(settings.enderecoDaApi ?? '');
   const salvarEnderecoDaApi = useSalvarEnderecoDaApi();
+  const modoDesenvolvedor = ehModoDesenvolvedor();
 
   function salvarEndereco() {
     const resultado = salvarEnderecoDaApi(endereco);
@@ -117,29 +119,33 @@ export function SettingsScreen() {
           />
         </Section>
 
-        <Section label="Servidor">
-          <Card
-            title="API de documentos"
-            description="Em branco, o app usa o PC que roda o Metro. No APK de entrega, digite o endereço que o npm run api:up mostra."
-          >
-            <Stack gap="label">
-              <TextField
-                label="Endereço da API"
-                accessibilityLabel="Endereço da API"
-                value={endereco}
-                onChangeText={setEndereco}
-                placeholder={enderecoAutomatico() ?? EXEMPLO_DE_ENDERECO}
-                keyboardType="url"
-                autoCapitalize="none"
-              />
-              <Button label="Salvar endereço" preset="secondary" onPress={salvarEndereco} />
-            </Stack>
-          </Card>
-        </Section>
+        {modoDesenvolvedor ? (
+          <>
+            <Section label="Servidor">
+              <Card
+                title="API de documentos"
+                description="Só aparece em desenvolvimento. Em branco, o app usa o endereço do build (o Render) ou, sem ele, o PC que roda o Metro. Para a API local, digite o endereço que o npm run api:up mostra."
+              >
+                <Stack gap="label">
+                  <TextField
+                    label="Endereço da API"
+                    accessibilityLabel="Endereço da API"
+                    value={endereco}
+                    onChangeText={setEndereco}
+                    placeholder={enderecoAutomatico() ?? EXEMPLO_DE_ENDERECO}
+                    keyboardType="url"
+                    autoCapitalize="none"
+                  />
+                  <Button label="Salvar endereço" preset="secondary" onPress={salvarEndereco} />
+                </Stack>
+              </Card>
+            </Section>
 
-        <Section label="Dados">
-          <Button label="Limpar dados do app" preset="danger" onPress={confirmarLimpeza} />
-        </Section>
+            <Section label="Dados">
+              <Button label="Limpar dados do app" preset="danger" onPress={confirmarLimpeza} />
+            </Section>
+          </>
+        ) : null}
       </Stack>
     </Screen>
   );

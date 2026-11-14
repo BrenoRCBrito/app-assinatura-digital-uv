@@ -3,6 +3,7 @@ import { useCallback, useEffect } from 'react';
 import { ValidationError } from '../domain/brand';
 import { criarEnderecoDaApi, type EnderecoDaApi } from '../domain/enderecoDaApi';
 import { acordarServidor, definirEnderecoConfigurado } from '../services/apiDeDocumentos';
+import { ehModoDesenvolvedor } from '../services/modoDesenvolvedor';
 import { useSettings } from '../storage/SettingsProvider';
 
 export type ResultadoDoEndereco = Readonly<{ ok: true } | { ok: false; mensagem: string }>;
@@ -11,7 +12,9 @@ export function useEnderecoDaApi(): void {
   const { settings } = useSettings();
 
   useEffect(() => {
-    definirEnderecoConfigurado(settings.enderecoDaApi);
+    // O campo do endereço só existe em desenvolvimento: no APK de entrega vale sempre o endereço do build,
+    // mesmo que algum tenha ficado salvo no aparelho.
+    definirEnderecoConfigurado(ehModoDesenvolvedor() ? settings.enderecoDaApi : null);
     // Com o endereço que vale no lugar, a API grátis do Render começa a acordar enquanto o usuário navega.
     void acordarServidor();
   }, [settings.enderecoDaApi]);

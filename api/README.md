@@ -42,7 +42,7 @@ A conta de serviço dá acesso total ao projeto Firebase: ela vai só no painel 
 3. Runtime `Docker`, Root Directory `api`, Health Check Path `/saude`, região Virginia (US East).
 4. Environment Variables: `ASSINAAQUI_HMAC_SECRET` e `FIREBASE_SERVICE_ACCOUNT` (cole o conteúdo inteiro do JSON).
 5. No log do deploy deve aparecer `Registros no Firestore do projeto ...`. Confira em `https://<servico>.onrender.com/saude`.
-6. No app, aponte para o Render com `ASSINAAQUI_API_URL=https://<servico>.onrender.com` no `.env.local` e no `env` dos perfis do `eas.json`, ou digite o endereço nas Configurações do app.
+6. No app, aponte para o Render com `ASSINAAQUI_API_URL=https://<servico>.onrender.com` no `.env.local` e no `env` dos perfis `preview` e `production` do `eas.json` (já configurado). Em desenvolvimento dá para trocar o endereço nas Configurações do app; no APK de entrega esse campo não aparece e vale sempre o endereço do build.
 
 No plano grátis a API dorme depois de uns 15 minutos parada e leva até um minuto para acordar: o app chama `/saude` ao abrir e quando o endereço muda, e espera até 60 s por resposta. Repositório público conectado pela URL não tem deploy automático; use Manual Deploy ou o Deploy Hook do serviço.
 

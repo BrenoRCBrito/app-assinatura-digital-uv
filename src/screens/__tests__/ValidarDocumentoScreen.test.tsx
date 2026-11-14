@@ -12,6 +12,7 @@ import {
   definirEnderecoConfigurado,
   ServidorIndisponivel,
 } from '../../services/apiDeDocumentos';
+import { ehModoDesenvolvedor } from '../../services/modoDesenvolvedor';
 import { SettingsProvider } from '../../storage/SettingsProvider';
 import { SETTINGS_STORAGE_KEY } from '../../storage/settingsStorage';
 import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
@@ -21,6 +22,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
+jest.mock('../../services/modoDesenvolvedor', () => ({ ehModoDesenvolvedor: jest.fn(() => true) }));
 jest.mock('../../services/apiDeDocumentos', () => ({
   ServidorIndisponivel: jest.requireActual('../../services/apiDeDocumentos').ServidorIndisponivel,
   consultarCodigo: jest.fn(),
@@ -219,6 +221,29 @@ describe('ValidarDocumentoScreen', () => {
       'http://192.168.0.10:3000',
     );
     erro.mockRestore();
+  });
+
+  test('no APK de entrega, sem servidor pede para conferir a internet, sem campo de endereço', async () => {
+    const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    jest.mocked(ehModoDesenvolvedor).mockReturnValue(false);
+    try {
+      jest.mocked(consultarCodigo).mockRejectedValueOnce(new ServidorIndisponivel());
+      await abrirTela();
+      await screen.findByText(DICA);
+      await lerQr(CODIGO);
+
+      expect(await screen.findByText('Servidor indisponível')).toBeTruthy();
+      expect(screen.getByText(/Confira a conexão com a internet/)).toBeTruthy();
+      expect(screen.queryByLabelText('Endereço da API')).toBeNull();
+
+      await fireEvent.press(screen.getByText('Tentar de novo'));
+
+      expect(await screen.findByText('Documento autêntico')).toBeTruthy();
+      expect(definirEnderecoConfigurado).not.toHaveBeenCalled();
+    } finally {
+      jest.mocked(ehModoDesenvolvedor).mockReturnValue(true);
+      erro.mockRestore();
+    }
   });
 
   test('endereço inválido na tela sem servidor avisa e não tenta de novo', async () => {

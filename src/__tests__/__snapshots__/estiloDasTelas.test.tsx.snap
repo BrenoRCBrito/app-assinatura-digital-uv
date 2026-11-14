@@ -653,7 +653,7 @@ exports[`estilo das telas no tema dark login, início e configurações: configu
     "elemento": "texto",
     "fontSize": 14,
     "lineHeight": 20,
-    "texto": "Em branco, o app usa o PC que roda o Metro. No APK de entrega, digite o endereço que o npm run api:up mostra.",
+    "texto": "Só aparece em desenvolvimento. Em branco, o app usa o endereço do build (o Render) ou, sem ele, o PC que roda o Metro. Para a API local, digite o endereço que o npm run api:up mostra.",
   },
   {
     "color": "#778DA9",
@@ -1945,7 +1945,7 @@ exports[`estilo das telas no tema light login, início e configurações: config
     "elemento": "texto",
     "fontSize": 14,
     "lineHeight": 20,
-    "texto": "Em branco, o app usa o PC que roda o Metro. No APK de entrega, digite o endereço que o npm run api:up mostra.",
+    "texto": "Só aparece em desenvolvimento. Em branco, o app usa o endereço do build (o Render) ou, sem ele, o PC que roda o Metro. Para a API local, digite o endereço que o npm run api:up mostra.",
   },
   {
     "color": "#415A77",

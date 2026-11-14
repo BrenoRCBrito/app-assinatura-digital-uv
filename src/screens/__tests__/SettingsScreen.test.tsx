@@ -7,6 +7,7 @@ import Toast from 'react-native-toast-message';
 import { DEFAULT_SETTINGS } from '../../domain/settings';
 import { useAuthentication } from '../../hooks/useAuthentication';
 import { excluirTodasAsPastasDeArquivos } from '../../services/fileSystem';
+import { ehModoDesenvolvedor } from '../../services/modoDesenvolvedor';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 import type { Repositories } from '../../storage/repositories';
 import { SettingsProvider } from '../../storage/SettingsProvider';
@@ -20,6 +21,7 @@ jest.mock('react-native-safe-area-context', () => require('react-native-safe-are
 jest.mock('../../hooks/useAuthentication', () => ({ useAuthentication: jest.fn() }));
 jest.mock('../../storage/RepositoriesProvider', () => ({ useRepositories: jest.fn() }));
 jest.mock('../../services/fileSystem', () => ({ excluirTodasAsPastasDeArquivos: jest.fn() }));
+jest.mock('../../services/modoDesenvolvedor', () => ({ ehModoDesenvolvedor: jest.fn(() => true) }));
 
 type BotoesDoAlerta = NonNullable<Parameters<typeof Alert.alert>[2]>;
 
@@ -189,5 +191,29 @@ describe('SettingsScreen', () => {
     await waitFor(async () =>
       expect(JSON.parse((await AsyncStorage.getItem(SETTINGS_STORAGE_KEY)) ?? '{}').enderecoDaApi).toBeNull(),
     );
+  });
+});
+
+describe('SettingsScreen no APK de entrega', () => {
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+    jest.mocked(ehModoDesenvolvedor).mockReturnValue(false);
+    jest.mocked(useAuthentication).mockReturnValue({ sair } as unknown as ReturnType<typeof useAuthentication>);
+    jest.mocked(useRepositories).mockReturnValue({} as unknown as Repositories);
+  });
+
+  afterEach(() => {
+    jest.mocked(ehModoDesenvolvedor).mockReturnValue(true);
+  });
+
+  test('esconde o endereço da API e o Limpar dados, que são só de quem desenvolve', async () => {
+    await render(<SettingsScreen />, { wrapper: SettingsProvider });
+
+    await screen.findByText('Salvar cópia na galeria');
+
+    expect(screen.queryByText('API de documentos')).toBeNull();
+    expect(screen.queryByLabelText('Endereço da API')).toBeNull();
+    expect(screen.queryByText('Limpar dados do app')).toBeNull();
+    expect(screen.getByText('Motor de gestos')).toBeTruthy();
   });
 });

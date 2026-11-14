@@ -26,6 +26,7 @@ import {
   enderecoAutomatico,
   ServidorIndisponivel,
 } from '../../services/apiDeDocumentos';
+import { ehModoDesenvolvedor } from '../../services/modoDesenvolvedor';
 import { useSettings } from '../../storage/SettingsProvider';
 import { validarCodigoLido } from '../../useCases/validarCodigoLido';
 
@@ -56,6 +57,12 @@ const VEREDICTOS: Readonly<Record<ResultadoDaValidacao['tipo'], Aviso>> = {
 
 const SEM_SERVIDOR: Aviso = {
   titulo: 'Servidor indisponível',
+  descricao: 'O AssinaAqui não alcançou o servidor. Confira a conexão com a internet e tente de novo.',
+};
+
+// Em desenvolvimento o servidor pode ser a API no PC: a tela também deixa corrigir o endereço.
+const SEM_SERVIDOR_EM_DESENVOLVIMENTO: Aviso = {
+  titulo: 'Servidor indisponível',
   descricao: 'O AssinaAqui não alcançou o servidor. Confira o wifi e o endereço da API e tente de novo.',
 };
 
@@ -75,6 +82,7 @@ export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps
   const { settings } = useSettings();
   const [endereco, setEndereco] = useState(settings.enderecoDaApi ?? '');
   const salvarEnderecoDaApi = useSalvarEnderecoDaApi();
+  const modoDesenvolvedor = ehModoDesenvolvedor();
   // O leitor dispara a cada quadro; a ref barra a segunda leitura antes do próximo render.
   const lendoRef = useRef(false);
 
@@ -104,7 +112,7 @@ export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps
   }
 
   function tentarDeNovo(texto: string) {
-    if (endereco !== (settings.enderecoDaApi ?? '')) {
+    if (modoDesenvolvedor && endereco !== (settings.enderecoDaApi ?? '')) {
       const salvo = salvarEnderecoDaApi(endereco);
       if (!salvo.ok) {
         showError('Endereço inválido', salvo.mensagem);
@@ -130,6 +138,8 @@ export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps
   }
 
   if (resultado === null && semServidor !== null) {
+    const aviso = modoDesenvolvedor ? SEM_SERVIDOR_EM_DESENVOLVIMENTO : SEM_SERVIDOR;
+
     return (
       <Screen
         preset="authScroll"
@@ -146,18 +156,20 @@ export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps
       >
         <Stack gap="block">
           <Stack gap="titleText" align="center">
-            <Text preset="screenTitle">{SEM_SERVIDOR.titulo}</Text>
-            <Text preset="status">{SEM_SERVIDOR.descricao}</Text>
+            <Text preset="screenTitle">{aviso.titulo}</Text>
+            <Text preset="status">{aviso.descricao}</Text>
           </Stack>
-          <TextField
-            label="Endereço da API"
-            accessibilityLabel="Endereço da API"
-            value={endereco}
-            onChangeText={setEndereco}
-            placeholder={enderecoAutomatico() ?? EXEMPLO_DO_ENDERECO}
-            keyboardType="url"
-            autoCapitalize="none"
-          />
+          {modoDesenvolvedor ? (
+            <TextField
+              label="Endereço da API"
+              accessibilityLabel="Endereço da API"
+              value={endereco}
+              onChangeText={setEndereco}
+              placeholder={enderecoAutomatico() ?? EXEMPLO_DO_ENDERECO}
+              keyboardType="url"
+              autoCapitalize="none"
+            />
+          ) : null}
         </Stack>
       </Screen>
     );

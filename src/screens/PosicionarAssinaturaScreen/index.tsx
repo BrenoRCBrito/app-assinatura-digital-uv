@@ -55,7 +55,7 @@ const MENSAGENS_DE_FALHA: Readonly<Record<MotivoFalhaAssinatura, string>> = {
   localIndisponivel: 'Não foi possível obter o local. Tente em área aberta.',
   servidorIndisponivel:
     'Não foi possível falar com o servidor do AssinaAqui. ' +
-    'Confira se o celular está no mesmo wifi do servidor e tente de novo.',
+    'Confira a conexão com a internet e tente de novo.',
   erroAoGerarDocumento: 'Não foi possível gerar o documento. Tente de novo.',
 };
 
