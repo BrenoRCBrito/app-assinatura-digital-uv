@@ -35,13 +35,14 @@ describe('layoutDaPagina', () => {
     expect(layout.esquerda).toBeCloseTo(12 + (571 - 526.5) / 2, 6);
   });
 
-  test('a foto deitada ocupa a largura toda, centralizada na altura', () => {
+  test('a foto que não passa do A4 ocupa a largura toda colada no topo, e o papel que sobra fica antes do rodapé', () => {
     const layout = layoutDaPagina(DEITADA, createPixels(595));
 
     expect(layout.foto.width).toBeCloseTo(571, 6);
     expect(layout.foto.height).toBeCloseTo(428.25, 6);
     expect(layout.esquerda).toBeCloseTo(12, 6);
-    expect(layout.topo).toBeCloseTo(12 + (702 - 428.25) / 2, 6);
+    expect(layout.topo).toBeCloseTo(12, 6);
+    expect(layout.rodape.topo).toBeCloseTo(842 - 12 - 104, 6);
   });
 
   test('a foto mantém a proporção real e nunca invade o rodapé nem sai da folha', () => {

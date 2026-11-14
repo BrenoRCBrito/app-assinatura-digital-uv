@@ -27,9 +27,9 @@ const TAMANHO_DA_LEGENDA = 9;
 export const LARGURA_DA_FOLHA_A4: Pixels = createPixels(LARGURA_DA_FOLHA);
 export const ALTURA_DA_FOLHA_A4: Pixels = createPixels(ALTURA_DA_FOLHA);
 
-// A folha é sempre A4: o rodapé com o QR fica no pé, e a foto encolhe até caber inteira no espaço de cima,
-// centralizada e com a proporção real. Sobra papel nas laterais (foto em pé mais alongada que o A4) ou em cima
-// e embaixo (foto deitada), mas nada do documento é cortado.
+// A folha é sempre A4, com o rodapé do QR no pé. A foto que passaria do A4 encolhe até caber inteira no espaço de
+// cima, centralizada na largura (sobra papel nas laterais); a que não passa ocupa a largura toda, colada no topo,
+// e o papel que sobra fica entre ela e o rodapé. A proporção é sempre a real e nada do documento é cortado.
 export function layoutDaPagina(tamanhoFoto: Size, largura: Pixels): LayoutDaPagina {
   const escala = largura / LARGURA_DA_FOLHA;
   const margem = MARGEM * escala;
@@ -43,7 +43,7 @@ export function layoutDaPagina(tamanhoFoto: Size, largura: Pixels): LayoutDaPagi
     pagina,
     foto,
     esquerda: createPixels(margem + (areaDaFoto.width - foto.width) / 2),
-    topo: createPixels(margem + (areaDaFoto.height - foto.height) / 2),
+    topo: createPixels(margem),
     rodape: {
       esquerda: createPixels(margem),
       topo: createPixels(topoDoRodape),
