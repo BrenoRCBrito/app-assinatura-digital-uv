@@ -6,10 +6,12 @@ import type { TestInstance } from 'test-renderer';
 
 import App from '../../../App';
 import type { DocumentoAssinado } from '../../domain/documento';
+import { createCapturedPhoto } from '../../domain/photo';
 import { DEFAULT_SETTINGS } from '../../domain/settings';
 import { criarEmail, criarUsuarioId, type UsuarioId } from '../../domain/usuario';
 import { useAssinarDocumento } from '../../hooks/useAssinarDocumento';
 import { contaDoFirebase } from '../../services/autenticacaoFirebase';
+import { escolherDocumentoDaGaleria } from '../../services/documentoDaGaleria';
 import { authenticateDeviceOwner, getBiometricStatus } from '../../services/localAuthentication';
 import { createRepositories } from '../../storage/createRepositories';
 import { SETTINGS_STORAGE_KEY } from '../../storage/settingsStorage';
@@ -39,6 +41,7 @@ jest.mock('../../services/fileSystem', () => ({
   excluirArquivosDocumento: jest.fn(),
 }));
 jest.mock('../../hooks/useAssinarDocumento', () => ({ useAssinarDocumento: jest.fn() }));
+jest.mock('../../services/documentoDaGaleria', () => ({ escolherDocumentoDaGaleria: jest.fn() }));
 jest.mock('expo-camera', () => {
   const { Component } = require('react');
 
@@ -83,6 +86,7 @@ async function abrirPosicionar() {
   await render(<App />);
   await fireEvent.press(await screen.findByText('Acessar'));
   await fireEvent.press(await screen.findByText('Digitalizar documento'));
+  await fireEvent.press(await screen.findByText('Tirar foto agora'));
   await fireEvent.press(await screen.findByLabelText('Tirar foto'));
   await fireEvent.press(await screen.findByText('Usar foto'));
   await screen.findByRole('radio', { name: 'Rubrica' });
@@ -134,6 +138,27 @@ describe('AppNavigator', () => {
 
     expect(pilha).toHaveLength(2);
     expect(pilha.at(-1)?.props.gestureEnabled).toBe(false);
+  });
+
+  test('a foto da galeria vai do Início direto ao Posicionar, sem passar pela câmera', async () => {
+    jest.mocked(escolherDocumentoDaGaleria).mockResolvedValue({
+      tipo: 'escolhida',
+      foto: createCapturedPhoto('file:///cache/manipulada.jpg', 3024, 4032),
+    });
+    await createRepositories('sqlite').assinaturas.save(
+      criarAssinaturaDeTeste('1', 'Rubrica', '2026-09-12T12:00:00.000Z', usuarioIdReal),
+    );
+    await render(<App />);
+    await fireEvent.press(await screen.findByText('Acessar'));
+    await fireEvent.press(await screen.findByText('Digitalizar documento'));
+    await fireEvent.press(await screen.findByText('Escolher da galeria'));
+    await screen.findByRole('radio', { name: 'Rubrica' });
+
+    const pilha = telasDaPilha();
+
+    expect(pilha).toHaveLength(2);
+    expect(pilha.at(-1)?.props.gestureEnabled).toBe(false);
+    expect(screen.queryByText('Escolher da galeria')).toBeNull();
   });
 
   test('Assinar troca o Posicionar pelo documento assinado', async () => {

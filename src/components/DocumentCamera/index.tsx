@@ -2,13 +2,11 @@ import React, { useMemo, useRef, useState } from 'react';
 import { CameraView } from 'expo-camera';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { createCapturedPhoto, type CapturedPhoto } from '../../domain/photo';
+import { createCapturedPhoto, QUALIDADE_DA_FOTO, type CapturedPhoto } from '../../domain/photo';
 import { useAppTheme } from '../../theme';
 import { IconButton } from '../IconButton';
 import { Text } from '../Text';
 import { documentCameraPresets } from './presets';
-
-const PHOTO_QUALITY = 0.6;
 
 type DocumentCameraProps = Readonly<{
   onClose: () => void;
@@ -30,7 +28,7 @@ export function DocumentCamera({ onClose, onCapture, onCaptureError, onMountErro
     }
     capturing.current = true;
     try {
-      const picture = await camera.current.takePictureAsync({ quality: PHOTO_QUALITY });
+      const picture = await camera.current.takePictureAsync({ quality: QUALIDADE_DA_FOTO });
       onCapture(createCapturedPhoto(picture.uri, picture.width, picture.height));
     } catch (error) {
       onCaptureError(error);

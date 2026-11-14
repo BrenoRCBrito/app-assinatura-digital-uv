@@ -51,6 +51,7 @@ export function AppNavigator() {
                 {({ navigation }: { navigation: AppNavigation }) => (
                   <HomeScreen
                     onDigitalizarDocumento={() => navigation.navigate('DigitalizarDocumento')}
+                    onUsarFotoDaGaleria={(foto) => navigation.navigate('PosicionarAssinatura', { foto })}
                     onOpenAssinaturas={() => navigation.navigate('Assinaturas')}
                     onOpenHistorico={() => navigation.navigate('Historico')}
                     onValidarDocumento={() => navigation.navigate('ValidarDocumento')}

@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, FeatureCard, MenuList, Row, Screen, Stack } from '../../components';
+import type { CapturedPhoto } from '../../domain/photo';
 import { useAuthentication } from '../../hooks/useAuthentication';
+import { OrigemDoDocumentoDialog } from './OrigemDoDocumentoDialog';
 
 type HomeScreenProps = Readonly<{
   onDigitalizarDocumento: () => void;
+  onUsarFotoDaGaleria: (foto: CapturedPhoto) => void;
   onOpenAssinaturas: () => void;
   onOpenHistorico: () => void;
   onValidarDocumento: () => void;
@@ -13,6 +16,7 @@ type HomeScreenProps = Readonly<{
 
 export function HomeScreen({
   onDigitalizarDocumento,
+  onUsarFotoDaGaleria,
   onOpenAssinaturas,
   onOpenHistorico,
   onValidarDocumento,
@@ -21,6 +25,7 @@ export function HomeScreen({
 }: HomeScreenProps) {
 
 const { sair } = useAuthentication();
+const [escolhendoOrigem, setEscolhendoOrigem] = useState(false);
 
 return (
     <Screen
@@ -43,9 +48,14 @@ return (
         <FeatureCard
           icon="documentSign"
           title="Assinar documento"
-          description="Fotografe o documento, posicione uma assinatura salva e gere o PDF."
+          description="Fotografe o documento ou escolha a foto na galeria, posicione uma assinatura salva e gere o PDF."
         >
-          <Button label="Digitalizar documento" icon="camera" onPress={onDigitalizarDocumento} preset="inverse" />
+          <Button
+            label="Digitalizar documento"
+            icon="camera"
+            onPress={() => setEscolhendoOrigem(true)}
+            preset="inverse"
+          />
         </FeatureCard>
         <MenuList
           items={[
@@ -57,6 +67,12 @@ return (
           ]}
         />
       </Stack>
+      <OrigemDoDocumentoDialog
+        visible={escolhendoOrigem}
+        onClose={() => setEscolhendoOrigem(false)}
+        onTirarFoto={onDigitalizarDocumento}
+        onFotoEscolhida={onUsarFotoDaGaleria}
+      />
     </Screen>
   );
 }

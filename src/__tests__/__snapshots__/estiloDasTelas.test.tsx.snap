@@ -792,7 +792,7 @@ exports[`estilo das telas no tema dark login, início e configurações: início
     "elemento": "texto",
     "fontSize": 14,
     "lineHeight": 20,
-    "texto": "Fotografe o documento, posicione uma assinatura salva e gere o PDF.",
+    "texto": "Fotografe o documento ou escolha a foto na galeria, posicione uma assinatura salva e gere o PDF.",
   },
   {
     "backgroundColor": "#0D1B2A",
@@ -2084,7 +2084,7 @@ exports[`estilo das telas no tema light login, início e configurações: iníci
     "elemento": "texto",
     "fontSize": 14,
     "lineHeight": 20,
-    "texto": "Fotografe o documento, posicione uma assinatura salva e gere o PDF.",
+    "texto": "Fotografe o documento ou escolha a foto na galeria, posicione uma assinatura salva e gere o PDF.",
   },
   {
     "backgroundColor": "#E0E1DD",

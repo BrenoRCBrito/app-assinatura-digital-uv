@@ -1,4 +1,20 @@
-import { createCapturedPhoto, createFileUri } from '../photo';
+import { createSize } from '../geometry';
+import { createCapturedPhoto, createFileUri, MAIOR_LADO_DA_FOTO, reducaoDaFoto } from '../photo';
+
+describe('reducaoDaFoto', () => {
+  test('foto do tamanho da câmera ou menor fica como está', () => {
+    expect(reducaoDaFoto(createSize(3024, 4032))).toBeNull();
+    expect(reducaoDaFoto(createSize(4032, 3024))).toBeNull();
+    expect(reducaoDaFoto(createSize(800, 600))).toBeNull();
+  });
+
+  test('foto maior encolhe pelo lado maior até o tamanho da câmera, mantendo a proporção', () => {
+    expect(MAIOR_LADO_DA_FOTO).toBe(4032);
+    expect(reducaoDaFoto(createSize(6048, 8064))).toEqual({ height: 4032 });
+    expect(reducaoDaFoto(createSize(8064, 6048))).toEqual({ width: 4032 });
+    expect(reducaoDaFoto(createSize(5000, 5000))).toEqual({ width: 4032 });
+  });
+});
 
 describe('photo', () => {
   test('createFileUri aceita o endereço de um arquivo', () => {
