@@ -1,0 +1,12 @@
+appId: com.brcb.AssinaAqui
+name: Avisa quando o código não foi emitido pela API
+---
+- runFlow: subflows/abrir-validacao-digitada.yaml
+- runFlow:
+    file: subflows/conferir-codigo.yaml
+    env:
+      CODIGO: ZZZZ-ZZZZ-ZZZZ
+- extendedWaitUntil:
+    visible: "Código não encontrado"
+    timeout: 15000
+- assertVisible: "Confira os caracteres digitados. Nenhum documento foi emitido com este código."

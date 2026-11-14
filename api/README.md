@@ -36,6 +36,8 @@ O `npm run api:up` passa só essa variável para o contêiner.
 | GET | `/documentos/:codigo` | consulta pelo código curto |
 | POST | `/validacoes` | confere um código AA1 antigo |
 
+A documentação interativa (Swagger UI) fica em `/docs`, e o documento OpenAPI em `/openapi.json`. Com a API no ar, abra `http://<endereço>:3000/docs` no navegador para ver e testar cada rota.
+
 ## Testes
 
 `npm run test:api`, na raiz.

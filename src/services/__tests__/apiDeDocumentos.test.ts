@@ -1,9 +1,12 @@
 import Constants from 'expo-constants';
 
 import { criarCodigoCurto } from '../../domain/codigoCurto';
+import { criarEnderecoDaApi } from '../../domain/enderecoDaApi';
 import {
   conferirCodigoAntigo,
   consultarCodigo,
+  definirEnderecoConfigurado,
+  enderecoAutomatico,
   enderecoDaApi,
   registrarDocumento,
   ServidorIndisponivel,
@@ -27,6 +30,7 @@ function responder(status: number, corpo: unknown): Response {
 }
 
 beforeEach(() => {
+  definirEnderecoConfigurado(null);
   constantes.expoConfig = { hostUri: '192.168.0.10:8081' };
   fetchSimulado = jest.fn();
   global.fetch = fetchSimulado as unknown as typeof fetch;
@@ -49,6 +53,23 @@ describe('enderecoDaApi', () => {
     constantes.expoConfig = { hostUri: '192.168.0.10:8081', extra: { apiUrl: 'http://10.0.0.5:4000/' } };
 
     expect(enderecoDaApi()).toBe('http://10.0.0.5:4000');
+  });
+
+  test('o endereço das Configurações vence o do build e o do Metro', () => {
+    constantes.expoConfig = { hostUri: '192.168.0.10:8081', extra: { apiUrl: 'http://10.0.0.5:4000' } };
+    definirEnderecoConfigurado(criarEnderecoDaApi('http://10.0.2.2:3000'));
+
+    expect(enderecoDaApi()).toBe('http://10.0.2.2:3000');
+
+    definirEnderecoConfigurado(null);
+    expect(enderecoDaApi()).toBe('http://10.0.0.5:4000');
+  });
+
+  test('o endereço automático é o do build ou o do Metro, e nada fora de desenvolvimento', () => {
+    expect(enderecoAutomatico()).toBe('http://192.168.0.10:3000');
+
+    constantes.expoConfig = {};
+    expect(enderecoAutomatico()).toBeNull();
   });
 
   test('sem endereço nenhum, trata como servidor indisponível', () => {

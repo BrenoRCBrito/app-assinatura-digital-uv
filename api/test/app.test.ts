@@ -12,6 +12,7 @@ import { criarApp } from '../src/app';
 import { abrirBanco, type Banco } from '../src/banco';
 import { criarCarimbo } from '../src/carimbo';
 import { codigoCurtoDeBytes, formatarCodigoCurto } from '../src/domain/codigoCurto';
+import { documentoOpenApi } from '../src/openapi';
 import { CAMPOS_DO_VETOR, CODIGO_IMPRESSO_PELO_APP, SEGREDO_DO_VETOR } from './vetor';
 
 const CAMPOS = [
@@ -203,3 +204,58 @@ describe('POST /validacoes', () => {
     assert.equal(resposta.status, 400);
   });
 });
+
+describe('documentação', () => {
+  test('publica o OpenAPI com as rotas da API', async () => {
+    const resposta = await fetch(`${base}/openapi.json`);
+
+    assert.equal(resposta.status, 200);
+    const documento = (await resposta.json()) as {
+      openapi: string;
+      info: { title: string };
+      paths: Record<string, Record<string, unknown>>;
+    };
+    assert.equal(documento.openapi, '3.0.3');
+    assert.equal(documento.info.title, 'API do AssinaAqui');
+    assert.deepEqual(rotasDoOpenApi(documento.paths), [
+      'GET /documentos/{codigo}',
+      'GET /saude',
+      'POST /documentos',
+      'POST /validacoes',
+    ]);
+  });
+
+  test('toda rota da API está documentada', () => {
+    const app = criarApp({
+      banco,
+      carimbo: criarCarimbo(SEGREDO_DO_VETOR),
+      gerarBytes: () => BYTES_A,
+      agora: () => new Date(),
+    });
+    const camadas = (app.router as unknown as { stack: { route?: { path: string; methods: Record<string, boolean> } }[] })
+      .stack;
+    const rotas = camadas
+      .flatMap((camada) => (camada.route === undefined ? [] : [camada.route]))
+      .filter((rota) => rota.path !== '/openapi.json')
+      .flatMap((rota) =>
+        Object.keys(rota.methods).map((metodo) => `${metodo.toUpperCase()} ${rota.path.replace(/:(\w+)/g, '{$1}')}`),
+      )
+      .sort();
+
+    assert.deepEqual(rotas, rotasDoOpenApi(documentoOpenApi.paths));
+  });
+
+  test('serve o Swagger UI em /docs', async () => {
+    const resposta = await fetch(`${base}/docs/`);
+
+    assert.equal(resposta.status, 200);
+    assert.match(resposta.headers.get('content-type') ?? '', /text\/html/);
+    assert.match(await resposta.text(), /swagger-ui/i);
+  });
+});
+
+function rotasDoOpenApi(caminhos: Record<string, Record<string, unknown>>): string[] {
+  return Object.entries(caminhos)
+    .flatMap(([caminho, metodos]) => Object.keys(metodos).map((metodo) => `${metodo.toUpperCase()} ${caminho}`))
+    .sort();
+}

@@ -2,6 +2,7 @@ import React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 import { DEFAULT_SETTINGS } from '../../domain/settings';
 import { useAuthentication } from '../../hooks/useAuthentication';
@@ -147,5 +148,46 @@ describe('SettingsScreen', () => {
         ultimoUsuarioIdBiometria: null,
       });
     });
+  });
+  test('salva o endereço da API digitado, sem a barra final', async () => {
+    const toast = jest.spyOn(Toast, 'show').mockImplementation(() => undefined);
+    await abrirConfiguracoes();
+
+    await fireEvent.changeText(screen.getByLabelText('Endereço da API'), 'http://192.168.0.10:3000/');
+    await fireEvent.press(screen.getByText('Salvar endereço'));
+
+    await waitFor(async () =>
+      expect(JSON.parse((await AsyncStorage.getItem(SETTINGS_STORAGE_KEY)) ?? '{}').enderecoDaApi).toBe(
+        'http://192.168.0.10:3000',
+      ),
+    );
+    expect(toast).toHaveBeenCalledWith({ type: 'success', text1: 'Endereço da API salvo.' });
+    toast.mockRestore();
+  });
+
+  test('endereço inválido avisa e não salva', async () => {
+    await abrirConfiguracoes();
+
+    await fireEvent.changeText(screen.getByLabelText('Endereço da API'), '192.168.0.10:3000');
+    await fireEvent.press(screen.getByText('Salvar endereço'));
+
+    expect(alerta).toHaveBeenCalledWith('Endereço inválido', 'Digite o endereço completo, como http://192.168.0.10:3000.');
+    expect(JSON.parse((await AsyncStorage.getItem(SETTINGS_STORAGE_KEY)) ?? '{}').enderecoDaApi ?? null).toBeNull();
+  });
+
+  test('campo vazio volta ao endereço automático', async () => {
+    await AsyncStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({ ...DEFAULT_SETTINGS, enderecoDaApi: 'http://192.168.0.10:3000' }),
+    );
+    await abrirConfiguracoes();
+
+    expect(screen.getByLabelText('Endereço da API').props.value).toBe('http://192.168.0.10:3000');
+    await fireEvent.changeText(screen.getByLabelText('Endereço da API'), '  ');
+    await fireEvent.press(screen.getByText('Salvar endereço'));
+
+    await waitFor(async () =>
+      expect(JSON.parse((await AsyncStorage.getItem(SETTINGS_STORAGE_KEY)) ?? '{}').enderecoDaApi).toBeNull(),
+    );
   });
 });

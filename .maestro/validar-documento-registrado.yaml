@@ -1,0 +1,11 @@
+appId: com.brcb.AssinaAqui
+name: Valida pelo código digitado um documento registrado na API
+---
+- runFlow: subflows/abrir-validacao-digitada.yaml
+- runFlow: subflows/conferir-codigo.yaml
+- extendedWaitUntil:
+    visible: "Documento autêntico"
+    timeout: 15000
+- assertVisible: "Documento de teste do Maestro"
+- tapOn: "Conferir outro"
+- assertVisible: "Conferir"

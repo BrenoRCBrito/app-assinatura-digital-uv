@@ -1,0 +1,33 @@
+appId: com.brcb.AssinaAqui
+name: Desenha, salva e exclui uma assinatura
+tags:
+  - conta
+---
+- runFlow: subflows/entrar-na-conta.yaml
+# Nome novo a cada execução: uma sobra de execução interrompida não confunde a exclusão.
+- evalScript: ${output.nome = 'Maestro ' + String(Date.now()).slice(-6)}
+- tapOn: "Minhas assinaturas"
+- tapOn: "Nova assinatura"
+- tapOn: "Nome da assinatura"
+- inputText: ${output.nome}
+- hideKeyboard
+# No Pixel 7 do emulador, o papel vai de 29% a 88% da altura; os traços ficam no meio dele.
+- swipe:
+    start: 20%, 45%
+    end: 80%, 55%
+    duration: 600
+- swipe:
+    start: 30%, 62%
+    end: 70%, 42%
+    duration: 600
+- tapOn: "Salvar"
+# O nome digitado também aparece na tela de desenho: primeiro espera voltar para a lista.
+- extendedWaitUntil:
+    notVisible: "Deitar papel"
+    timeout: 15000
+- assertVisible: ${output.nome}
+- tapOn: ${'Excluir ' + output.nome}
+- tapOn: "Excluir"
+- extendedWaitUntil:
+    notVisible: ${output.nome}
+    timeout: 15000

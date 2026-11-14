@@ -1,0 +1,26 @@
+appId: com.brcb.AssinaAqui
+---
+# Começa do zero a cada fluxo: sem sessão guardada, sem endereço da API e sem pedidos de permissão na tela.
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- tapOn: "E-mail"
+- inputText:
+    text: ${MAESTRO_EMAIL}
+    label: Digita o e-mail da conta de teste
+- tapOn: "Senha"
+- inputText:
+    text: ${MAESTRO_SENHA}
+    label: Digita a senha da conta de teste
+- hideKeyboard
+- tapOn: "Entrar"
+- extendedWaitUntil:
+    visible: "Digitalizar documento"
+    timeout: 30000
+# Com uma digital cadastrada no aparelho, o app oferece a biometria no primeiro login.
+- runFlow:
+    when:
+      visible: "Entrar com biometria"
+    commands:
+      - tapOn: "Não"

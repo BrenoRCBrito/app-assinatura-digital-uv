@@ -48,7 +48,8 @@ for _ in $(seq "$ESPERA_MAXIMA_S"); do
   if curl --silent --fail "http://127.0.0.1:$PORTA/saude" > /dev/null; then
     echo
     echo "API do AssinaAqui no ar. No celular, no mesmo wifi: $ASSINAAQUI_ENDERECO_NA_REDE"
-    echo "Para conferir: $ASSINAAQUI_ENDERECO_NA_REDE/saude. Para parar: npm run api:down."
+    echo "Para conferir: $ASSINAAQUI_ENDERECO_NA_REDE/saude. Documentação: $ASSINAAQUI_ENDERECO_NA_REDE/docs."
+    echo "Para parar: npm run api:down."
     exit 0
   fi
   sleep 1

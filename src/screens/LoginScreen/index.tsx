@@ -64,7 +64,14 @@ export function LoginScreen({ onCriarConta, onValidarDocumento }: LoginScreenPro
 
   return (
     <KeyboardDismissArea>
-      <Screen preset="authScroll">
+      <Screen
+        preset="authScroll"
+        footer={
+          <Stack gap="label" align="center">
+            <Link label="Validar um documento" onPress={onValidarDocumento} preset="linkQuiet" />
+          </Stack>
+        }
+      >
         <Stack gap="hero" align="center">
           <Logo />
           <Text preset="brand">Assina Aqui</Text>
@@ -92,8 +99,7 @@ export function LoginScreen({ onCriarConta, onValidarDocumento }: LoginScreenPro
 
           <Stack gap="label" align="center">
             <Button label={entrando ? 'Entrando…' : 'Entrar'} onPress={entrar} disabled={entrando} />
-            <Link label="Criar conta" onPress={onCriarConta} />
-            <Link label="Validar um documento" onPress={onValidarDocumento} preset="linkQuiet" />
+            <Button label="Criar conta" onPress={onCriarConta} preset="secondary" />
             {mostrarEntrarComBiometria && usuarioBiometria !== null ? (
               <Link label="Usar biometria" onPress={() => setUsarSenha(false)} preset="linkQuiet" />
             ) : null}

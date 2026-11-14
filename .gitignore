@@ -49,3 +49,6 @@ database-debug.log
 
 # banco local da API
 api/dados/
+
+# credenciais locais do APK de entrega (geradas pelo scripts/build-android.sh)
+credentials.json

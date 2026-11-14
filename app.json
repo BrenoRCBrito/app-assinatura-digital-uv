@@ -80,7 +80,16 @@
           "imageWidth": 200
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true,
+            "enableMinifyInReleaseBuilds": false
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

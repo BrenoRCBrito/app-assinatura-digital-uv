@@ -1,0 +1,23 @@
+appId: com.brcb.AssinaAqui
+name: Abre cada item do menu do Início e volta
+tags:
+  - conta
+---
+- runFlow: subflows/entrar-na-conta.yaml
+- tapOn: "Minhas assinaturas"
+- assertNotVisible: "Digitalizar documento"
+- assertVisible: "Nova assinatura"
+- back
+- tapOn: "Histórico"
+- assertNotVisible: "Digitalizar documento"
+- back
+- tapOn: "Validar documento"
+- assertVisible: "Digitar código"
+- back
+- tapOn: "Perfil"
+- assertVisible: "Dados da conta"
+- back
+- tapOn: "Configurações"
+- assertVisible: "Motor de gestos"
+- back
+- assertVisible: "Digitalizar documento"

@@ -4,8 +4,11 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Mesmo arquivo que o app.config.js lê: fica um nível acima do repositório, fora do Git.
-ARQUIVO_DE_SEGREDOS="$(cd .. && pwd)/.env.local"
+PASTA_DE_FORA="$(cd .. && pwd)"
+ARQUIVO_DE_SEGREDOS="$PASTA_DE_FORA/.env.local"
+KEYSTORE="$PASTA_DE_FORA/credenciais/assinaaqui-preview.jks"
 VERSAO_DO_EAS=27.7.2
+PERFIL="${1:-preview}"
 
 falhar() {
   echo "$1" >&2
@@ -19,6 +22,34 @@ if [ -f "$ARQUIVO_DE_SEGREDOS" ]; then
 fi
 [ -n "${GOOGLE_MAPS_ANDROID_KEY:-}" ] ||
   falhar "Defina GOOGLE_MAPS_ANDROID_KEY em $ARQUIVO_DE_SEGREDOS: sem ela, o mapa não desenha no APK."
+
+case "$PERFIL" in
+  preview)
+    [ -f "$KEYSTORE" ] && [ -n "${ASSINAAQUI_KEYSTORE_PASSWORD:-}" ] ||
+      falhar "Falta a keystore do APK de entrega. Rode uma vez: npm run android:keystore"
+    # O EAS só lê as credenciais locais do credentials.json da raiz; ele é gerado aqui e apagado no fim.
+    trap 'rm -f credentials.json' EXIT
+    cat > credentials.json << JSON
+{
+  "android": {
+    "keystore": {
+      "keystorePath": "$KEYSTORE",
+      "keystorePassword": "$ASSINAAQUI_KEYSTORE_PASSWORD",
+      "keyAlias": "${ASSINAAQUI_KEY_ALIAS:-assinaaqui}",
+      "keyPassword": "$ASSINAAQUI_KEYSTORE_PASSWORD"
+    }
+  }
+}
+JSON
+    ;;
+  development)
+    grep -q '"expo-dev-client"' package.json ||
+      falhar "O perfil development precisa do expo-dev-client: npx expo install expo-dev-client"
+    ;;
+  *)
+    falhar "Perfil desconhecido: $PERFIL. Use preview (padrão) ou development."
+    ;;
+esac
 
 if command -v vfox > /dev/null && [ -f .vfox.toml ]; then
   eval "$(vfox env -s bash)"
@@ -42,4 +73,4 @@ export TMPDIR="${TMPDIR_DO_BUILD:-$HOME/.cache/eas-build-tmp}"
 mkdir -p "$TMPDIR"
 export ORG_GRADLE_PROJECT_reactNativeArchitectures="${ABIS_DO_ANDROID:-arm64-v8a,x86_64}"
 
-npx --yes "eas-cli@$VERSAO_DO_EAS" build --platform android --profile development --local
+npx --yes "eas-cli@$VERSAO_DO_EAS" build --platform android --profile "$PERFIL" --local

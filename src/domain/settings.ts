@@ -1,3 +1,5 @@
+import { criarEnderecoDaApi, type EnderecoDaApi } from './enderecoDaApi';
+
 export type ThemeName = 'light' | 'dark';
 export type GestureEngine = 'panResponder' | 'reanimated';
 
@@ -8,6 +10,7 @@ export type Settings = Readonly<{
   loginBiometricoAtivado: boolean;
   perguntaBiometriaRespondida: boolean;
   ultimoUsuarioIdBiometria: string | null;
+  enderecoDaApi: EnderecoDaApi | null;
 }>;
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -17,6 +20,7 @@ export const DEFAULT_SETTINGS: Settings = {
   loginBiometricoAtivado: false,
   perguntaBiometriaRespondida: false,
   ultimoUsuarioIdBiometria: null,
+  enderecoDaApi: null,
 };
 
 const THEME_NAMES: readonly ThemeName[] = ['light', 'dark'];
@@ -28,6 +32,17 @@ function isThemeName(value: unknown): value is ThemeName {
 
 function isGestureEngine(value: unknown): value is GestureEngine {
   return GESTURE_ENGINES.some((engine) => engine === value);
+}
+
+function lerEnderecoDaApi(value: unknown): EnderecoDaApi | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  try {
+    return criarEnderecoDaApi(value);
+  } catch {
+    return null;
+  }
 }
 
 export function parseSettings(data: unknown): Settings {
@@ -43,6 +58,7 @@ export function parseSettings(data: unknown): Settings {
     'perguntaBiometriaRespondida' in data ? data.perguntaBiometriaRespondida : undefined;
   const ultimoUsuarioIdBiometria =
     'ultimoUsuarioIdBiometria' in data ? data.ultimoUsuarioIdBiometria : undefined;
+  const enderecoDaApi = 'enderecoDaApi' in data ? data.enderecoDaApi : undefined;
 
   return {
     theme: isThemeName(theme) ? theme : DEFAULT_SETTINGS.theme,
@@ -57,5 +73,6 @@ export function parseSettings(data: unknown): Settings {
         : DEFAULT_SETTINGS.perguntaBiometriaRespondida,
     ultimoUsuarioIdBiometria:
       typeof ultimoUsuarioIdBiometria === 'string' ? ultimoUsuarioIdBiometria : DEFAULT_SETTINGS.ultimoUsuarioIdBiometria,
+    enderecoDaApi: lerEnderecoDaApi(enderecoDaApi),
   };
 }
