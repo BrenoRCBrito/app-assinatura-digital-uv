@@ -3,19 +3,17 @@ appId: com.brcb.AssinaAqui
 - tapOn:
     below: "Código de autenticidade"
 - inputText: ${CODIGO}
-# Enter em vez de hideKeyboard: com o teclado do PC ligado no emulador, o Gboard vira uma barra flutuante que o
-# hideKeyboard não fecha, e o "voltar" que ele tenta sai da tela. O Enter tira o foco do campo e fecha o teclado.
 - pressKey: Enter
 - tapOn: "Conferir"
-# O app espera até 60 s pela API: no plano grátis do Render ela pode estar acordando.
+# O app espera até um minuto pela API do Render, que dorme quando fica parada.
 - extendedWaitUntil:
     notVisible: "Conferir"
-    timeout: 60000
+    timeout: 70000
 - runFlow:
     when:
       visible: "Servidor indisponível"
     commands:
-      # Só o APK de desenvolvimento mostra o campo do endereço; o de entrega usa sempre a API do build.
+      # Só o app de desenvolvimento mostra o campo do endereço; o APK de entrega usa sempre a API do build.
       - runFlow:
           when:
             visible: "Endereço da API"
