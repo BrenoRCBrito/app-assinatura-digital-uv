@@ -5,7 +5,7 @@ name: Valida pelo código digitado um documento registrado na API
 - runFlow: subflows/conferir-codigo.yaml
 - extendedWaitUntil:
     visible: "Documento autêntico"
-    timeout: 15000
+    timeout: 60000
 - assertVisible: "Documento de teste do Maestro"
 - tapOn: "Conferir outro"
 - assertVisible: "Conferir"

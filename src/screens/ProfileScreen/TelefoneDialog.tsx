@@ -49,6 +49,7 @@ export function TelefoneDialog({ visible, usuario, onClose, onSaved }: TelefoneD
         <TextField
           label="Telefone"
           accessibilityLabel="Telefone"
+          testID="campo-telefone"
           value={telefone}
           onChangeText={(texto) => setTelefone(mascararTelefoneDigitado(texto))}
           placeholder="(00) 00000-0000"

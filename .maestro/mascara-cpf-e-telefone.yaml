@@ -1,0 +1,27 @@
+appId: com.brcb.AssinaAqui
+name: CPF e telefone ganham a máscara enquanto se digita, no Perfil
+tags:
+  - conta
+---
+- runFlow: subflows/entrar-na-conta.yaml
+- tapOn: "Perfil"
+- assertVisible: "Dados da conta"
+# Só digita e fecha, sem salvar: o CPF e o telefone da conta de teste continuam os mesmos.
+- tapOn: "Editar cpf"
+# O rótulo tem o mesmo texto do campo; o id acha o campo sem ambiguidade.
+- tapOn:
+    id: "campo-cpf"
+- eraseText: 20
+- inputText: "11144477735"
+- assertVisible: "111.444.777-35"
+- tapOn: "Fechar"
+- assertNotVisible: "Salvar CPF"
+- tapOn: "Editar telefone"
+- tapOn:
+    id: "campo-telefone"
+- eraseText: 20
+- inputText: "24999998888"
+# O texto do Maestro é uma expressão regular: os parênteses vão escapados.
+- assertVisible: "\\(24\\) 99999-8888"
+- tapOn: "Fechar"
+- assertNotVisible: "Salvar telefone"

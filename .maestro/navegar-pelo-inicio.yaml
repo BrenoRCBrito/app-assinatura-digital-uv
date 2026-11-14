@@ -20,4 +20,10 @@ tags:
 - tapOn: "Configurações"
 - assertVisible: "Motor de gestos"
 - back
+# Digitalizar documento pergunta de onde vem a foto antes de abrir a câmera.
+- tapOn: "Digitalizar documento"
+- assertVisible: "Tirar foto agora"
+- assertVisible: "Escolher da galeria"
+- tapOn: "Fechar"
+- assertNotVisible: "Escolher da galeria"
 - assertVisible: "Digitalizar documento"

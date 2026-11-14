@@ -115,8 +115,9 @@ O [Maestro](https://maestro.dev) abre o APK instalado e percorre as telas como u
 | --- | --- | --- |
 | `validar-documento-registrado.yaml` | digita o código de um documento registrado na API e vê "Documento autêntico" | não |
 | `validar-codigo-inexistente.yaml` | digita um código que a API não emitiu e vê "Código não encontrado" | não |
-| `navegar-pelo-inicio.yaml` | abre cada item do menu do Início e volta | sim |
+| `navegar-pelo-inicio.yaml` | abre cada item do menu do Início e volta, e confere que Digitalizar documento oferece a câmera e a galeria | sim |
 | `criar-e-excluir-assinatura.yaml` | desenha uma assinatura, salva e exclui | sim |
+| `mascara-cpf-e-telefone.yaml` | no Perfil, digita só os números do CPF e do telefone e vê a máscara aplicada; fecha sem salvar | sim |
 
 ### Preparar, uma vez
 
@@ -162,4 +163,6 @@ Na janela do emulador dá para acompanhar cada toque. Quando um fluxo falha, o M
 - Depois de uma ação que depende da rede, espere com `extendedWaitUntil` e um `timeout`, e não com `assertVisible`.
 - Um fluxo que precisa de login começa com `runFlow: subflows/entrar-na-conta.yaml` e leva `tags: [conta]`.
 - Para digitar um segredo, use `inputText` com `label`: a saída do terminal mostra o rótulo, e não o valor.
+- Quando o rótulo de um campo tem o mesmo texto do campo (como "CPF"), dê um `testID` ao `TextField` e toque com `tapOn: { id: "..." }`.
+- O texto do `assertVisible` e do `tapOn` é uma expressão regular: escape parênteses e outros símbolos, como em `"\\(24\\) 99999-8888"`.
 - O Maestro não opera a biometria. Assinar um documento pede a confirmação biométrica, então esse caminho ainda não tem fluxo.

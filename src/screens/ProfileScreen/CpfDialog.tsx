@@ -49,6 +49,7 @@ export function CpfDialog({ visible, usuario, onClose, onSaved }: CpfDialogProps
         <TextField
           label="CPF"
           accessibilityLabel="CPF"
+          testID="campo-cpf"
           value={cpf}
           onChangeText={(texto) => setCpf(mascararCpfDigitado(texto))}
           placeholder="000.000.000-00"

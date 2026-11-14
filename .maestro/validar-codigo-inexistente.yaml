@@ -8,5 +8,5 @@ name: Avisa quando o código não foi emitido pela API
       CODIGO: ZZZZ-ZZZZ-ZZZZ
 - extendedWaitUntil:
     visible: "Código não encontrado"
-    timeout: 15000
+    timeout: 60000
 - assertVisible: "Confira os caracteres digitados. Nenhum documento foi emitido com este código."

@@ -5,16 +5,22 @@ appId: com.brcb.AssinaAqui
 - inputText: ${CODIGO}
 - hideKeyboard
 - tapOn: "Conferir"
+# O app espera até 60 s pela API: no plano grátis do Render ela pode estar acordando.
 - extendedWaitUntil:
     notVisible: "Conferir"
-    timeout: 15000
+    timeout: 60000
 - runFlow:
     when:
       visible: "Servidor indisponível"
     commands:
-      - tapOn:
-          below: "Endereço da API"
-      - eraseText: 60
-      - inputText: ${API_URL}
-      - hideKeyboard
+      # Só o APK de desenvolvimento mostra o campo do endereço; o de entrega usa sempre a API do build.
+      - runFlow:
+          when:
+            visible: "Endereço da API"
+          commands:
+            - tapOn:
+                below: "Endereço da API"
+            - eraseText: 60
+            - inputText: ${API_URL}
+            - hideKeyboard
       - tapOn: "Tentar de novo"

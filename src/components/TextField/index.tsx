@@ -17,6 +17,8 @@ type TextFieldProps = Readonly<{
   secureTextEntry?: boolean;
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  // Para os testes de interface (Maestro) acharem o campo quando o rótulo tem o mesmo texto dele.
+  testID?: string;
 }>;
 
 export function TextField({
@@ -30,6 +32,7 @@ export function TextField({
   secureTextEntry = false,
   keyboardType = 'default',
   autoCapitalize = 'sentences',
+  testID,
 }: TextFieldProps) {
   const { theme } = useAppTheme();
   const styles = useMemo(() => textFieldPresets[preset](theme), [preset, theme]);
@@ -42,6 +45,7 @@ export function TextField({
       <Text preset="sectionLabel">{label}</Text>
       <View style={styles.container}>
         <TextInput
+          testID={testID}
           accessibilityLabel={accessibilityLabel}
           maxLength={maxLength}
           onChangeText={onChangeText}

@@ -50,6 +50,8 @@ describe('máscara de CPF e telefone no perfil', () => {
     });
 
     expect((await screen.findByLabelText('CPF')).props.value).toBe('111.444.777-35');
+    // O Maestro acha o campo pelo id, porque o rótulo tem o mesmo texto do campo.
+    expect(screen.getByTestId('campo-cpf')).toBe(screen.getByLabelText('CPF'));
   });
 
   test('o CPF ganha a máscara ao digitar e é salvo só com os números', async () => {
@@ -75,6 +77,7 @@ describe('máscara de CPF e telefone no perfil', () => {
     });
 
     expect((await screen.findByLabelText('Telefone')).props.value).toBe('(11) 98765-4321');
+    expect(screen.getByTestId('campo-telefone')).toBe(screen.getByLabelText('Telefone'));
   });
 
   test('o telefone ganha a máscara ao digitar e é salvo só com os números', async () => {
