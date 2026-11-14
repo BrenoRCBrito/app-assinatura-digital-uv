@@ -14,10 +14,9 @@ import {
   ToggleRow,
   type SegmentOption,
 } from '../../components';
-import { ValidationError } from '../../domain/brand';
-import { criarEnderecoDaApi } from '../../domain/enderecoDaApi';
 import type { GestureEngine, ThemeName } from '../../domain/settings';
 import { useAuthentication } from '../../hooks/useAuthentication';
+import { useSalvarEnderecoDaApi } from '../../hooks/useEnderecoDaApi';
 import { enderecoAutomatico } from '../../services/apiDeDocumentos';
 import { excluirTodasAsPastasDeArquivos } from '../../services/fileSystem';
 import { useRepositories } from '../../storage/RepositoriesProvider';
@@ -40,21 +39,14 @@ export function SettingsScreen() {
   const { assinaturas, cursores, documentos, usuarios } = useRepositories();
   const { sair } = useAuthentication();
   const [endereco, setEndereco] = useState(settings.enderecoDaApi ?? '');
+  const salvarEnderecoDaApi = useSalvarEnderecoDaApi();
 
   function salvarEndereco() {
-    if (endereco.trim() === '') {
-      updateSettings({ enderecoDaApi: null });
+    const resultado = salvarEnderecoDaApi(endereco);
+    if (resultado.ok) {
       showSuccess('Endereço da API salvo.');
-      return;
-    }
-    try {
-      updateSettings({ enderecoDaApi: criarEnderecoDaApi(endereco) });
-      showSuccess('Endereço da API salvo.');
-    } catch (error) {
-      if (!(error instanceof ValidationError)) {
-        throw error;
-      }
-      showError('Endereço inválido', error.message);
+    } else {
+      showError('Endereço inválido', resultado.mensagem);
     }
   }
 

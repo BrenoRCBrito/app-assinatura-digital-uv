@@ -6,8 +6,14 @@ import { Alert } from 'react-native';
 import { criarCodigoCurto } from '../../domain/codigoCurto';
 import { camposDoDocumento } from '../../domain/codigoDeAutenticidade';
 import { criarCpf, criarEmail } from '../../domain/usuario';
-import { conferirCodigoAntigo, consultarCodigo, ServidorIndisponivel } from '../../services/apiDeDocumentos';
+import {
+  conferirCodigoAntigo,
+  consultarCodigo,
+  definirEnderecoConfigurado,
+  ServidorIndisponivel,
+} from '../../services/apiDeDocumentos';
 import { SettingsProvider } from '../../storage/SettingsProvider';
+import { SETTINGS_STORAGE_KEY } from '../../storage/settingsStorage';
 import { criarDocumentoDeTeste } from '../../storage/testing/documentoAssinadoRepositoryContract';
 import { ValidarDocumentoScreen } from '../ValidarDocumentoScreen';
 
@@ -19,6 +25,8 @@ jest.mock('../../services/apiDeDocumentos', () => ({
   ServidorIndisponivel: jest.requireActual('../../services/apiDeDocumentos').ServidorIndisponivel,
   consultarCodigo: jest.fn(),
   conferirCodigoAntigo: jest.fn(),
+  definirEnderecoConfigurado: jest.fn(),
+  enderecoAutomatico: jest.fn(() => null),
 }));
 jest.mock('expo-camera', () => {
   const { Component } = require('react');
@@ -184,13 +192,49 @@ describe('ValidarDocumentoScreen', () => {
     await lerQr(CODIGO);
 
     expect(await screen.findByText('Servidor indisponível')).toBeTruthy();
-    expect(screen.getByText(/Confira o wifi e tente de novo/)).toBeTruthy();
+    expect(screen.getByText(/Confira o wifi e o endereço da API/)).toBeTruthy();
 
     await fireEvent.press(screen.getByText('Tentar de novo'));
 
     expect(await screen.findByText('Documento autêntico')).toBeTruthy();
     expect(consultarCodigo).toHaveBeenCalledTimes(2);
     expect(jest.mocked(consultarCodigo).mock.calls[1]).toEqual([criarCodigoCurto(CODIGO)]);
+    erro.mockRestore();
+  });
+
+  test('sem servidor, corrige o endereço da API ali mesmo e tenta de novo', async () => {
+    const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    jest.mocked(consultarCodigo).mockRejectedValueOnce(new ServidorIndisponivel());
+    await abrirTela();
+    await screen.findByText(DICA);
+    await lerQr(CODIGO);
+    await screen.findByText('Servidor indisponível');
+
+    await fireEvent.changeText(screen.getByLabelText('Endereço da API'), 'http://192.168.0.10:3000/');
+    await fireEvent.press(screen.getByText('Tentar de novo'));
+
+    expect(await screen.findByText('Documento autêntico')).toBeTruthy();
+    expect(definirEnderecoConfigurado).toHaveBeenCalledWith('http://192.168.0.10:3000');
+    expect(JSON.parse((await AsyncStorage.getItem(SETTINGS_STORAGE_KEY)) ?? '{}').enderecoDaApi).toBe(
+      'http://192.168.0.10:3000',
+    );
+    erro.mockRestore();
+  });
+
+  test('endereço inválido na tela sem servidor avisa e não tenta de novo', async () => {
+    const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    jest.mocked(consultarCodigo).mockRejectedValueOnce(new ServidorIndisponivel());
+    await abrirTela();
+    await screen.findByText(DICA);
+    await lerQr(CODIGO);
+    await screen.findByText('Servidor indisponível');
+
+    await fireEvent.changeText(screen.getByLabelText('Endereço da API'), '192.168.0.10');
+    await fireEvent.press(screen.getByText('Tentar de novo'));
+
+    expect(alerta).toHaveBeenCalledWith('Endereço inválido', 'Digite o endereço completo, como http://192.168.0.10:3000.');
+    expect(consultarCodigo).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Servidor indisponível')).toBeTruthy();
     erro.mockRestore();
   });
 

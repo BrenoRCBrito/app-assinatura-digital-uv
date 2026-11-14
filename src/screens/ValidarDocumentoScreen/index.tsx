@@ -19,7 +19,14 @@ import {
   type ResultadoDaValidacao,
 } from '../../domain/codigoDeAutenticidade';
 import { useCameraPermission } from '../../hooks/useCameraPermission';
-import { conferirCodigoAntigo, consultarCodigo, ServidorIndisponivel } from '../../services/apiDeDocumentos';
+import { useSalvarEnderecoDaApi } from '../../hooks/useEnderecoDaApi';
+import {
+  conferirCodigoAntigo,
+  consultarCodigo,
+  enderecoAutomatico,
+  ServidorIndisponivel,
+} from '../../services/apiDeDocumentos';
+import { useSettings } from '../../storage/SettingsProvider';
 import { validarCodigoLido } from '../../useCases/validarCodigoLido';
 
 type ValidarDocumentoScreenProps = Readonly<{
@@ -49,12 +56,13 @@ const VEREDICTOS: Readonly<Record<ResultadoDaValidacao['tipo'], Aviso>> = {
 
 const SEM_SERVIDOR: Aviso = {
   titulo: 'Servidor indisponível',
-  descricao: 'O AssinaAqui não alcançou o servidor. Confira o wifi e tente de novo.',
+  descricao: 'O AssinaAqui não alcançou o servidor. Confira o wifi e o endereço da API e tente de novo.',
 };
 
 const AVISO_DE_VERSAO = 'O código veio de uma versão mais nova do app; campos novos aparecem com o nome original.';
 
 const EXEMPLO_DO_CODIGO = '7K3F-9QXZ-M2P4';
+const EXEMPLO_DO_ENDERECO = 'http://192.168.0.10:3000';
 
 export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps) {
   const permissao = useCameraPermission();
@@ -64,6 +72,9 @@ export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps
   const [modo, setModo] = useState<'leitor' | 'digitar'>('leitor');
   const [codigoDigitado, setCodigoDigitado] = useState('');
   const [mostrarMapa, setMostrarMapa] = useState(false);
+  const { settings } = useSettings();
+  const [endereco, setEndereco] = useState(settings.enderecoDaApi ?? '');
+  const salvarEnderecoDaApi = useSalvarEnderecoDaApi();
   // O leitor dispara a cada quadro; a ref barra a segunda leitura antes do próximo render.
   const lendoRef = useRef(false);
 
@@ -93,6 +104,13 @@ export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps
   }
 
   function tentarDeNovo(texto: string) {
+    if (endereco !== (settings.enderecoDaApi ?? '')) {
+      const salvo = salvarEnderecoDaApi(endereco);
+      if (!salvo.ok) {
+        showError('Endereço inválido', salvo.mensagem);
+        return;
+      }
+    }
     lendoRef.current = false;
     void conferir(texto);
   }
@@ -126,9 +144,20 @@ export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps
           </Stack>
         }
       >
-        <Stack gap="titleText" align="center">
-          <Text preset="screenTitle">{SEM_SERVIDOR.titulo}</Text>
-          <Text preset="status">{SEM_SERVIDOR.descricao}</Text>
+        <Stack gap="block">
+          <Stack gap="titleText" align="center">
+            <Text preset="screenTitle">{SEM_SERVIDOR.titulo}</Text>
+            <Text preset="status">{SEM_SERVIDOR.descricao}</Text>
+          </Stack>
+          <TextField
+            label="Endereço da API"
+            accessibilityLabel="Endereço da API"
+            value={endereco}
+            onChangeText={setEndereco}
+            placeholder={enderecoAutomatico() ?? EXEMPLO_DO_ENDERECO}
+            keyboardType="url"
+            autoCapitalize="none"
+          />
         </Stack>
       </Screen>
     );
