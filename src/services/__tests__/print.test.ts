@@ -114,6 +114,17 @@ describe('montarHtmlDocumento', () => {
     expect(tamanhoDaPagina.height).toBeCloseTo(noAndroid.pagina.height, 6);
   });
 
+  test('a folha do PDF é sempre A4, no Android e no iPhone, para foto em pé ou deitada', () => {
+    for (const tamanhoFoto of [createSize(2662, 4032), createSize(4032, 3024)]) {
+      for (const plataforma of ['android', 'ios'] as const) {
+        const { tamanhoDaPagina } = montarHtmlDocumento({ ...DOCUMENTO, tamanhoFoto }, FOTO, CODIGO, plataforma);
+
+        expect(tamanhoDaPagina.width).toBeCloseTo(595, 6);
+        expect(tamanhoDaPagina.height).toBeCloseTo(842, 6);
+      }
+    }
+  });
+
   test('sem a plataforma, usa a do aparelho', () => {
     const { tamanhoDaPagina } = montarHtmlDocumento(DOCUMENTO, FOTO, CODIGO);
 
