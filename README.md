@@ -120,12 +120,7 @@ O [Maestro](https://maestro.dev) abre o APK instalado e percorre as telas como u
 
 ### Preparar, uma vez
 
-1. Instale o Maestro, que precisa de Java 17 ou mais novo:
-
-   ```
-   curl -Ls "https://get.maestro.mobile.dev" | bash
-   ```
-
+1. Tenha o Java 17 ou mais novo: quem usa o vfox já recebe o JDK 17 pelo `.vfox.toml`. Não é preciso instalar o Maestro: na primeira execução, o `npm run e2e` baixa a versão fixada no `scripts/maestro.sh` (cerca de 335 MB) para `~/.cache/assinaaqui/maestro/`, confere o SHA-256 publicado no release e desliga o envio de dados de uso.
 2. Crie um emulador no Android Studio (Virtual Device Manager): Pixel 7, Android 15 (API 35), imagem x86_64 com Google APIs e Graphics em Hardware. Ligue com `emulator -avd <nome> -gpu host`. Um celular com depuração USB, conectado pelo adb, também serve.
 3. Gere e instale o APK de entrega, com as variáveis `FIREBASE_*` no `.env.local` (seção "Gerar o APK do Android"): `adb install -r build-<número>.apk`.
 4. Crie uma conta só para testes pelo próprio app, em "Criar conta", com um e-mail de teste (como `maestro@example.com`) e um CPF fictício válido. Depois acrescente ao `.env.local`:
@@ -149,6 +144,7 @@ O script acorda a API que vai dentro do APK (a do Render, lida do `eas.json`; le
 
 | Comando | O que faz |
 | --- | --- |
+| `npm run e2e -- .maestro/navegar-pelo-inicio.yaml` | roda só o fluxo indicado |
 | `npm run e2e -- --include-tags conta` | roda só os fluxos que entram na conta |
 | `npm run e2e -- --exclude-tags conta` | roda só os de validação |
 | `npm run e2e -- --format html --output ../relatorio-maestro.html` | gera um relatório em HTML, fora do repositório |
@@ -158,7 +154,7 @@ Na janela do emulador dá para acompanhar cada toque. Quando um fluxo falha, o M
 
 ### Escrever um fluxo novo
 
-- Com a tela aberta no emulador, `maestro hierarchy` mostra os textos e os `accessibilityLabel` que o `tapOn` encontra. Os rótulos dos campos aparecem em maiúsculas na tela, então `tapOn: "E-mail"` acerta o campo, e não o rótulo.
+- Com a tela aberta no emulador, `npm run maestro -- hierarchy` mostra os textos e os `accessibilityLabel` que o `tapOn` encontra. Os rótulos dos campos aparecem em maiúsculas na tela, então `tapOn: "E-mail"` acerta o campo, e não o rótulo. O `npm run maestro -- <comando>` roda qualquer comando do Maestro com a versão fixada.
 - Depois de uma ação que depende da rede, espere com `extendedWaitUntil` e um `timeout`, e não com `assertVisible`.
 - Para fechar o teclado depois de digitar, use `pressKey: Enter`, e não `hideKeyboard`. Quando a janela do emulador recebe o teclado do PC, o Gboard mostra só uma barra flutuante, e o `hideKeyboard` aperta Voltar e sai da tela.
 - Um fluxo que precisa de login começa com `runFlow: subflows/entrar-na-conta.yaml` e leva `tags: [conta]`.

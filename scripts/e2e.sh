@@ -4,7 +4,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PORTA="${PORT:-3000}"
-MAESTRO="${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}"
 ADB="${ADB:-$(command -v adb || echo "${ANDROID_HOME:-$HOME/Android/Sdk}/platform-tools/adb")}"
 
 falhar() {
@@ -12,7 +11,6 @@ falhar() {
   exit 1
 }
 
-[ -x "$MAESTRO" ] || falhar 'Instale o Maestro: curl -Ls "https://get.maestro.mobile.dev" | bash'
 aparelhos="$("$ADB" devices | awk 'NR > 1 && $2 == "device" { print $1 }')"
 [ -n "$aparelhos" ] || falhar "Conecte um celular pelo adb ou ligue um emulador, com o APK do AssinaAqui instalado."
 
@@ -63,4 +61,15 @@ else
   filtro=(--exclude-tags conta)
 fi
 
-"$MAESTRO" test -e API_URL="$API_URL" -e CODIGO="$CODIGO" "${filtro[@]}" "$@" .maestro
+# Arquivos .yaml nos argumentos escolhem os fluxos; sem eles, roda a pasta .maestro inteira.
+fluxos=()
+opcoes=()
+for argumento in "$@"; do
+  case "$argumento" in
+    *.yaml | *.yml) fluxos+=("$argumento") ;;
+    *) opcoes+=("$argumento") ;;
+  esac
+done
+[ "${#fluxos[@]}" -gt 0 ] || fluxos=(.maestro)
+
+bash scripts/maestro.sh test -e API_URL="$API_URL" -e CODIGO="$CODIGO" "${filtro[@]}" "${opcoes[@]}" "${fluxos[@]}"
