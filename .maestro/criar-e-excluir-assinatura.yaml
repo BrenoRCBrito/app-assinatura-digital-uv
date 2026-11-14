@@ -10,7 +10,7 @@ tags:
 - tapOn: "Nova assinatura"
 - tapOn: "Nome da assinatura"
 - inputText: ${output.nome}
-- hideKeyboard
+- pressKey: Enter
 # No Pixel 7 do emulador, o papel vai de 29% a 88% da altura; os traços ficam no meio dele.
 - swipe:
     start: 20%, 45%
