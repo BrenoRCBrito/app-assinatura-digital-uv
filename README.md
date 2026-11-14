@@ -10,11 +10,13 @@ App de assinatura digital para iOS e Android, feito com Expo, e a API HTTP que g
 ## Requisitos
 
 - Node 26 (LTS). O `.vfox.toml` fixa a versão para quem usa o vfox.
-- Para a API: Docker ou Podman.
 - Para o APK: JDK 17 (também fixado no `.vfox.toml`), Android SDK em `~/Android/Sdk` (ou em `ANDROID_HOME`) e uma conta Expo logada com `npx eas-cli login`.
-- Um arquivo `.env.local` na pasta acima do repositório, fora do Git:
+- Para a API no PC (opcional, a API já está no ar no Render): Docker ou Podman.
+- Para os testes das regras do Firebase e da API no Firestore: Java 17 ou mais novo, para o emulador do Firebase.
+- Um arquivo `.env.local` na pasta **acima** do repositório, fora do Git:
 
 ```
+ASSINAAQUI_API_URL=https://app-assinatura-digital-uv.onrender.com
 ASSINAAQUI_HMAC_SECRET=<32 caracteres ou mais>
 GOOGLE_MAPS_ANDROID_KEY=<chave do Maps SDK for Android>
 FIREBASE_API_KEY=<do projeto Firebase>
@@ -25,11 +27,41 @@ FIREBASE_APP_ID=<do projeto Firebase>
 FIREBASE_DATABASE_URL=<do projeto Firebase>
 ```
 
-Sem as variáveis `FIREBASE_*`, o app abre e valida documentos, mas não entra nem cria conta.
+- `ASSINAAQUI_API_URL` aponta o app para a API. Sem ela, o app procura a API no PC que roda o Metro (veja "Subir a API no PC").
+- `ASSINAAQUI_HMAC_SECRET` só é usado pela API no PC; a do Render tem o próprio, no painel.
+- Sem as variáveis `FIREBASE_*`, o app abre e valida documentos, mas não entra nem cria conta.
+- **Onde fica o arquivo:** o `npx expo start` também lê um `.env.local` na raiz do repositório, mas os scripts (`npm run api:up`, `npm run android:apk`, `npm run android:keystore` e `npm run e2e`) só leem o da pasta acima. Deixe-o na pasta acima para tudo funcionar.
 
-Depois de clonar, instale as dependências com `npm ci`.
+Depois de clonar, instale as dependências:
 
-## Subir a API HTTP
+```
+npm ci                                  # app
+npm --prefix api ci                     # API: para npm run test:api e para rodá-la sem contêiner
+npm --prefix regras-do-firestore ci     # Firebase: para testar e publicar as regras
+```
+
+Depois de um `git pull` ou de trocar de branch, rode de novo o `npm ci` se o `package.json` ou o `package-lock.json` tiverem mudado.
+
+## Rodar o app
+
+```
+npx expo start
+```
+
+- **iPhone:** abra pelo Expo Go.
+- **Android:** pelo Expo Go, ou pelo APK de desenvolvimento quando o `expo-dev-client` estiver instalado.
+- **API:** com a `ASSINAAQUI_API_URL` no `.env.local`, o app usa a API do Render, e o `npx expo start --tunnel` funciona sem mais nada. Depois de mudar o `.env.local`, reinicie com `npx expo start -c`.
+- **Só em desenvolvimento** (Expo Go e `expo start`), as Configurações mostram o endereço da API, para apontar para a API no PC, e o Limpar dados do app. No APK de entrega essas opções não aparecem.
+
+## API HTTP
+
+### No ar, no Render
+
+A API roda em `https://app-assinatura-digital-uv.onrender.com` e grava os registros na coleção `registrosDaApi` do Firestore. Para conferir, abra `<endereço>/saude` no navegador: a resposta é `{"ok":true}`. A documentação das rotas (Swagger) fica em `<endereço>/docs`.
+
+No plano grátis do Render, a API dorme depois de uns 15 minutos parada e leva até um minuto para acordar; o app espera esse tempo. O passo a passo do deploy e as variáveis estão em [`api/README.md`](api/README.md).
+
+### Subir a API no PC
 
 | Comando | O que faz |
 | --- | --- |
@@ -38,7 +70,18 @@ Depois de clonar, instale as dependências com `npm ci`.
 | `npm run api:down -- --volumes` | para a API e apaga os documentos registrados |
 | `npm run api:logs` | acompanha o log da API |
 
-O celular e o PC precisam estar no mesmo wifi. Para conferir, abra `<endereço>/saude` no navegador do celular: a resposta é `{"ok":true}`. A documentação das rotas (Swagger) fica em `<endereço>/docs`. Mais detalhes em [`api/README.md`](api/README.md).
+No PC, a API grava num SQLite em `api/dados`. Para o app usar essa API, tire a `ASSINAAQUI_API_URL` do `.env.local` (o app encontra o PC pelo IP do Metro) ou digite o endereço nas Configurações, em desenvolvimento. O celular e o PC precisam estar no mesmo wifi.
+
+## Firebase: publicar as regras
+
+As regras do Firestore (`firestore.rules`) e do Realtime Database (`database.rules.json`) ficam no repositório. Sempre que elas mudarem, publique **antes** de usar a versão do app que depende delas; sem isso, o que o app novo grava não sobe para a nuvem.
+
+```
+npx --prefix regras-do-firestore firebase login
+npx --prefix regras-do-firestore firebase deploy --only firestore:rules,database --project assina-aqui
+```
+
+O login precisa ser de uma conta com acesso ao projeto `assina-aqui`. Antes de publicar, rode os testes das regras (seção "Testes").
 
 ## Gerar o APK do Android
 
@@ -50,18 +93,8 @@ npm run android:apk
 O `npm run android:apk` gera o APK de entrega (perfil `preview`): o JavaScript vai dentro do APK, então ele roda sem o Metro. O build roda no PC, sem a nuvem do Expo, e grava o `build-<número>.apk` na raiz do repositório. Instale com `adb install -r build-<número>.apk` ou pelo Expo Orbit.
 
 - **Assinatura:** o `npm run android:keystore` cria, uma vez, a keystore em `../credenciais/` e guarda a senha no `.env.local`. Guarde uma cópia dos dois: sem eles, o próximo APK não instala por cima do anterior.
-- **API:** no APK de entrega não há Metro para indicar o PC. Informe o endereço que o `npm run api:up` mostra nas Configurações, ou na própria tela de validação quando ela avisar "Servidor indisponível".
+- **API:** o APK de entrega já vem apontando para a API do Render, pela `ASSINAAQUI_API_URL` no `env` dos perfis `preview` e `production` do `eas.json`. Para outra API, mude ali e gere o APK de novo.
 - **Desenvolvimento:** `npm run android:apk -- development` gera o APK que carrega o JavaScript do Metro; ele precisa do `expo-dev-client` instalado.
-
-## Rodar o app
-
-```
-npx expo start
-```
-
-- **iPhone:** abra pelo Expo Go.
-- **Android:** pelo Expo Go, ou pelo APK de desenvolvimento quando o `expo-dev-client` estiver instalado.
-- **API:** o app encontra a API pelo IP do PC que roda o Metro. Se usar `npx expo start --tunnel`, defina `ASSINAAQUI_API_URL=http://<ip-do-pc>:3000` no `.env.local`.
 
 ## Testes
 
@@ -70,7 +103,9 @@ npx expo start
 | `npm test` | testes do app |
 | `npm run typecheck` | checagem de tipos do app |
 | `npm run test:api` | testes da API |
-| `npm run e2e` | fluxos do Maestro no celular ou no emulador conectado pelo adb (precisa da API no ar e do APK instalado) |
+| `npm --prefix api run test:firestore` | testes do banco da API contra o emulador do Firestore (precisa de Java) |
+| `npm --prefix regras-do-firestore test` | testes das regras do Firestore e do Realtime Database no emulador (precisa de Java) |
+| `npm run e2e` | fluxos do Maestro no celular ou no emulador conectado pelo adb, com o APK instalado |
 
 ## Testes de interface com o Maestro
 
@@ -104,19 +139,20 @@ O [Maestro](https://maestro.dev) abre o APK instalado e percorre as telas como u
 
 ### Rodar
 
-Com a API no ar (`npm run api:up`) e o emulador ligado:
+Com o emulador ligado e o APK de entrega instalado:
 
 ```
 npm run e2e
 ```
 
-O script registra um documento de teste na API, passa ao app o endereço da API (`http://10.0.2.2:3000` no emulador, o IP do wifi num celular) e roda todos os fluxos. O que vier depois de `--` vai para o Maestro:
+O script acorda a API que vai dentro do APK (a do Render, lida do `eas.json`; leva até um minuto no plano grátis), registra nela um documento de teste e roda todos os fluxos. Cada execução deixa um registro "Documento de teste do Maestro" na coleção `registrosDaApi` do Firestore. O que vier depois de `--` vai para o Maestro:
 
 | Comando | O que faz |
 | --- | --- |
 | `npm run e2e -- --include-tags conta` | roda só os fluxos que entram na conta |
 | `npm run e2e -- --exclude-tags conta` | roda só os de validação |
 | `npm run e2e -- --format html --output ../relatorio-maestro.html` | gera um relatório em HTML, fora do repositório |
+| `API_LOCAL=1 npm run e2e` | usa a API do PC (`npm run api:up`) em vez do Render; só serve com o APK de desenvolvimento, porque o de entrega usa sempre a API do build |
 
 Na janela do emulador dá para acompanhar cada toque. Quando um fluxo falha, o Maestro guarda capturas da tela e o log em `~/.maestro/tests/<data e hora>/`.
 
