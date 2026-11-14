@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { Button, FieldEditModal, Stack, TextField, showError, showSuccess } from '../../components';
 import { ValidationError } from '../../domain/brand';
-import { criarCpf, type Usuario } from '../../domain/usuario';
+import { criarCpf, mascararCpfDigitado, type Usuario } from '../../domain/usuario';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 
 type CpfDialogProps = Readonly<{
@@ -14,12 +14,12 @@ type CpfDialogProps = Readonly<{
 
 export function CpfDialog({ visible, usuario, onClose, onSaved }: CpfDialogProps) {
   const { usuarios } = useRepositories();
-  const [cpf, setCpf] = useState<string>(usuario.cpf ?? '');
+  const [cpf, setCpf] = useState<string>(() => mascararCpfDigitado(usuario.cpf ?? ''));
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
     if (visible) {
-      setCpf(usuario.cpf ?? '');
+      setCpf(mascararCpfDigitado(usuario.cpf ?? ''));
     }
   }, [visible, usuario.cpf]);
 
@@ -50,7 +50,7 @@ export function CpfDialog({ visible, usuario, onClose, onSaved }: CpfDialogProps
           label="CPF"
           accessibilityLabel="CPF"
           value={cpf}
-          onChangeText={setCpf}
+          onChangeText={(texto) => setCpf(mascararCpfDigitado(texto))}
           placeholder="000.000.000-00"
           keyboardType="number-pad"
         />

@@ -13,7 +13,7 @@ import {
   TextField,
   showSuccess,
 } from '../../components';
-import { REQUISITOS_SENHA } from '../../domain/usuario';
+import { mascararCpfDigitado, mascararTelefoneDigitado, REQUISITOS_SENHA } from '../../domain/usuario';
 import { useAuthentication } from '../../hooks/useAuthentication';
 import { useAppTheme } from '../../theme';
 
@@ -91,7 +91,7 @@ export function CriarContaScreen({ onJaTenhoConta }: CriarContaScreenProps) {
                 label="CPF"
                 accessibilityLabel="CPF"
                 value={cpf}
-                onChangeText={setCpf}
+                onChangeText={(texto) => setCpf(mascararCpfDigitado(texto))}
                 placeholder="000.000.000-00"
                 keyboardType="number-pad"
               />
@@ -99,7 +99,7 @@ export function CriarContaScreen({ onJaTenhoConta }: CriarContaScreenProps) {
                 label="Telefone"
                 accessibilityLabel="Telefone"
                 value={telefone}
-                onChangeText={setTelefone}
+                onChangeText={(texto) => setTelefone(mascararTelefoneDigitado(texto))}
                 placeholder="(00) 00000-0000"
                 keyboardType="phone-pad"
               />

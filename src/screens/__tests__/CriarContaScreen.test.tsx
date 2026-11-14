@@ -43,6 +43,22 @@ describe('CriarContaScreen', () => {
     toast.mockRestore();
   });
 
+  test('CPF e telefone ganham a máscara enquanto a pessoa digita só os números', async () => {
+    await abrir();
+
+    await fireEvent.changeText(screen.getByLabelText('CPF'), '1114447');
+    await fireEvent.changeText(screen.getByLabelText('Telefone'), '119876');
+
+    expect(screen.getByLabelText('CPF').props.value).toBe('111.444.7');
+    expect(screen.getByLabelText('Telefone').props.value).toBe('(11) 9876');
+
+    await fireEvent.changeText(screen.getByLabelText('CPF'), '11144477735');
+    await fireEvent.changeText(screen.getByLabelText('Telefone'), '11987654321');
+
+    expect(screen.getByLabelText('CPF').props.value).toBe('111.444.777-35');
+    expect(screen.getByLabelText('Telefone').props.value).toBe('(11) 98765-4321');
+  });
+
   test('com os campos vazios, o botão Criar conta fica desativado', async () => {
     await abrir();
 

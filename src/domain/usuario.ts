@@ -119,6 +119,40 @@ export function formatarTelefone(telefone: Telefone): string {
     : telefone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
 }
 
+// Máscaras para enquanto a pessoa digita: guardam só os números (até o tamanho máximo) e põem cada separador
+// apenas antes de um número que já existe. Assim o texto nunca termina num separador e o apagar sempre tira um
+// número. O valor salvo continua só com os números: criarCpf e criarTelefone descartam a máscara.
+const MAIOR_CPF = 11;
+const MAIOR_TELEFONE = 11;
+
+function somenteNumeros(texto: string, limite: number): string {
+  return texto.replace(/\D/g, '').slice(0, limite);
+}
+
+export function mascararCpfDigitado(texto: string): string {
+  const numeros = somenteNumeros(texto, MAIOR_CPF);
+  const partes = [numeros.slice(0, 3), numeros.slice(3, 6), numeros.slice(6, 9)].filter((parte) => parte !== '');
+  const verificador = numeros.slice(9);
+  return partes.join('.') + (verificador === '' ? '' : `-${verificador}`);
+}
+
+export function mascararTelefoneDigitado(texto: string): string {
+  const numeros = somenteNumeros(texto, MAIOR_TELEFONE);
+  if (numeros === '') {
+    return '';
+  }
+  const ddd = numeros.slice(0, 2);
+  const numero = numeros.slice(2);
+  if (numero === '') {
+    return `(${ddd}`;
+  }
+  // Até 10 dígitos é fixo, 4+4; com o 11º vira celular, 5+4.
+  const tamanhoDoComeco = numeros.length === MAIOR_TELEFONE ? 5 : 4;
+  const comeco = numero.slice(0, tamanhoDoComeco);
+  const fim = numero.slice(tamanhoDoComeco);
+  return `(${ddd}) ${comeco}${fim === '' ? '' : `-${fim}`}`;
+}
+
 export function criarFotoPerfil(base64: string): FotoPerfil {
   if (base64.trim() === '') {
     throw new ValidationError('Foto de perfil vazia.');

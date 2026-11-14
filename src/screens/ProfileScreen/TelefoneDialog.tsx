@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { Button, FieldEditModal, Stack, TextField, showError, showSuccess } from '../../components';
 import { ValidationError } from '../../domain/brand';
-import { criarTelefone, type Usuario } from '../../domain/usuario';
+import { criarTelefone, mascararTelefoneDigitado, type Usuario } from '../../domain/usuario';
 import { useRepositories } from '../../storage/RepositoriesProvider';
 
 type TelefoneDialogProps = Readonly<{
@@ -14,12 +14,12 @@ type TelefoneDialogProps = Readonly<{
 
 export function TelefoneDialog({ visible, usuario, onClose, onSaved }: TelefoneDialogProps) {
   const { usuarios } = useRepositories();
-  const [telefone, setTelefone] = useState<string>(usuario.telefone ?? '');
+  const [telefone, setTelefone] = useState<string>(() => mascararTelefoneDigitado(usuario.telefone ?? ''));
   const [salvando, setSalvando] = useState(false);
    
   useEffect(() => {
     if (visible) {
-      setTelefone(usuario.telefone ?? '');
+      setTelefone(mascararTelefoneDigitado(usuario.telefone ?? ''));
     }
   }, [visible, usuario.telefone]);
 
@@ -50,7 +50,7 @@ export function TelefoneDialog({ visible, usuario, onClose, onSaved }: TelefoneD
           label="Telefone"
           accessibilityLabel="Telefone"
           value={telefone}
-          onChangeText={setTelefone}
+          onChangeText={(texto) => setTelefone(mascararTelefoneDigitado(texto))}
           placeholder="(00) 00000-0000"
           keyboardType="phone-pad"
         />
