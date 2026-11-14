@@ -32,7 +32,7 @@ function documentoDaNuvem(extra: Readonly<Record<string, unknown>> = {}) {
     assinaturaUsada: { nome: 'Rubrica', desenho: DESENHO_NA_NUVEM },
     tamanhoFoto: { width: 3024, height: 4032 },
     selo: { x: 0.4, y: 0.65, largura: 0.35, cor: 'escura' },
-    local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: 'Vassouras' },
+    local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: 'Vassouras', endereco: null },
     assinadoEm: CRIADO,
     codigo: '7K3F9QXZM2P4',
     fotoSha256: 'a'.repeat(64),
@@ -153,6 +153,21 @@ describe('adaptadorDeDocumentos', () => {
 
     expect(dados.selo).toEqual({ x: 0.4, y: 0.65, largura: 0.35, cor: 'clara' });
     expect(adaptador.daNuvem('d1', UID, dados).item.selo.cor).toBe('clara');
+  });
+
+  test('o endereço aproximado sobe e volta; documento antigo, sem o campo, volta sem endereço', () => {
+    const ENDERECO = 'Rua das Flores, 123 - Centro, Vassouras - RJ';
+    const comEndereco = { ...item, local: { ...item.local, endereco: ENDERECO as never } };
+    const registro = { item: comEndereco, createdAt: CRIADO, updatedAt: ATUALIZADO, deletedAt: null };
+
+    const dados = adaptador.paraNuvem(registro);
+    const antigo = documentoDaNuvem({
+      local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: 'Vassouras' },
+    });
+
+    expect(dados.local).toMatchObject({ endereco: ENDERECO });
+    expect(adaptador.daNuvem('d1', UID, dados).item.local.endereco).toBe(ENDERECO);
+    expect(adaptador.daNuvem('d1', UID, antigo).item.local.endereco).toBeNull();
   });
 
   test('documento que subiu antes de existir a cor do selo volta com o selo escuro', () => {

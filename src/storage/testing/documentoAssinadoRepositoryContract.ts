@@ -41,6 +41,7 @@ export function criarDocumentoDeTeste(
     local: {
       coordenadas: { latitude: createLatitude(-22.40418), longitude: createLongitude(-43.66283) },
       cidade: createCity('Vassouras'),
+      endereco: null,
     },
     assinadoEm: createIsoDateTime(assinadoEm),
     codigo: null,

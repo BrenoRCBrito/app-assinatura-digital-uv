@@ -15,6 +15,7 @@ import {
   paraDocumentoAssinado,
   type DocumentoAssinado,
 } from '../documento';
+import { createEndereco } from '../endereco';
 import { createFraction, createSize } from '../geometry';
 import { criarUsuarioId } from '../usuario';
 
@@ -32,6 +33,7 @@ function documentoValido(id: string, assinadoEm: string, cidade: string | null =
     local: {
       coordenadas: { latitude: createLatitude(-22.40418), longitude: createLongitude(-43.66283) },
       cidade: cidade === null ? null : createCity(cidade),
+      endereco: cidade === null ? null : createEndereco('Rua das Flores, 123 - Centro, Vassouras - RJ'),
     },
     assinadoEm: createIsoDateTime(assinadoEm),
     codigo: null,
@@ -188,6 +190,29 @@ describe('paraDocumentoAssinado', () => {
     const documento = documentoValido('1', '2026-09-12T10:00:00.000Z');
 
     expect(() => paraDocumentoAssinado({ ...documento, selo: { ...documento.selo, cor } })).toThrow(
+      'Documento salvo inválido.',
+    );
+  });
+
+  test('guarda o endereço aproximado de onde foi assinado', () => {
+    const documento = documentoValido('1', '2026-09-12T10:00:00.000Z');
+
+    expect(documento.local.endereco).toBe('Rua das Flores, 123 - Centro, Vassouras - RJ');
+    expect(paraDocumentoAssinado(JSON.parse(JSON.stringify(documento)))).toEqual(documento);
+  });
+
+  test('documento salvo antes de existir o endereço volta sem endereço', () => {
+    const documento = documentoValido('1', '2026-09-12T10:00:00.000Z');
+    const { endereco, ...localAntigo } = documento.local;
+
+    expect(endereco).not.toBeNull();
+    expect(paraDocumentoAssinado(JSON.parse(JSON.stringify({ ...documento, local: localAntigo }))).local.endereco).toBeNull();
+  });
+
+  test.each(['', 42, 'x'.repeat(201)])('recusa o endereço inválido %p', (endereco) => {
+    const documento = documentoValido('1', '2026-09-12T10:00:00.000Z');
+
+    expect(() => paraDocumentoAssinado({ ...documento, local: { ...documento.local, endereco } })).toThrow(
       'Documento salvo inválido.',
     );
   });

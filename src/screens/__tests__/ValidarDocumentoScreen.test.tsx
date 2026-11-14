@@ -373,6 +373,25 @@ describe('ValidarDocumentoScreen', () => {
     expect(screen.queryByLabelText('Local da assinatura')).toBeNull();
   });
 
+  test('o endereço aproximado assinado aparece nos dados e no mapa, sem pedir a localização de quem valida', async () => {
+    const ENDERECO = 'Rua das Flores, 123 - Centro, Vassouras - RJ';
+    jest.mocked(consultarCodigo).mockResolvedValue({
+      ...AUTENTICO,
+      campos: [...CAMPOS, { chave: 'endereco', valor: ENDERECO }],
+    });
+    await abrirTela();
+    await screen.findByText(DICA);
+    await lerQr(CODIGO);
+    await screen.findByText('Documento autêntico');
+
+    expect(screen.getByText('Endereço aproximado')).toBeTruthy();
+    expect(screen.getAllByText(ENDERECO)).toHaveLength(1);
+
+    await fireEvent.press(screen.getByText('Ver localização'));
+
+    expect(screen.getAllByText(ENDERECO)).toHaveLength(2);
+  });
+
   test('código não autenticado não oferece a localização', async () => {
     jest.mocked(consultarCodigo).mockResolvedValue({ tipo: 'adulterado' });
     await abrirTela();

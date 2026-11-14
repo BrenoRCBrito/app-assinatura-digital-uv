@@ -59,6 +59,7 @@ export function adaptadorDeDocumentos(repositorio: DocumentoAssinadoRepository):
       local: {
         coordenadas: { latitude: item.local.coordenadas.latitude, longitude: item.local.coordenadas.longitude },
         cidade: item.local.cidade,
+        endereco: item.local.endereco,
       },
       assinadoEm: item.assinadoEm,
       codigo: item.codigo,

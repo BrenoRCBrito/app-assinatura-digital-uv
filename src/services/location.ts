@@ -1,13 +1,22 @@
 import {
   Accuracy,
   getCurrentPositionAsync,
+  getForegroundPermissionsAsync,
   getLastKnownPositionAsync,
   requestForegroundPermissionsAsync,
   reverseGeocodeAsync,
+  type LocationGeocodedAddress,
   type LocationObject,
 } from 'expo-location';
 
-import { createCity, createLatitude, createLongitude, type City, type LocalAssinatura } from '../domain/documento';
+import {
+  createCity,
+  createLatitude,
+  createLongitude,
+  type Coordinates,
+  type LocalAssinatura,
+} from '../domain/documento';
+import { montarEndereco, type Endereco } from '../domain/endereco';
 
 export type ResultadoLocalAssinatura =
   | Readonly<{ tipo: 'obtido'; local: LocalAssinatura }>
@@ -42,13 +51,55 @@ function obterUltimaPosicao(): Promise<LocationObject | null> {
   return getLastKnownPositionAsync({ maxAge: IDADE_MAXIMA_DA_ULTIMA_POSICAO_MS });
 }
 
-async function obterCidade(posicao: LocationObject): Promise<City | null> {
+type CidadeEEndereco = Pick<LocalAssinatura, 'cidade' | 'endereco'>;
+
+const SEM_ENDERECO: CidadeEEndereco = { cidade: null, endereco: null };
+
+function paraEndereco(consulta: LocationGeocodedAddress | undefined): CidadeEEndereco {
+  if (consulta === undefined) {
+    return SEM_ENDERECO;
+  }
+  const cidade = consulta.city?.trim();
+  return {
+    cidade: cidade ? createCity(cidade) : null,
+    endereco: montarEndereco({
+      rua: consulta.street,
+      numero: consulta.streetNumber,
+      bairro: consulta.district,
+      cidade: consulta.city ?? consulta.subregion,
+      estado: consulta.region,
+      cep: consulta.postalCode,
+      enderecoPronto: consulta.formattedAddress ?? null,
+    }),
+  };
+}
+
+// Uma consulta só traz a cidade e o endereço aproximado; o limite de tempo não deixa a assinatura esperar.
+async function consultarEndereco(coordenadas: Readonly<{ latitude: number; longitude: number }>): Promise<CidadeEEndereco> {
   try {
-    const [endereco] = (await comLimiteDeTempo(reverseGeocodeAsync(posicao.coords), LIMITE_DA_CIDADE_MS)) ?? [];
-    const cidade = endereco?.city?.trim();
-    return cidade ? createCity(cidade) : null;
+    const [consulta] =
+      (await comLimiteDeTempo(
+        reverseGeocodeAsync({ latitude: coordenadas.latitude, longitude: coordenadas.longitude }),
+        LIMITE_DA_CIDADE_MS,
+      )) ?? [];
+    return paraEndereco(consulta);
   } catch (error) {
-    console.error('Falha ao buscar a cidade da assinatura:', error);
+    console.error('Falha ao buscar o endereço da assinatura:', error);
+    return SEM_ENDERECO;
+  }
+}
+
+// Para documentos assinados antes de o endereço ser gravado. Não pede permissão: no Android a consulta exige a
+// localização liberada, e quem assinou já liberou; sem ela, a tela mostra só as coordenadas.
+export async function consultarEnderecoDoLocal(coordenadas: Coordinates): Promise<Endereco | null> {
+  try {
+    const permissao = await getForegroundPermissionsAsync();
+    if (!permissao.granted) {
+      return null;
+    }
+    return (await consultarEndereco(coordenadas)).endereco;
+  } catch (error) {
+    console.error('Falha ao consultar o endereço do documento:', error);
     return null;
   }
 }
@@ -70,7 +121,7 @@ export async function obterLocalAssinatura(): Promise<ResultadoLocalAssinatura> 
           latitude: createLatitude(posicao.coords.latitude),
           longitude: createLongitude(posicao.coords.longitude),
         },
-        cidade: await obterCidade(posicao),
+        ...(await consultarEndereco(posicao.coords)),
       },
     };
   } catch (error) {

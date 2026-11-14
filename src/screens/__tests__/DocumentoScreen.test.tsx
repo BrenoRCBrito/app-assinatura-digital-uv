@@ -6,7 +6,9 @@ import Toast from 'react-native-toast-message';
 
 import { criarCodigoCurto } from '../../domain/codigoCurto';
 import { criarDocumentoId, type DocumentoId } from '../../domain/documento';
+import { createEndereco } from '../../domain/endereco';
 import { formatDateTime } from '../../domain/format';
+import { consultarEnderecoDoLocal } from '../../services/location';
 import { baixarArquivosDoDocumento } from '../../services/baixarArquivosDoDocumento';
 import { excluirArquivosDocumento } from '../../services/fileSystem';
 import { compartilharPdf } from '../../services/sharing';
@@ -38,6 +40,7 @@ jest.mock('../../services/fileSystem', () => ({
 }));
 jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn() }));
 jest.mock('../../hooks/useAuthentication', () => ({ useAuthentication: jest.fn() }));
+jest.mock('../../services/location', () => ({ consultarEnderecoDoLocal: jest.fn() }));
 
 const DOCUMENTO = criarDocumentoDeTeste('1757680000000', 'Contrato de locação', '2026-09-12T14:32:00.000Z');
 const COM_CODIGO = { ...DOCUMENTO, codigo: criarCodigoCurto('7K3F9QXZM2P4') };
@@ -72,6 +75,7 @@ describe('DocumentoScreen', () => {
     alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     jest.mocked(setStringAsync).mockReset();
     jest.mocked(baixarArquivosDoDocumento).mockReset();
+    jest.mocked(consultarEnderecoDoLocal).mockReset().mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -96,6 +100,31 @@ describe('DocumentoScreen', () => {
     expect(screen.getAllByText('Vassouras')).toHaveLength(3);
     expect(screen.getByText('-22.40418, -43.66283')).toBeTruthy();
     expect(screen.getByText('Rubrica')).toBeTruthy();
+  });
+
+  test('mostra o endereço aproximado gravado na assinatura, também no mapa, sem consultar nada', async () => {
+    const ENDERECO = 'Rua das Flores, 123 - Centro, Vassouras - RJ';
+    await createRepositories('sqlite').documentos.save({
+      ...DOCUMENTO,
+      local: { ...DOCUMENTO.local, endereco: createEndereco(ENDERECO) },
+    });
+    await abrirDocumento();
+
+    await screen.findByText('Endereço aproximado');
+
+    expect(screen.getAllByText(ENDERECO)).toHaveLength(2);
+    expect(screen.queryByText('Local')).toBeNull();
+    expect(consultarEnderecoDoLocal).not.toHaveBeenCalled();
+  });
+
+  test('documento antigo, sem endereço gravado, consulta o endereço pelas coordenadas', async () => {
+    jest.mocked(consultarEnderecoDoLocal).mockResolvedValue(createEndereco('Rua A, Vassouras - RJ'));
+    await createRepositories('sqlite').documentos.save(DOCUMENTO);
+    await abrirDocumento();
+
+    expect(await screen.findByText('Endereço aproximado')).toBeTruthy();
+    expect(screen.getAllByText('Rua A, Vassouras - RJ')).toHaveLength(2);
+    expect(consultarEnderecoDoLocal).toHaveBeenCalledWith(DOCUMENTO.local.coordenadas);
   });
 
   test('sem cidade, esconde a linha Local e leva as coordenadas para o selo', async () => {

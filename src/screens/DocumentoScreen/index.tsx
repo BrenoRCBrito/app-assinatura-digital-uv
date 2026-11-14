@@ -18,6 +18,7 @@ import { formatarCodigoCurto, type CodigoCurto } from '../../domain/codigoCurto'
 import type { DocumentoAssinado, DocumentoId } from '../../domain/documento';
 import { formatCoordinates, formatDateTime, formatLocal } from '../../domain/format';
 import { useAuthentication } from '../../hooks/useAuthentication';
+import { useEnderecoDoDocumento } from '../../hooks/useEnderecoDoDocumento';
 import { baixarArquivosDoDocumento } from '../../services/baixarArquivosDoDocumento';
 import { copiarTexto } from '../../services/clipboard';
 import { excluirArquivosDocumento, uriFotoDocumento } from '../../services/fileSystem';
@@ -41,6 +42,7 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
   const baixandoRef = useRef(false);
   const [baixando, setBaixando] = useState(false);
   const [ampliado, setAmpliado] = useState(false);
+  const endereco = useEnderecoDoDocumento(documento?.local ?? null);
 
   const sairComErro = useEffectEvent((mensagem: string) => {
     showError('Erro', mensagem);
@@ -242,7 +244,9 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
           ) : null}
           <Stack gap="documentData" flex={1}>
             <DadoDoDocumento rotulo="Assinado em" valor={assinadoEm} />
-            {documento.local.cidade === null ? null : (
+            {endereco !== null ? (
+              <DadoDoDocumento rotulo="Endereço aproximado" valor={endereco} />
+            ) : documento.local.cidade === null ? null : (
               <DadoDoDocumento rotulo="Local" valor={documento.local.cidade} />
             )}
             <DadoDoDocumento
@@ -253,7 +257,7 @@ export function DocumentoScreen({ documentoId, onNaoEncontrado, onExcluido }: Do
             <DadoDoDocumento rotulo="Assinatura" valor={documento.assinaturaUsada.nome} />
           </Stack>
         </Row>
-        <MapaDoLocal coordenadas={documento.local.coordenadas} rotulo={documento.local.cidade} />
+        <MapaDoLocal coordenadas={documento.local.coordenadas} rotulo={endereco ?? documento.local.cidade} />
       </Stack>
       <VisualizadorDocumento
         visible={ampliado}

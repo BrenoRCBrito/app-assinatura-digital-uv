@@ -9,6 +9,7 @@ import {
   criarDocumentoId,
   criarTituloDocumento,
 } from '../../domain/documento';
+import { createEndereco } from '../../domain/endereco';
 import { createFraction, createSize } from '../../domain/geometry';
 import { createCapturedPhoto } from '../../domain/photo';
 import { criarUsuarioId } from '../../domain/usuario';
@@ -23,6 +24,7 @@ const USUARIO_ID = criarUsuarioId('42');
 const LOCAL = {
   coordenadas: { latitude: createLatitude(-22.40418), longitude: createLongitude(-43.66283) },
   cidade: createCity('Vassouras'),
+  endereco: createEndereco('Rua das Flores, 123 - Centro, Vassouras - RJ'),
 };
 const PEDIDO: PedidoAssinatura = {
   titulo: criarTituloDocumento('Contrato de locação'),

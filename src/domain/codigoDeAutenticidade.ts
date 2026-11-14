@@ -21,6 +21,7 @@ const ROTULOS = new Map<string, string>([
   ['cpf', 'CPF'],
   ['telefone', 'Telefone'],
   ['em', 'Assinado em'],
+  ['endereco', 'Endereço aproximado'],
   ['local', 'Local'],
   ['id', 'Documento'],
 ]);
@@ -52,6 +53,8 @@ export function camposDoDocumento(
     { chave: 'titulo', valor: documento.titulo },
     { chave: 'em', valor: documento.assinadoEm },
     { chave: 'local', valor: `${latitude},${longitude}` },
+    // Assinado junto: quem valida vê de onde o documento foi assinado sem precisar consultar nada.
+    ...(documento.local.endereco === null ? [] : [{ chave: 'endereco', valor: documento.local.endereco }]),
     { chave: 'foto', valor: resumoDaFoto },
   ];
 }
@@ -76,6 +79,11 @@ export function camposParaExibir(campos: readonly CampoDoCodigo[]): readonly Cam
     rotulo: ROTULOS.get(campo.chave) ?? campo.chave,
     valor: valorExibido(campo),
   }));
+}
+
+export function enderecoDoCodigo(campos: readonly CampoDoCodigo[]): string | null {
+  const endereco = campos.find(({ chave }) => chave === 'endereco')?.valor.trim() ?? '';
+  return endereco === '' ? null : endereco;
 }
 
 export function coordenadasDoCodigo(campos: readonly CampoDoCodigo[]): Coordinates | null {

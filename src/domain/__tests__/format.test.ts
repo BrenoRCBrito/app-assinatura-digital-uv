@@ -40,8 +40,8 @@ describe('formatCoordinates', () => {
 describe('formatLocal', () => {
   test('mostra a cidade e, sem cidade, as coordenadas', () => {
     const coordenadas = { latitude: createLatitude(-22.40418), longitude: createLongitude(-43.66283) };
-    const comCidade = formatLocal({ coordenadas, cidade: createCity('Vassouras') });
-    const semCidade = formatLocal({ coordenadas, cidade: null });
+    const comCidade = formatLocal({ coordenadas, cidade: createCity('Vassouras'), endereco: null });
+    const semCidade = formatLocal({ coordenadas, cidade: null, endereco: null });
 
     expect([comCidade, semCidade]).toEqual(['Vassouras', '-22.40418, -43.66283']);
   });

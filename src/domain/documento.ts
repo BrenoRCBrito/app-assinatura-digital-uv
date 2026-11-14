@@ -3,6 +3,7 @@ import { ValidationError, validarId, type Brand } from './brand';
 import { criarCodigoCurto, type CodigoCurto } from './codigoCurto';
 import { createIsoDateTime, type IsoDateTime } from './dateTime';
 import { paraDesenho, type Desenho } from './desenho';
+import { createEndereco, type Endereco } from './endereco';
 import { createFraction, paraSize, type Size } from './geometry';
 import { lerNumero, lerObjeto, lerTexto, lerTextoOuNulo } from './leitura';
 import { ehCorDoSelo, type CorDoSelo, type SeloDoDocumento } from './selo';
@@ -18,7 +19,7 @@ export type Html = Brand<string, 'Html'>;
 
 export type Coordinates = Readonly<{ latitude: Latitude; longitude: Longitude }>;
 
-export type LocalAssinatura = Readonly<{ coordenadas: Coordinates; cidade: City | null }>;
+export type LocalAssinatura = Readonly<{ coordenadas: Coordinates; cidade: City | null; endereco: Endereco | null }>;
 
 export type AssinaturaUsada = Readonly<{ nome: NomeAssinatura; desenho: Desenho }>;
 
@@ -159,7 +160,20 @@ function paraLocal(dado: unknown): LocalAssinatura {
       ),
     },
     cidade: cidade === null ? null : createCity(lerTexto(cidade, DOCUMENTO_INVALIDO)),
+    endereco: paraEndereco('endereco' in local ? local.endereco : undefined),
   };
+}
+
+// Documentos assinados antes de existir o endereço não têm o campo: ficam sem endereço.
+function paraEndereco(dado: unknown): Endereco | null {
+  if (dado === undefined || dado === null) {
+    return null;
+  }
+  try {
+    return createEndereco(lerTexto(dado, DOCUMENTO_INVALIDO));
+  } catch {
+    throw new ValidationError(DOCUMENTO_INVALIDO);
+  }
 }
 
 // Documentos assinados antes do código curto guardaram um código mais longo, que a API não conhece: ficam sem código.

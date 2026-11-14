@@ -1,16 +1,18 @@
 import {
   getCurrentPositionAsync,
+  getForegroundPermissionsAsync,
   getLastKnownPositionAsync,
   requestForegroundPermissionsAsync,
   reverseGeocodeAsync,
   type LocationObject,
 } from 'expo-location';
 
-import { obterLocalAssinatura } from '../location';
+import { consultarEnderecoDoLocal, obterLocalAssinatura } from '../location';
 
 jest.mock('expo-location', () => ({
   Accuracy: { High: 4 },
   requestForegroundPermissionsAsync: jest.fn(),
+  getForegroundPermissionsAsync: jest.fn(),
   getCurrentPositionAsync: jest.fn(),
   getLastKnownPositionAsync: jest.fn(),
   reverseGeocodeAsync: jest.fn(),
@@ -40,6 +42,15 @@ function endereco(city: string | null): Endereco {
   return { city } as Endereco;
 }
 
+const ENDERECO_COMPLETO = {
+  street: 'Rua das Flores',
+  streetNumber: '123',
+  district: 'Centro',
+  city: ' Vassouras ',
+  region: 'RJ',
+  postalCode: '27700-000',
+} as Endereco;
+
 describe('obterLocalAssinatura', () => {
   beforeEach(() => {
     jest.resetAllMocks();
@@ -57,14 +68,19 @@ describe('obterLocalAssinatura', () => {
     expect(getCurrentPositionAsync).not.toHaveBeenCalled();
   });
 
-  test('com permissão, devolve as coordenadas e a cidade', async () => {
+  test('com permissão, devolve as coordenadas, a cidade e o endereço aproximado', async () => {
     jest.mocked(getCurrentPositionAsync).mockResolvedValue(POSICAO);
-    jest.mocked(reverseGeocodeAsync).mockResolvedValue([endereco(' Vassouras ')]);
+    jest.mocked(reverseGeocodeAsync).mockResolvedValue([ENDERECO_COMPLETO]);
 
     await expect(obterLocalAssinatura()).resolves.toEqual({
       tipo: 'obtido',
-      local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: 'Vassouras' },
+      local: {
+        coordenadas: { latitude: -22.40418, longitude: -43.66283 },
+        cidade: 'Vassouras',
+        endereco: 'Rua das Flores, 123 - Centro, Vassouras - RJ, 27700-000',
+      },
     });
+    expect(reverseGeocodeAsync).toHaveBeenCalledTimes(1);
     expect(getCurrentPositionAsync).toHaveBeenCalledWith({ accuracy: 4 });
   });
 
@@ -79,7 +95,7 @@ describe('obterLocalAssinatura', () => {
 
     await expect(resultado).resolves.toEqual({
       tipo: 'obtido',
-      local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: null },
+      local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: null, endereco: null },
     });
     expect(getLastKnownPositionAsync).toHaveBeenCalledWith({ maxAge: 300000 });
   });
@@ -112,7 +128,7 @@ describe('obterLocalAssinatura', () => {
 
     await expect(obterLocalAssinatura()).resolves.toEqual({
       tipo: 'obtido',
-      local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: null },
+      local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: null, endereco: null },
     });
     expect(erro).toHaveBeenCalledTimes(1);
     erro.mockRestore();
@@ -128,7 +144,42 @@ describe('obterLocalAssinatura', () => {
 
     await expect(resultado).resolves.toEqual({
       tipo: 'obtido',
-      local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: null },
+      local: { coordenadas: { latitude: -22.40418, longitude: -43.66283 }, cidade: null, endereco: null },
     });
+  });
+});
+
+describe('consultarEnderecoDoLocal', () => {
+  const COORDENADAS = { latitude: -22.40418, longitude: -43.66283 } as never;
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  test('com a permissão já dada, consulta o endereço das coordenadas', async () => {
+    jest.mocked(getForegroundPermissionsAsync).mockResolvedValue(permissao(true));
+    jest.mocked(reverseGeocodeAsync).mockResolvedValue([ENDERECO_COMPLETO]);
+
+    await expect(consultarEnderecoDoLocal(COORDENADAS)).resolves.toBe(
+      'Rua das Flores, 123 - Centro, Vassouras - RJ, 27700-000',
+    );
+    expect(reverseGeocodeAsync).toHaveBeenCalledWith({ latitude: -22.40418, longitude: -43.66283 });
+  });
+
+  test('sem a permissão, não pede nem consulta: só mostra o que já existe', async () => {
+    jest.mocked(getForegroundPermissionsAsync).mockResolvedValue(permissao(false));
+
+    await expect(consultarEnderecoDoLocal(COORDENADAS)).resolves.toBeNull();
+    expect(requestForegroundPermissionsAsync).not.toHaveBeenCalled();
+    expect(reverseGeocodeAsync).not.toHaveBeenCalled();
+  });
+
+  test('quando a consulta falha, fica sem endereço', async () => {
+    const erro = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    jest.mocked(getForegroundPermissionsAsync).mockResolvedValue(permissao(true));
+    jest.mocked(reverseGeocodeAsync).mockRejectedValue(new Error('Sem rede'));
+
+    await expect(consultarEnderecoDoLocal(COORDENADAS)).resolves.toBeNull();
+    erro.mockRestore();
   });
 });

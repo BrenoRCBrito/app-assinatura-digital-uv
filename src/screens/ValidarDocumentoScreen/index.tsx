@@ -16,6 +16,7 @@ import {
 import {
   camposParaExibir,
   coordenadasDoCodigo,
+  enderecoDoCodigo,
   type ResultadoDaValidacao,
 } from '../../domain/codigoDeAutenticidade';
 import { useCameraPermission } from '../../hooks/useCameraPermission';
@@ -305,7 +306,12 @@ export function ValidarDocumentoScreen({ onFechar }: ValidarDocumentoScreenProps
             size="sm"
           />
         )}
-        {coordenadas !== null && mostrarMapa ? <MapaDoLocal coordenadas={coordenadas} rotulo={null} /> : null}
+        {coordenadas !== null && mostrarMapa ? (
+          <MapaDoLocal
+            coordenadas={coordenadas}
+            rotulo={resultado.tipo === 'autentico' ? enderecoDoCodigo(resultado.campos) : null}
+          />
+        ) : null}
         {resultado.tipo === 'autentico' && resultado.versaoMaisNova ? (
           <Text preset="supporting">{AVISO_DE_VERSAO}</Text>
         ) : null}

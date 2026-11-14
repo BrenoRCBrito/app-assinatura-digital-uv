@@ -237,6 +237,16 @@ describe('formato dos dados', () => {
     ],
     ['documento com resumo da foto inválido', 'usuarios/ana/documentos/d1', () => documento({ fotoSha256: 'ABC' })],
     [
+      'documento com endereço enorme',
+      'usuarios/ana/documentos/d1',
+      () => documento({ local: { coordenadas: { latitude: 0, longitude: 0 }, cidade: null, endereco: 'x'.repeat(201) } }),
+    ],
+    [
+      'documento com endereço que não é texto',
+      'usuarios/ana/documentos/d1',
+      () => documento({ local: { coordenadas: { latitude: 0, longitude: 0 }, cidade: null, endereco: 42 } }),
+    ],
+    [
       'documento com cor do selo fora da lista',
       'usuarios/ana/documentos/d1',
       () => documento({ selo: { x: 0.4, y: 0.65, largura: 0.35, cor: 'vermelha' } }),
@@ -262,6 +272,20 @@ describe('formato dos dados', () => {
         documento({ local: { coordenadas: { latitude: 0, longitude: 0 }, cidade: null }, codigo: null, fotoSha256: null }),
       ),
     );
+  });
+
+  test('aceita: documento com o endereço aproximado, ou com ele nulo', async () => {
+    for (const [id, endereco] of [
+      ['d-endereco', 'Rua das Flores, 123 - Centro, Vassouras - RJ'],
+      ['d-sem-endereco', null],
+    ]) {
+      await assertSucceeds(
+        setDoc(
+          doc(como('ana'), `usuarios/ana/documentos/${id}`),
+          documento({ local: { coordenadas: { latitude: -22.4, longitude: -43.6 }, cidade: 'Vassouras', endereco } }),
+        ),
+      );
+    }
   });
 
   test('aceita: documento com o selo escuro ou branco', async () => {

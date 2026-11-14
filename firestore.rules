@@ -88,10 +88,12 @@ service cloud.firestore {
 
     function localValido(local) {
       return local is map
-        && local.keys().hasOnly(['coordenadas', 'cidade'])
+        && local.keys().hasOnly(['coordenadas', 'cidade', 'endereco'])
         && local.keys().hasAll(['coordenadas', 'cidade'])
         && coordenadasValidas(local.coordenadas)
-        && textoOuNulo(local.cidade, 120);
+        && textoOuNulo(local.cidade, 120)
+        // O endereço é opcional: documentos e versões do app de antes dele sobem sem o campo.
+        && textoOuNulo(local.get('endereco', null), 200);
     }
 
     function documentoValido(dados) {
