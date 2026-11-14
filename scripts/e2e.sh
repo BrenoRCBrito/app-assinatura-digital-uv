@@ -12,7 +12,7 @@ falhar() {
 }
 
 aparelhos="$("$ADB" devices | awk 'NR > 1 && $2 == "device" { print $1 }')"
-[ -n "$aparelhos" ] || falhar "Conecte um celular pelo adb ou ligue um emulador, com o APK do AssinaAqui instalado."
+[ -n "$aparelhos" ] || falhar "Ligue o emulador padrão (npm run emulator) ou conecte um celular pelo adb, com o APK do AssinaAqui instalado."
 
 # O documento de teste precisa estar na mesma API que o app consulta. API_URL é o endereço que o app usa;
 # REGISTRO, o endereço pelo qual este PC registra o documento.

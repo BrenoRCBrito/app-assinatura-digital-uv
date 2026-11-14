@@ -106,6 +106,7 @@ O `npm run android:apk` gera o APK de entrega (perfil `preview`): o JavaScript v
 | `npm --prefix api run test:firestore` | testes do banco da API contra o emulador do Firestore (precisa de Java) |
 | `npm --prefix regras-do-firestore test` | testes das regras do Firestore e do Realtime Database no emulador (precisa de Java) |
 | `npm run e2e` | fluxos do Maestro no celular ou no emulador conectado pelo adb, com o APK instalado |
+| `npm run emulator` | liga o emulador padrão dos fluxos do Maestro e o cria na primeira vez |
 
 ## Testes de interface com o Maestro
 
@@ -121,7 +122,7 @@ O [Maestro](https://maestro.dev) abre o APK instalado e percorre as telas como u
 ### Preparar, uma vez
 
 1. Tenha o Java 17 ou mais novo: quem usa o vfox já recebe o JDK 17 pelo `.vfox.toml`. Não é preciso instalar o Maestro: na primeira execução, o `npm run e2e` baixa a versão fixada no `scripts/maestro.sh` (cerca de 335 MB) para `~/.cache/assinaaqui/maestro/`, confere o SHA-256 publicado no release e desliga o envio de dados de uso.
-2. Crie um emulador no Android Studio (Virtual Device Manager): Pixel 7, Android 15 (API 35), imagem x86_64 com Google APIs e Graphics em Hardware. Ligue com `emulator -avd <nome> -gpu host`. Um celular com depuração USB, conectado pelo adb, também serve.
+2. Ligue o emulador padrão com `npm run emulator`. Na primeira vez, o script cria o mesmo aparelho que o `maestro start-device` criaria: um Pixel 7 com Android 15 (API 35) e Google APIs. Se a imagem do Android faltar, ele também a baixa (cerca de 3,5 GB no disco). Depois disso, o comando só liga o emulador, com a GPU do PC, e espera o Android abrir. São necessários o Android Emulator e o Android SDK Command-line Tools (latest), instalados pelo SDK Manager do Android Studio, e uns 12 GB livres no disco, que o emulador reserva para os dados. Os fluxos medem os gestos em porcentagem da tela desse aparelho; um celular com depuração USB, conectado pelo adb, também serve.
 3. Gere e instale o APK de entrega, com as variáveis `FIREBASE_*` no `.env.local` (seção "Gerar o APK do Android"): `adb install -r build-<número>.apk`.
 4. Crie uma conta só para testes pelo próprio app, em "Criar conta", com um e-mail de teste (como `maestro@example.com`) e um CPF fictício válido. Depois acrescente ao `.env.local`:
 
@@ -134,13 +135,14 @@ O [Maestro](https://maestro.dev) abre o APK instalado e percorre as telas como u
 
 ### Rodar
 
-Com o emulador ligado e o APK de entrega instalado:
+Com o APK de entrega instalado:
 
 ```
+npm run emulator   # se ele ainda não estiver ligado
 npm run e2e
 ```
 
-O script acorda a API que vai dentro do APK (a do Render, lida do `eas.json`; leva até um minuto no plano grátis), registra nela um documento de teste e roda todos os fluxos. Cada execução deixa um registro "Documento de teste do Maestro" na coleção `registrosDaApi` do Firestore. O que vier depois de `--` vai para o Maestro:
+O `npm run e2e` acorda a API que vai dentro do APK (a do Render, lida do `eas.json`; leva até um minuto no plano grátis), registra nela um documento de teste e roda todos os fluxos. Cada execução deixa um registro "Documento de teste do Maestro" na coleção `registrosDaApi` do Firestore. O que vier depois de `--` vai para o Maestro:
 
 | Comando | O que faz |
 | --- | --- |
@@ -151,6 +153,13 @@ O script acorda a API que vai dentro do APK (a do Render, lida do `eas.json`; le
 | `API_LOCAL=1 npm run e2e` | usa a API do PC (`npm run api:up`) em vez do Render; só serve com o APK de desenvolvimento, porque o de entrega usa sempre a API do build |
 
 Na janela do emulador dá para acompanhar cada toque. Quando um fluxo falha, o Maestro guarda capturas da tela e o log em `~/.maestro/tests/<data e hora>/`.
+
+O emulador ligado pelo `npm run emulator` fica ligado depois que o comando termina, e o log dele vai para `~/.cache/assinaaqui/emulador.log`. Para desligar, feche a janela ou rode `adb emu kill`.
+
+| Comando | O que faz |
+| --- | --- |
+| `npm run emulator -- -no-window` | liga o emulador sem janela; o que vier depois de `--` vai para o `emulator` do Android SDK |
+| `EMULADOR_GPU=swiftshader_indirect npm run emulator` | desenha pela CPU, para quando o emulador fecha ou fica com a tela preta com a GPU do PC |
 
 ### Escrever um fluxo novo
 
