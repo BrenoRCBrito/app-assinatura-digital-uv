@@ -30,7 +30,7 @@ Depois de clonar, instale as dependências com `npm ci`.
 | `npm run api:down -- --volumes` | para a API e apaga os documentos registrados |
 | `npm run api:logs` | acompanha o log da API |
 
-O celular e o PC precisam estar no mesmo wifi. Para conferir, abra `<endereço>/saude` no navegador do celular: a resposta é `{"ok":true}`. Mais detalhes em [`api/README.md`](api/README.md).
+O celular e o PC precisam estar no mesmo wifi. Para conferir, abra `<endereço>/saude` no navegador do celular: a resposta é `{"ok":true}`. A documentação das rotas (Swagger) fica em `<endereço>/docs`. Mais detalhes em [`api/README.md`](api/README.md).
 
 ## Gerar o APK do Android
 

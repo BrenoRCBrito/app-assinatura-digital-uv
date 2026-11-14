@@ -1,4 +1,5 @@
 import express, { type ErrorRequestHandler, type Express } from 'express';
+import swaggerUi from 'swagger-ui-express';
 
 import type { Banco } from './banco';
 import type { Carimbo } from './carimbo';
@@ -11,6 +12,7 @@ import {
   type CodigoCurto,
 } from './domain/codigoCurto';
 import { conferirCodigoAntigo, serializarCampos, type CampoDoCodigo } from './domain/codigoDeAutenticidade';
+import { documentoOpenApi } from './openapi';
 
 export type DependenciasDaApi = Readonly<{
   banco: Banco;
@@ -142,6 +144,11 @@ export function criarApp({ banco, carimbo, gerarBytes, agora }: DependenciasDaAp
         : { veredicto: resultado.tipo },
     );
   });
+
+  app.get('/openapi.json', (_pedido, resposta) => {
+    resposta.json(documentoOpenApi);
+  });
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(documentoOpenApi, { customSiteTitle: 'API do AssinaAqui' }));
 
   app.use(tratarErro);
   return app;
