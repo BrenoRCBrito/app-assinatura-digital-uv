@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 import { criarCodigoCurto } from '../../domain/codigoCurto';
 import { criarEnderecoDaApi } from '../../domain/enderecoDaApi';
 import {
+  acordarServidor,
   conferirCodigoAntigo,
   consultarCodigo,
   definirEnderecoConfigurado,
@@ -109,7 +110,7 @@ describe('registrarDocumento', () => {
     await expect(registrarDocumento(CAMPOS)).rejects.toBeInstanceOf(ServidorIndisponivel);
   });
 
-  test('desiste em 8 segundos e trata como servidor indisponível', async () => {
+  test('desiste em 60 segundos, o tempo do servidor grátis acordar, e trata como servidor indisponível', async () => {
     jest.useFakeTimers();
     fetchSimulado.mockImplementation(
       (_endereco: string, opcoes: RequestInit) =>
@@ -119,9 +120,27 @@ describe('registrarDocumento', () => {
     );
 
     const falha = registrarDocumento(CAMPOS);
-    jest.advanceTimersByTime(8000);
+    jest.advanceTimersByTime(60_000);
 
     await expect(falha).rejects.toBeInstanceOf(ServidorIndisponivel);
+  });
+});
+
+describe('acordarServidor', () => {
+  test('chama a rota de saúde, para o servidor já estar de pé quando o usuário precisar', async () => {
+    fetchSimulado.mockResolvedValue(responder(200, { ok: true }));
+
+    await acordarServidor();
+
+    expect(fetchSimulado).toHaveBeenCalledWith('http://192.168.0.10:3000/saude', expect.anything());
+  });
+
+  test('não quebra o app quando o servidor não responde ou não há endereço', async () => {
+    fetchSimulado.mockRejectedValue(new TypeError('Network request failed'));
+    await expect(acordarServidor()).resolves.toBeUndefined();
+
+    constantes.expoConfig = null;
+    await expect(acordarServidor()).resolves.toBeUndefined();
   });
 });
 

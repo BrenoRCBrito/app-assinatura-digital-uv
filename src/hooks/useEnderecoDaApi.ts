@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 
 import { ValidationError } from '../domain/brand';
 import { criarEnderecoDaApi, type EnderecoDaApi } from '../domain/enderecoDaApi';
-import { definirEnderecoConfigurado } from '../services/apiDeDocumentos';
+import { acordarServidor, definirEnderecoConfigurado } from '../services/apiDeDocumentos';
 import { useSettings } from '../storage/SettingsProvider';
 
 export type ResultadoDoEndereco = Readonly<{ ok: true } | { ok: false; mensagem: string }>;
@@ -12,6 +12,8 @@ export function useEnderecoDaApi(): void {
 
   useEffect(() => {
     definirEnderecoConfigurado(settings.enderecoDaApi);
+    // Com o endereço que vale no lugar, a API grátis do Render começa a acordar enquanto o usuário navega.
+    void acordarServidor();
   }, [settings.enderecoDaApi]);
 }
 

@@ -84,7 +84,8 @@ export function criarApp({ banco, carimbo, gerarBytes, agora }: DependenciasDaAp
     resposta.json({ ok: true });
   });
 
-  app.post('/documentos', (pedido, resposta) => {
+  // Express 5 leva a rejeição de uma rota async para o tratarErro.
+  app.post('/documentos', async (pedido, resposta) => {
     const campos = lerCampos(pedido.body?.campos);
     if (campos === null || campos.some(({ chave }) => chave === CHAVE_DO_CODIGO)) {
       resposta.status(400).json({ erro: 'Campos do documento inválidos.' });
@@ -97,7 +98,7 @@ export function criarApp({ banco, carimbo, gerarBytes, agora }: DependenciasDaAp
         resposta.status(400).json({ erro: 'Campos do documento inválidos.' });
         return;
       }
-      const gravado = banco.inserir({
+      const gravado = await banco.inserir({
         codigo,
         campos: JSON.stringify(campos),
         carimbo: carimbo.carimbar(mensagem),
@@ -111,13 +112,13 @@ export function criarApp({ banco, carimbo, gerarBytes, agora }: DependenciasDaAp
     resposta.status(503).json({ erro: 'Não foi possível gerar um código livre.' });
   });
 
-  app.get('/documentos/:codigo', (pedido, resposta) => {
+  app.get('/documentos/:codigo', async (pedido, resposta) => {
     const codigo = lerCodigo(pedido.params.codigo);
     if (codigo === null) {
       resposta.status(400).json({ erro: 'Código malformado.' });
       return;
     }
-    const registro = banco.buscar(codigo);
+    const registro = await banco.buscar(codigo);
     if (registro === null) {
       resposta.status(404).json({ erro: 'Código não encontrado.' });
       return;

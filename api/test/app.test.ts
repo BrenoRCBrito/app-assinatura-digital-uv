@@ -9,7 +9,8 @@ import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 
 import { criarApp } from '../src/app';
-import { abrirBanco, type Banco } from '../src/banco';
+import type { Banco } from '../src/banco';
+import { abrirBancoSqlite } from '../src/bancoSqlite';
 import { criarCarimbo } from '../src/carimbo';
 import { codigoCurtoDeBytes, formatarCodigoCurto } from '../src/domain/codigoCurto';
 import { documentoOpenApi } from '../src/openapi';
@@ -37,7 +38,7 @@ let sorteios: Uint8Array[];
 
 beforeEach(async () => {
   pasta = mkdtempSync(join(tmpdir(), 'assinaaqui-api-'));
-  banco = abrirBanco(join(pasta, 'teste.db'));
+  banco = abrirBancoSqlite(join(pasta, 'teste.db'));
   sorteios = [BYTES_A, BYTES_B];
   const app = criarApp({
     banco,
@@ -54,7 +55,7 @@ afterEach(async () => {
   servidor.closeAllConnections();
   servidor.close();
   await once(servidor, 'close');
-  banco.fechar();
+  await banco.fechar();
   rmSync(pasta, { recursive: true, force: true });
 });
 

@@ -6,7 +6,8 @@ import type { EnderecoDaApi } from '../domain/enderecoDaApi';
 import { lerLista, lerObjeto, lerTexto } from '../domain/leitura';
 
 const PORTA_DA_API = 3000;
-const TEMPO_LIMITE_MS = 8000;
+// No plano grátis do Render, a API dorme depois de uns 15 minutos parada e leva até um minuto para acordar.
+const TEMPO_LIMITE_MS = 60_000;
 const RESPOSTA_INVALIDA = 'Resposta inesperada da API.';
 
 export class ServidorIndisponivel extends Error {
@@ -49,6 +50,15 @@ async function requisitar(caminho: string, opcoes: RequestInit = {}): Promise<Re
     throw new ServidorIndisponivel({ cause: error });
   } finally {
     clearTimeout(limite);
+  }
+}
+
+// Chamada ao abrir o app: enquanto o usuário navega, a API acorda. Falha aqui não importa, então é ignorada.
+export async function acordarServidor(): Promise<void> {
+  try {
+    await requisitar('/saude');
+  } catch {
+    // A próxima chamada de verdade avisa o usuário se o servidor continuar fora do ar.
   }
 }
 

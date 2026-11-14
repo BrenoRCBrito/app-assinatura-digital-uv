@@ -3,23 +3,38 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { networkInterfaces } from 'node:os';
 import { join } from 'node:path';
 
+import { cert, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+
 import { criarApp } from './app';
-import { abrirBanco } from './banco';
+import type { Banco } from './banco';
+import { abrirBancoFirestore, COLECAO_DOS_REGISTROS } from './bancoFirestore';
+import { abrirBancoSqlite } from './bancoSqlite';
 import { criarCarimbo } from './carimbo';
-import { enderecosNaRede, lerConfiguracao } from './configuracao';
+import { enderecosNaRede, lerConfiguracao, type ContaDeServico } from './configuracao';
 
 // Mesmo arquivo que o app.config.js lê: fica no contêiner do repositório, fora do Git, acima das worktrees.
 const ARQUIVO_DE_SEGREDOS = join(__dirname, '..', '..', '..', '.env.local');
 const PASTA_DOS_DADOS = join(__dirname, '..', 'dados');
 
+function abrirBanco(contaDeServico: ContaDeServico | null): Banco {
+  if (contaDeServico === null) {
+    mkdirSync(PASTA_DOS_DADOS, { recursive: true });
+    console.log('Registros no SQLite, em api/dados.');
+    return abrirBancoSqlite(join(PASTA_DOS_DADOS, 'assinaaqui.db'));
+  }
+  const firebase = initializeApp({ credential: cert(contaDeServico) });
+  console.log(`Registros no Firestore do projeto ${contaDeServico.projectId}, coleção ${COLECAO_DOS_REGISTROS}.`);
+  return abrirBancoFirestore(getFirestore(firebase));
+}
+
 function iniciar(): void {
   if (existsSync(ARQUIVO_DE_SEGREDOS)) {
     process.loadEnvFile(ARQUIVO_DE_SEGREDOS);
   }
-  const { segredo, porta, enderecoNaRede } = lerConfiguracao(process.env);
-  mkdirSync(PASTA_DOS_DADOS, { recursive: true });
+  const { segredo, porta, enderecoNaRede, contaDeServico } = lerConfiguracao(process.env);
   const app = criarApp({
-    banco: abrirBanco(join(PASTA_DOS_DADOS, 'assinaaqui.db')),
+    banco: abrirBanco(contaDeServico),
     carimbo: criarCarimbo(segredo),
     gerarBytes: (quantidade) => randomBytes(quantidade),
     agora: () => new Date(),

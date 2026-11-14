@@ -7,10 +7,12 @@
   "scripts": {
     "start": "tsx src/servidor.ts",
     "test": "tsx --test test/*.test.ts",
+    "test:firestore": "node ../regras-do-firestore/node_modules/firebase-tools/lib/bin/firebase.js emulators:exec --config ../firebase.json --only firestore --project demo-assinaaqui-api \"tsx --test test/banco.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "express": "^5.3.0",
+    "firebase-admin": "^14.5.1",
     "swagger-ui-express": "^5.0.1",
     "tsx": "^4.23.15"
   },
