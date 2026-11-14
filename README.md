@@ -70,3 +70,6 @@ npx expo start
 | `npm test` | testes do app |
 | `npm run typecheck` | checagem de tipos do app |
 | `npm run test:api` | testes da API |
+| `npm run e2e` | fluxos do Maestro no celular ou no emulador conectado pelo adb (precisa da API no ar e do APK instalado) |
+
+Os fluxos ficam em `.maestro/` e validam documentos pelo código digitado, sem precisar de conta. O `npm run e2e` registra antes um documento de teste na API. Para instalar o Maestro: `curl -Ls "https://get.maestro.mobile.dev" | bash`.

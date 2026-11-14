@@ -1,0 +1,20 @@
+appId: com.brcb.AssinaAqui
+---
+- tapOn:
+    below: "Código de autenticidade"
+- inputText: ${CODIGO}
+- hideKeyboard
+- tapOn: "Conferir"
+- extendedWaitUntil:
+    notVisible: "Conferir"
+    timeout: 15000
+- runFlow:
+    when:
+      visible: "Servidor indisponível"
+    commands:
+      - tapOn:
+          below: "Endereço da API"
+      - eraseText: 60
+      - inputText: ${API_URL}
+      - hideKeyboard
+      - tapOn: "Tentar de novo"

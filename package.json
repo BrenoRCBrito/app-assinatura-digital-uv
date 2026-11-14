@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit",
     "api": "npm --prefix api start",
     "test:api": "npm --prefix api test",
+    "e2e": "bash scripts/e2e.sh",
     "api:up": "bash api/scripts/up.sh",
     "api:down": "bash api/scripts/down.sh",
     "api:logs": "bash api/scripts/logs.sh"

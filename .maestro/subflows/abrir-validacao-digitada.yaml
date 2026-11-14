@@ -1,0 +1,15 @@
+appId: com.brcb.AssinaAqui
+---
+- launchApp
+- runFlow:
+    when:
+      visible: "Validar um documento"
+    commands:
+      - tapOn: "Validar um documento"
+- runFlow:
+    when:
+      visible: "Validar documento"
+    commands:
+      - tapOn: "Validar documento"
+- tapOn: "Digitar código"
+- assertVisible: "Conferir"
