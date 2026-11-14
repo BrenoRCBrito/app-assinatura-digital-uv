@@ -3,7 +3,9 @@ appId: com.brcb.AssinaAqui
 - tapOn:
     below: "Código de autenticidade"
 - inputText: ${CODIGO}
-- hideKeyboard
+# Enter em vez de hideKeyboard: com o teclado do PC ligado no emulador, o Gboard vira uma barra flutuante que o
+# hideKeyboard não fecha, e o "voltar" que ele tenta sai da tela. O Enter tira o foco do campo e fecha o teclado.
+- pressKey: Enter
 - tapOn: "Conferir"
 # O app espera até 60 s pela API: no plano grátis do Render ela pode estar acordando.
 - extendedWaitUntil:
@@ -22,5 +24,5 @@ appId: com.brcb.AssinaAqui
                 below: "Endereço da API"
             - eraseText: 60
             - inputText: ${API_URL}
-            - hideKeyboard
+            - pressKey: Enter
       - tapOn: "Tentar de novo"

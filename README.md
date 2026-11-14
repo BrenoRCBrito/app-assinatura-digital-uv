@@ -161,6 +161,7 @@ Na janela do emulador dá para acompanhar cada toque. Quando um fluxo falha, o M
 
 - Com a tela aberta no emulador, `maestro hierarchy` mostra os textos e os `accessibilityLabel` que o `tapOn` encontra. Os rótulos dos campos aparecem em maiúsculas na tela, então `tapOn: "E-mail"` acerta o campo, e não o rótulo.
 - Depois de uma ação que depende da rede, espere com `extendedWaitUntil` e um `timeout`, e não com `assertVisible`.
+- Para fechar o teclado depois de digitar, use `pressKey: Enter`, e não `hideKeyboard`. Com o teclado do PC ligado no emulador, o Gboard vira uma barra flutuante que o `hideKeyboard` não fecha; o "voltar" que ele tenta acaba saindo da tela.
 - Um fluxo que precisa de login começa com `runFlow: subflows/entrar-na-conta.yaml` e leva `tags: [conta]`.
 - Para digitar um segredo, use `inputText` com `label`: a saída do terminal mostra o rótulo, e não o valor.
 - Quando o rótulo de um campo tem o mesmo texto do campo (como "CPF"), dê um `testID` ao `TextField` e toque com `tapOn: { id: "..." }`.

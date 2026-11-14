@@ -13,7 +13,7 @@ appId: com.brcb.AssinaAqui
 - inputText:
     text: ${MAESTRO_SENHA}
     label: Digita a senha da conta de teste
-- hideKeyboard
+- pressKey: Enter
 - tapOn: "Entrar"
 - extendedWaitUntil:
     visible: "Digitalizar documento"
